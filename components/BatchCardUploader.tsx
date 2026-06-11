@@ -2,11 +2,16 @@
 
 import { ChangeEvent, useMemo, useState } from 'react';
 
-type Option = { id: string; name: string };
+type PoolOption = {
+  packId: string;
+  seriesId: string;
+  name: string;
+  stock: number;
+  cardCount: number;
+};
 
 type Props = {
-  series: Option[];
-  packs: Option[];
+  pools: PoolOption[];
 };
 
 const rarityOptions = [
@@ -36,12 +41,14 @@ function pad(num: number) {
   return String(num).padStart(3, '0');
 }
 
-function getSeriesPrefix(seriesName: string) {
-  const normalized = seriesName.trim().toUpperCase();
+function getPoolPrefix(poolName: string) {
+  const normalized = poolName.trim().toUpperCase();
   if (normalized.includes('布麗') || normalized.includes('BLUEY')) return 'BRI';
   if (normalized.includes('小車') || normalized.includes('車') || normalized.includes('CAR')) return 'CAR';
   if (normalized.includes('狗')) return 'DOG';
   if (normalized.includes('恐龍')) return 'DINO';
+  if (normalized.includes('端午')) return 'DRGN';
+  if (normalized.includes('生日')) return 'BDAY';
   if (normalized.includes('植物') || normalized.includes('PIK')) return 'PIK';
   return 'CARD';
 }
@@ -65,7 +72,7 @@ function loadImage(url: string) {
   });
 }
 
-async function renderCard(file: File, options: { cardName: string; cardNo: string; seriesName: string; rarity: string }) {
+async function renderCard(file: File, options: { cardName: string; cardNo: string; poolName: string; rarity: string }) {
   const rarity = rarityOptions.find((item) => item.value === options.rarity) || rarityOptions[0];
   const objectUrl = URL.createObjectURL(file);
   const image = await loadImage(objectUrl);
@@ -82,18 +89,18 @@ async function renderCard(file: File, options: { cardName: string; cardNo: strin
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 900, 1200);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.86)';
-  roundRect(ctx, 50, 50, 800, 1100, 70);
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  roundRect(ctx, 50, 50, 800, 1100, 78);
   ctx.fill();
 
   ctx.strokeStyle = rarity.frame;
-  ctx.lineWidth = 16;
-  roundRect(ctx, 50, 50, 800, 1100, 70);
+  ctx.lineWidth = 14;
+  roundRect(ctx, 50, 50, 800, 1100, 78);
   ctx.stroke();
 
   ctx.fillStyle = '#0F3F8C';
   ctx.font = '900 42px sans-serif';
-  ctx.fillText(options.seriesName || '收藏系列', 95, 135);
+  ctx.fillText(options.poolName || '獎勵卡包', 95, 135);
 
   ctx.fillStyle = rarity.frame;
   roundRect(ctx, 620, 82, 190, 68, 30);
@@ -138,25 +145,25 @@ async function renderCard(file: File, options: { cardName: string; cardNo: strin
   return canvas.toDataURL('image/png');
 }
 
-export function BatchCardUploader({ series, packs }: Props) {
-  const [selectedSeriesId, setSelectedSeriesId] = useState(series[0]?.id || '');
-  const [selectedPackId, setSelectedPackId] = useState(packs[0]?.id || '');
+export function BatchCardUploader({ pools }: Props) {
+  const [selectedPoolId, setSelectedPoolId] = useState(pools[0]?.packId || '');
   const [rarity, setRarity] = useState('common');
   const [stock, setStock] = useState(1);
   const [weight, setWeight] = useState(10);
   const [previews, setPreviews] = useState<PreviewCard[]>([]);
   const [isRendering, setIsRendering] = useState(false);
 
-  const selectedSeriesName = useMemo(
-    () => series.find((item) => item.id === selectedSeriesId)?.name || '收藏系列',
-    [series, selectedSeriesId]
+  const selectedPool = useMemo(
+    () => pools.find((item) => item.packId === selectedPoolId) || pools[0],
+    [pools, selectedPoolId]
   );
 
-  const autoPrefix = useMemo(() => getSeriesPrefix(selectedSeriesName), [selectedSeriesName]);
+  const autoPrefix = useMemo(() => getPoolPrefix(selectedPool?.name || '獎池'), [selectedPool?.name]);
+  const startNumber = (selectedPool?.cardCount || 0) + 1;
 
   async function onFilesChange(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files || []);
-    if (files.length === 0) {
+    if (files.length === 0 || !selectedPool) {
       setPreviews([]);
       return;
     }
@@ -167,13 +174,22 @@ export function BatchCardUploader({ series, packs }: Props) {
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
       const cardName = cleanName(file.name);
-      const cardNo = `${autoPrefix}-${pad(index + 1)}`;
-      const dataUrl = await renderCard(file, { cardName, cardNo, seriesName: selectedSeriesName, rarity });
+      const cardNo = `${autoPrefix}-${pad(startNumber + index)}`;
+      const dataUrl = await renderCard(file, { cardName, cardNo, poolName: selectedPool.name, rarity });
       rendered.push({ id: `${file.name}-${file.size}-${index}`, fileName: file.name, cardName, cardNo, dataUrl });
     }
 
     setPreviews(rendered);
     setIsRendering(false);
+  }
+
+  if (pools.length === 0) {
+    return (
+      <div className="rounded-[2rem] bg-amber-50 p-5 text-center ring-1 ring-amber-100">
+        <h3 className="text-2xl font-black text-ink">還沒有獎池</h3>
+        <p className="mt-2 text-sm font-bold text-slate-500">先在上方建立一個獎池，例如「布麗狗驚喜卡包」，再回來上傳卡片。</p>
+      </div>
+    );
   }
 
   return (
@@ -183,7 +199,7 @@ export function BatchCardUploader({ series, packs }: Props) {
           <p className="text-sm font-black text-blue-600">補卡到獎池</p>
           <h3 className="mt-1 text-2xl font-black text-slate-900">批次上傳新卡</h3>
           <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-            選系列、選獎池、一次上傳多張圖片。系統會自動命名、編號、套版並放進獎池。
+            選一個獎池，一次上傳多張圖片。系統會自動命名、編號、套版，並直接放進這個獎池。
           </p>
         </div>
         <span className="rounded-2xl bg-white px-3 py-2 text-sm font-black text-blue-700 shadow-sm">
@@ -191,25 +207,29 @@ export function BatchCardUploader({ series, packs }: Props) {
         </span>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">選擇系列池</span>
-          <select name="batch_series_id" value={selectedSeriesId} onChange={(event) => setSelectedSeriesId(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
-            {series.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">補到哪個獎池</span>
-          <select name="batch_reward_pack_id" value={selectedPackId} onChange={(event) => setSelectedPackId(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
-            <option value="">只建卡，不加入獎池</option>
-            {packs.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-        </label>
-      </div>
+      <label className="mt-5 block">
+        <span className="text-sm font-black text-slate-500">選擇要補卡的獎池</span>
+        <select
+          name="batch_reward_pack_id"
+          value={selectedPoolId}
+          onChange={(event) => {
+            setSelectedPoolId(event.target.value);
+            setPreviews([]);
+          }}
+          className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-4 text-lg font-black text-slate-900 shadow-sm"
+        >
+          {pools.map((item) => (
+            <option key={item.packId} value={item.packId}>
+              {item.name}｜剩餘 {item.stock} 張
+            </option>
+          ))}
+        </select>
+      </label>
 
+      <input type="hidden" name="batch_series_id" value={selectedPool?.seriesId || ''} />
       <input type="hidden" name="batch_category_id" value="" />
       <input type="hidden" name="batch_prefix" value={autoPrefix} />
-      <input type="hidden" name="batch_start_number" value="1" />
+      <input type="hidden" name="batch_start_number" value={String(startNumber)} />
 
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <label className="block">
@@ -229,7 +249,7 @@ export function BatchCardUploader({ series, packs }: Props) {
       </div>
 
       <div className="mt-3 rounded-3xl bg-white/80 px-4 py-3 text-sm font-black text-blue-700 shadow-sm">
-        系統會自動產生卡號：{autoPrefix}-001、{autoPrefix}-002、{autoPrefix}-003...
+        系統會自動產生卡號：{autoPrefix}-{pad(startNumber)}、{autoPrefix}-{pad(startNumber + 1)}、{autoPrefix}-{pad(startNumber + 2)}...
       </div>
 
       <label className="mt-4 block rounded-[1.75rem] border-2 border-dashed border-blue-200 bg-white/80 p-5 text-center shadow-sm">
