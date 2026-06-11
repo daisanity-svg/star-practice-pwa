@@ -18,33 +18,42 @@ export const demoMemoryHooks: MemoryHook[] = [
 export const demoGeneratedQuestions: GeneratedQuestion[] = [
   {
     id: 'q-b-choice',
+    child_id: 'demo-child',
+    learning_item_id: 'demo-b',
+    memory_hook_id: 'hook-b-1',
     question_text: '爸爸的 ㄅ 在哪裡？',
     options: ['ㄅ', 'ㄆ', 'ㄇ', 'ㄈ'],
     correct_answer: ['ㄅ'],
     order_index: 1,
     practice_mode: 'choice',
-    learning_item: { content: 'ㄅ', display_text: 'ㄅ', type: 'bopomofo_initial' },
-    memory_hook: { keyword: '爸爸', sentence: '爸爸的 ㄅ' }
+    learning_item: { id: 'demo-b', content: 'ㄅ', display_text: 'ㄅ', type: 'bopomofo_initial' },
+    memory_hook: { id: 'hook-b-1', keyword: '爸爸', sentence: '爸爸的 ㄅ' }
   },
   {
     id: 'q-a-choice',
+    child_id: 'demo-child',
+    learning_item_id: 'demo-a',
+    memory_hook_id: 'hook-a-1',
     question_text: 'Apple 的 A 在哪裡？',
     options: ['A', 'B', 'C', 'D'],
     correct_answer: ['A'],
     order_index: 2,
     practice_mode: 'choice',
-    learning_item: { content: 'A', display_text: 'A', type: 'english_uppercase' },
-    memory_hook: { keyword: 'Apple', sentence: 'A is for Apple' }
+    learning_item: { id: 'demo-a', content: 'A', display_text: 'A', type: 'english_uppercase' },
+    memory_hook: { id: 'hook-a-1', keyword: 'Apple', sentence: 'A is for Apple' }
   },
   {
     id: 'q-m-choice',
+    child_id: 'demo-child',
+    learning_item_id: 'demo-m',
+    memory_hook_id: 'hook-m-1',
     question_text: '蜜蜂的 ㄇ 在哪裡？',
     options: ['ㄅ', 'ㄆ', 'ㄇ', 'ㄈ'],
     correct_answer: ['ㄇ'],
     order_index: 3,
     practice_mode: 'choice',
-    learning_item: { content: 'ㄇ', display_text: 'ㄇ', type: 'bopomofo_initial' },
-    memory_hook: { keyword: '蜜蜂', sentence: '蜜蜂的 ㄇ' }
+    learning_item: { id: 'demo-m', content: 'ㄇ', display_text: 'ㄇ', type: 'bopomofo_initial' },
+    memory_hook: { id: 'hook-m-1', keyword: '蜜蜂', sentence: '蜜蜂的 ㄇ' }
   }
 ];
 
@@ -112,14 +121,20 @@ export async function getTodayQuestions(): Promise<GeneratedQuestion[]> {
     .from('generated_questions')
     .select(`
       id,
+      child_id,
+      learning_item_id,
+      memory_hook_id,
+      question_template_id,
       question_text,
       options,
       correct_answer,
       order_index,
+      status,
       question_templates(practice_mode),
-      learning_items(content, display_text, type),
-      learning_memory_hooks(keyword, sentence, image_url)
+      learning_items(id, content, display_text, type),
+      learning_memory_hooks(id, keyword, sentence, image_url)
     `)
+    .neq('status', 'completed')
     .order('order_index', { ascending: true })
     .limit(10);
 
@@ -127,6 +142,10 @@ export async function getTodayQuestions(): Promise<GeneratedQuestion[]> {
 
   return data.map((row: any) => ({
     id: row.id,
+    child_id: row.child_id,
+    learning_item_id: row.learning_item_id,
+    memory_hook_id: row.memory_hook_id,
+    question_template_id: row.question_template_id,
     question_text: row.question_text,
     options: Array.isArray(row.options) ? row.options : [],
     correct_answer: Array.isArray(row.correct_answer) ? row.correct_answer : [],
