@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
 import type { DrawRewardResult, RewardCard } from '@/lib/types';
+import { isPracticeTestMode } from '@/lib/config/app-mode';
 
 const demoCard: RewardCard = {
   id: 'demo-red-car',
@@ -58,13 +59,23 @@ async function getDefaultChildId() {
   return data.id as string;
 }
 
-async function getActiveRewardPackId() {
+/**
+ * 獲取有庫存的 active reward pack
+ * 必須檢查 reward_pack_items.stock > 0
+ */
+async function getActiveRewardPackIdWithStock() {
   const today = new Date().toISOString().slice(0, 10);
 
   const { data, error } = await supabase!
     .from('reward_packs')
-    .select('id')
+    .select(
+      `
+      id,
+      reward_pack_items!inner(stock)
+    `
+    )
     .eq('is_active', true)
+    .gte('reward_pack_items.stock', 1)
     .or(`start_date.is.null,start_date.lte.${today}`)
     .or(`end_date.is.null,end_date.gte.${today}`)
     .order('created_at', { ascending: true })
@@ -171,32 +182,37 @@ export async function drawDailyReward(formData?: FormData): Promise<DrawRewardRe
     };
   }
 
-  const childIdFromForm = formData?.get('child_id')?.toString();
-  const packIdFromForm = formData?.get('reward_pack_id')?.toString();
   const practiceRecordId = formData?.get('practice_record_id')?.toString() || null;
+  let rewardPackId = formData?.get('reward_pack_id')?.toString() || null;
+  let childId = formData?.get('child_id')?.toString() || null;
 
-  let childId = childIdFromForm || null;
-
+  // 優先從 practice_record 取得關聯的 reward_pack_id
   if (practiceRecordId) {
-    const { data: practiceRecord, error: practiceRecordError } = await supabase
+    const { data: record, error } = await supabase
       .from('practice_records')
-      .select('id, child_id, completed, reward_claimed')
+      .select('id, child_id, reward_pack_id, completed, reward_claimed')
       .eq('id', practiceRecordId)
       .maybeSingle();
 
-    if (practiceRecordError || !practiceRecord?.id) {
+    if (error || !record?.id) {
       return { ok: false, message: '找不到這次練習紀錄，請先完成今日練習。' };
     }
 
-    if (!practiceRecord.completed) {
+    if (!record.completed) {
       return { ok: false, message: '今日練習尚未完成，完成後才能打開卡包。' };
     }
 
-    if (practiceRecord.reward_claimed) {
+    if (record.reward_claimed) {
       return { ok: false, message: '這次練習已經領過獎勵了，明天再來抽新卡。' };
     }
 
-    childId = practiceRecord.child_id;
+    childId = record.child_id;
+    rewardPackId = record.reward_pack_id; // 優先用記錄的 reward_pack_id
+  }
+
+  // 沒有 practice_record_id 且非測試模式：拒絕
+  if (!practiceRecordId && !isPracticeTestMode()) {
+    return { ok: false, message: '請先完成今日練習，再打開卡包。' };
   }
 
   childId = childId || (await getDefaultChildId());
@@ -204,19 +220,22 @@ export async function drawDailyReward(formData?: FormData): Promise<DrawRewardRe
     return { ok: false, message: '尚未建立孩子資料，請先到 Supabase seed 或後台新增孩子。' };
   }
 
-  const activeRewardPackId = packIdFromForm || (await getActiveRewardPackId());
+  // 若 practice_record 沒帶 reward_pack_id，取第一個 active + 有庫存的
+  if (!rewardPackId) {
+    rewardPackId = await getActiveRewardPackIdWithStock();
+  }
 
   const scheduledReward = await getScheduledReward(childId);
   if (scheduledReward?.cards) {
-    const rewardPackId = scheduledReward.reward_pack_id || activeRewardPackId;
-    if (!rewardPackId) {
+    const finalRewardPackId = scheduledReward.reward_pack_id || rewardPackId;
+    if (!finalRewardPackId) {
       return { ok: false, message: '已找到指定卡，但目前沒有可記錄的卡包。請先建立一個啟用中的獎池。' };
     }
 
     const inventoryResult = await addCardToInventory({
       childId,
       cardId: scheduledReward.card_id,
-      rewardPackId,
+      rewardPackId: finalRewardPackId,
       practiceRecordId
     });
 
@@ -226,7 +245,7 @@ export async function drawDailyReward(formData?: FormData): Promise<DrawRewardRe
 
     const { error: logError } = await supabase.from('reward_draw_logs').insert({
       child_id: childId,
-      reward_pack_id: rewardPackId,
+      reward_pack_id: finalRewardPackId,
       card_id: scheduledReward.card_id,
       practice_record_id: practiceRecordId
     });
@@ -263,9 +282,8 @@ export async function drawDailyReward(formData?: FormData): Promise<DrawRewardRe
     };
   }
 
-  const rewardPackId = activeRewardPackId;
   if (!rewardPackId) {
-    return { ok: false, message: '目前沒有啟用中的卡包，請先到後台建立並啟用卡包。' };
+    return { ok: false, message: '目前沒有啟用中且有庫存的卡包，請先到後台建立並啟用卡包。' };
   }
 
   const { data: packItems, error: packItemsError } = await supabase
