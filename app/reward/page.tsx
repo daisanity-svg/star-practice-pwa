@@ -14,14 +14,21 @@ const rarityLabel: Record<string, string> = {
 type RewardPageProps = {
   searchParams?: Promise<{
     draw?: string;
+    practice_record_id?: string;
   }>;
 };
 
 export default async function RewardPage({ searchParams }: RewardPageProps) {
   const params = await searchParams;
   const shouldDraw = params?.draw === '1';
-  const result = shouldDraw ? await drawDailyReward() : null;
+  const practiceRecordId = params?.practice_record_id;
+
+  const drawForm = new FormData();
+  if (practiceRecordId) drawForm.set('practice_record_id', practiceRecordId);
+
+  const result = shouldDraw ? await drawDailyReward(drawForm) : null;
   const card = result?.card;
+  const drawHref = practiceRecordId ? `/reward?draw=1&practice_record_id=${practiceRecordId}` : '/reward?draw=1';
 
   return (
     <PhoneFrame>
@@ -44,8 +51,13 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
           <p className="mt-4 text-xl font-bold leading-relaxed text-slate-500">
             完成練習後，就可以打開一張收藏卡。
           </p>
+          {!practiceRecordId ? (
+            <p className="mt-5 rounded-3xl bg-white px-4 py-3 text-base font-bold text-slate-500 shadow-sm">
+              正式模式會檢查今日練習紀錄，請先完成今日練習再來抽卡。
+            </p>
+          ) : null}
           <div className="mt-10 w-full space-y-3">
-            <KidButton href="/reward?draw=1" tone="butter">打開卡包</KidButton>
+            <KidButton href={drawHref} tone="butter">打開卡包</KidButton>
             <KidButton href="/collection" tone="white">先看我的收納包</KidButton>
           </div>
         </section>
