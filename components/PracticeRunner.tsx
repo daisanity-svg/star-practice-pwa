@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { completePracticeSession } from '@/lib/actions/practice';
 import type { GeneratedQuestion, SubmittedPracticeAnswer } from '@/lib/types';
@@ -8,6 +8,12 @@ import { KidButton } from '@/components/KidButton';
 
 type PracticeRunnerProps = {
   questions: GeneratedQuestion[];
+};
+
+type CompletionStats = {
+  total: number;
+  correct: number;
+  wrong: number;
 };
 
 function isTracingQuestion(question: GeneratedQuestion) {
@@ -24,6 +30,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const [answers, setAnswers] = useState<SubmittedPracticeAnswer[]>([]);
   const [questionStartedAt, setQuestionStartedAt] = useState(Date.now());
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
+  const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null);
   const [practiceRecordId, setPracticeRecordId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -31,8 +38,6 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const progressText = `${Math.min(currentIndex + 1, questions.length)} / ${questions.length}`;
   const answeredCurrent = selectedAnswer !== null;
   const currentIsCorrect = selectedAnswer ? isAnswerCorrect(current, selectedAnswer) : false;
-
-  const correctCount = useMemo(() => answers.filter((answer) => answer.is_correct).length, [answers]);
 
   function speakQuestion() {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -86,6 +91,9 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
       return;
     }
 
+    const correct = nextAnswers.filter((item) => item.is_correct).length;
+    setCompletionStats({ total: nextAnswers.length, correct, wrong: nextAnswers.length - correct });
+
     startTransition(async () => {
       const result = await completePracticeSession(nextAnswers);
       setCompletionMessage(result.message);
@@ -115,7 +123,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
         <p className="mt-8 text-base font-bold text-grape">Practice Complete</p>
         <h1 className="mt-2 text-4xl font-black leading-tight text-ink">今天練習完成！</h1>
         <p className="mt-4 text-xl font-bold leading-relaxed text-slate-500">
-          答對 {correctCount + (currentIsCorrect ? 1 : 0)} 題，準備打開今天的驚喜卡包。
+          答對 {completionStats?.correct ?? 0} 題，準備打開今天的驚喜卡包。
         </p>
         {completionMessage ? <p className="mt-4 rounded-3xl bg-white px-4 py-3 text-base font-bold text-slate-500 shadow-sm">{completionMessage}</p> : null}
         <div className="mt-10 w-full space-y-3">
