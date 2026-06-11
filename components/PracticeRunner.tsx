@@ -24,6 +24,14 @@ function isAnswerCorrect(question: GeneratedQuestion, selected: string) {
   return question.correct_answer.includes(selected);
 }
 
+function questionEmoji(question: GeneratedQuestion) {
+  if (question.practice_mode === 'listening') return '👂';
+  if (question.practice_mode === 'tracing') return '✍️';
+  if (question.practice_mode === 'intro') return '👋';
+  if (question.learning_item?.type?.includes('english')) return '🔤';
+  return 'ㄅ';
+}
+
 export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -36,6 +44,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
   const current = questions[currentIndex];
   const progressText = `${Math.min(currentIndex + 1, questions.length)} / ${questions.length}`;
+  const progressPercent = questions.length > 0 ? Math.round(((currentIndex + (selectedAnswer ? 1 : 0)) / questions.length) * 100) : 0;
   const answeredCurrent = selectedAnswer !== null;
   const currentIsCorrect = selectedAnswer ? isAnswerCorrect(current, selectedAnswer) : false;
 
@@ -44,7 +53,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
     const utterance = new SpeechSynthesisUtterance(current.question_text);
     utterance.lang = current.learning_item?.type?.includes('english') ? 'en-US' : 'zh-TW';
-    utterance.rate = 0.85;
+    utterance.rate = 0.82;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   }
@@ -106,13 +115,17 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
   if (!questions.length) {
     return (
-      <section className="kid-card flex min-h-[620px] flex-col items-center justify-center p-6 text-center">
-        <div className="text-7xl">🌙</div>
-        <h1 className="mt-6 text-4xl font-black text-ink">今天已經完成囉</h1>
-        <p className="mt-4 text-xl font-bold text-slate-500">明天會自動產生新的練習，也可以到後台新增更多學習朋友。</p>
+      <section className="kid-card flex min-h-[610px] flex-col items-center justify-center overflow-hidden p-6 text-center">
+        <div className="relative flex h-36 w-36 items-center justify-center rounded-[46px] bg-gradient-to-br from-[#e9e5ff] to-[#fff1bd] text-7xl shadow-[0_18px_35px_rgba(109,93,252,0.16)]">
+          🌙
+          <span className="absolute -right-2 -top-2 text-4xl">✨</span>
+        </div>
+        <p className="mt-8 rounded-full bg-[#f4f0ff] px-5 py-2 text-base font-black text-[#5b4be8]">今天休息一下</p>
+        <h1 className="mt-4 text-4xl font-black leading-tight text-ink">今天已經完成囉</h1>
+        <p className="mt-4 text-xl font-bold leading-relaxed text-slate-500">明天會有新的字母朋友，也可以到後台新增更多練習內容。</p>
         <div className="mt-8 w-full space-y-3">
-          <KidButton href="/collection" tone="butter">看我的收納包</KidButton>
-          <KidButton href="/parent/dashboard" tone="white">去家長後台</KidButton>
+          <KidButton href="/collection" tone="butter">🎒 看我的收納包</KidButton>
+          <KidButton href="/parent/dashboard" tone="white">家長後台</KidButton>
         </div>
       </section>
     );
@@ -120,16 +133,20 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
   if (practiceRecordId) {
     return (
-      <section className="kid-card flex min-h-[620px] flex-col items-center justify-center p-6 text-center">
-        <div className="flex h-32 w-32 items-center justify-center rounded-[42px] bg-butter text-7xl shadow-sm animate-bounce-soft">⭐</div>
-        <p className="mt-8 text-base font-bold text-grape">Practice Complete</p>
-        <h1 className="mt-2 text-4xl font-black leading-tight text-ink">今天練習完成！</h1>
+      <section className="kid-card flex min-h-[610px] flex-col items-center justify-center overflow-hidden p-6 text-center">
+        <div className="relative flex h-40 w-40 items-center justify-center rounded-[50px] bg-gradient-to-br from-[#fff0b8] to-[#d9fae8] text-8xl shadow-[0_20px_42px_rgba(245,158,11,0.18)] animate-bounce-soft">
+          ⭐
+          <span className="absolute -left-3 top-4 text-3xl">✨</span>
+          <span className="absolute -right-3 bottom-5 text-3xl">🎉</span>
+        </div>
+        <p className="mt-8 rounded-full bg-[#f4f0ff] px-5 py-2 text-base font-black text-[#5b4be8]">Practice Complete</p>
+        <h1 className="mt-4 text-4xl font-black leading-tight text-ink">今天練習完成！</h1>
         <p className="mt-4 text-xl font-bold leading-relaxed text-slate-500">
           答對 {completionStats?.correct ?? 0} 題，準備打開今天的驚喜卡包。
         </p>
-        {completionMessage ? <p className="mt-4 rounded-3xl bg-white px-4 py-3 text-base font-bold text-slate-500 shadow-sm">{completionMessage}</p> : null}
+        {completionMessage ? <p className="mt-4 rounded-[26px] bg-white px-5 py-4 text-base font-bold text-slate-500 shadow-sm">{completionMessage}</p> : null}
         <div className="mt-10 w-full space-y-3">
-          <KidButton href={`/reward?practice_record_id=${practiceRecordId}`} tone="butter">去拿獎勵</KidButton>
+          <KidButton href={`/reward?practice_record_id=${practiceRecordId}`} tone="primary">🎁 去拿獎勵</KidButton>
           <KidButton href="/collection" tone="white">先看收納包</KidButton>
         </div>
       </section>
@@ -137,44 +154,52 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   }
 
   return (
-    <section className="kid-card flex flex-1 flex-col p-6">
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-full bg-mint px-4 py-2 text-lg font-black text-emerald-900">
-          {current.learning_item?.type?.includes('english') ? '英文' : '注音'}
-        </span>
-        <div className="rounded-full bg-white px-4 py-2 text-lg font-black text-grape shadow-sm">第 {progressText} 題</div>
+    <section className="kid-card flex flex-1 flex-col overflow-hidden p-5">
+      <div className="rounded-[30px] bg-gradient-to-br from-[#6d5dfc] to-[#8f7cff] p-5 text-white shadow-[0_18px_38px_rgba(109,93,252,0.25)]">
+        <div className="flex items-center justify-between gap-3">
+          <span className="rounded-full bg-white/20 px-4 py-2 text-base font-black text-white">
+            {current.learning_item?.type?.includes('english') ? '英文朋友' : '注音朋友'}
+          </span>
+          <span className="rounded-full bg-white px-4 py-2 text-base font-black text-[#5b4be8]">第 {progressText} 題</span>
+        </div>
+        <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/25">
+          <div className="h-full rounded-full bg-[#fff0b8] transition-all" style={{ width: `${progressPercent}%` }} />
+        </div>
       </div>
 
-      <div className="mt-6 rounded-[32px] bg-white p-6 text-center shadow-sm">
+      <div className="mt-5 rounded-[34px] bg-white p-5 text-center shadow-[0_12px_28px_rgba(77,68,111,0.08)]">
         <button
           type="button"
           onClick={speakQuestion}
-          className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-skysoft text-3xl shadow-sm active:scale-[0.98]"
+          className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[30px] bg-[#dff0ff] text-4xl shadow-sm active:scale-[0.98]"
           aria-label="播放題目聲音"
         >
           🔊
         </button>
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#fff8df] text-4xl font-black text-[#5b4be8]">
+          {questionEmoji(current)}
+        </div>
         <p className="text-3xl font-black leading-tight text-ink">{current.question_text}</p>
-        <p className="mt-4 text-lg font-bold leading-relaxed text-slate-500">
+        <p className="mt-4 rounded-[24px] bg-[#fff8ec] px-4 py-3 text-lg font-bold leading-relaxed text-slate-500">
           {current.memory_hook?.sentence ?? '聽一聽，再找出正確的朋友'}
         </p>
       </div>
 
       {isTracingQuestion(current) ? (
-        <div className="mt-7 rounded-[32px] bg-cream p-5 text-center shadow-inner">
-          <div className="flex min-h-[260px] items-center justify-center rounded-[28px] border-4 border-dashed border-white bg-white/70 text-[132px] font-black text-slate-300">
+        <div className="mt-5 rounded-[34px] bg-[#fff6d7] p-5 text-center shadow-inner">
+          <div className="flex min-h-[260px] items-center justify-center rounded-[30px] border-4 border-dashed border-white bg-white/75 text-[140px] font-black text-slate-300">
             {current.learning_item?.content ?? current.correct_answer[0]}
           </div>
           <button
             type="button"
             onClick={handleTracingDone}
-            className={`mt-5 h-20 w-full rounded-[30px] text-2xl font-black shadow-sm active:scale-[0.98] ${answeredCurrent ? 'bg-mint text-emerald-900' : 'bg-butter text-amber-900'}`}
+            className={`mt-5 h-20 w-full rounded-[30px] text-2xl font-black shadow-sm active:scale-[0.98] ${answeredCurrent ? 'bg-[#d9fae8] text-emerald-900' : 'bg-[#fff0b8] text-amber-900'}`}
           >
             {answeredCurrent ? '完成了！' : current.practice_mode === 'intro' ? '我認識了' : '我描好了'}
           </button>
         </div>
       ) : (
-        <div className="mt-7 grid grid-cols-2 gap-4">
+        <div className="mt-5 grid grid-cols-2 gap-4">
           {current.options.map((option) => {
             const isSelected = selectedAnswer === option;
             const correct = isAnswerCorrect(current, option);
@@ -185,12 +210,12 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
                 key={option}
                 type="button"
                 onClick={() => handleSelect(option)}
-                className={`flex h-24 items-center justify-center rounded-[28px] text-5xl font-black shadow-sm active:scale-[0.98] ${
+                className={`flex h-28 items-center justify-center rounded-[32px] border-2 text-5xl font-black shadow-[0_10px_22px_rgba(77,68,111,0.08)] transition active:scale-[0.98] ${
                   showState && correct
-                    ? 'bg-mint text-emerald-900'
+                    ? 'border-emerald-200 bg-[#d9fae8] text-emerald-900'
                     : showState && isSelected
-                      ? 'bg-rose-100 text-rose-500'
-                      : 'bg-white text-ink'
+                      ? 'border-rose-200 bg-rose-100 text-rose-500'
+                      : 'border-white bg-white text-ink'
                 }`}
               >
                 {option}
@@ -201,11 +226,11 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
       )}
 
       {answeredCurrent ? (
-        <div className="mt-6 rounded-[30px] bg-white p-5 text-center shadow-sm">
+        <div className={`mt-5 rounded-[30px] p-5 text-center shadow-sm ${isTracingQuestion(current) || currentIsCorrect ? 'bg-[#d9fae8]' : 'bg-[#fff1bd]'}`}>
           <p className="text-2xl font-black text-ink">
             {isTracingQuestion(current) || currentIsCorrect ? '太棒了！' : '差一點點，再記一次'}
           </p>
-          <p className="mt-2 text-lg font-bold text-slate-500">
+          <p className="mt-2 text-lg font-bold text-slate-600">
             {isTracingQuestion(current) || currentIsCorrect
               ? `你找到 ${current.memory_hook?.keyword ?? '這個朋友'} 的 ${current.learning_item?.content ?? current.correct_answer[0]}！`
               : `${current.memory_hook?.keyword ?? '這題'} 的答案是 ${current.correct_answer.join('、')}`}
@@ -213,13 +238,13 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
         </div>
       ) : null}
 
-      <div className="mt-auto space-y-3 pt-8">
-        <KidButton tone="white" onClick={speakQuestion}>重聽一次</KidButton>
+      <div className="mt-auto space-y-3 pt-6">
+        <KidButton tone="white" onClick={speakQuestion}>🔊 重聽一次</KidButton>
         <button
           type="button"
           disabled={!answeredCurrent || isPending}
           onClick={goNext}
-          className="block min-h-[64px] w-full rounded-[28px] bg-butter px-6 py-4 text-center text-xl font-black text-amber-900 shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="block min-h-[68px] w-full rounded-[30px] bg-gradient-to-r from-[#fff0b8] to-[#ffe08a] px-6 py-4 text-center text-xl font-black text-amber-950 shadow-[0_12px_26px_rgba(245,158,11,0.16)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isPending ? '正在記錄...' : currentIndex === questions.length - 1 ? '完成今日練習' : '下一題'}
         </button>
