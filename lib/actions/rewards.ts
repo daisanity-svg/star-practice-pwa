@@ -265,3 +265,30 @@ export async function addCardToPack(formData: FormData) {
 
   revalidatePath('/parent/cards');
 }
+
+export async function createScheduledReward(formData: FormData) {
+  if (!supabase) return;
+
+  const cardId = value(formData, 'scheduled_card_id');
+  if (!cardId) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const childId = nullableValue(formData, 'scheduled_child_id');
+  const rewardPackId = nullableValue(formData, 'scheduled_reward_pack_id');
+  const reason = value(formData, 'scheduled_reason') || '爸爸指定獎勵';
+  const startsOn = nullableValue(formData, 'scheduled_starts_on') || today;
+  const expiresOn = nullableValue(formData, 'scheduled_expires_on') || today;
+
+  await supabase.from('scheduled_rewards').insert({
+    child_id: childId,
+    card_id: cardId,
+    reward_pack_id: rewardPackId,
+    reason,
+    starts_on: startsOn,
+    expires_on: expiresOn,
+    is_claimed: false
+  });
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/reward');
+}
