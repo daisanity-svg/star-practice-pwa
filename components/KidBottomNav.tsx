@@ -21,7 +21,7 @@ export function KidBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="kid-bottom-safe fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[430px] px-3">
+    <nav className="kid-bottom-nav">
       <div className="rounded-[32px] border border-[#d8eaff] bg-white/95 p-1.5 shadow-[0_18px_42px_rgba(30,64,175,0.16)] backdrop-blur-xl">
         <div className="grid grid-cols-4 gap-1">
           {items.map((item) => {
