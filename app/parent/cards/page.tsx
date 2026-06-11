@@ -3,8 +3,9 @@ import { BatchCardUploader } from '@/components/BatchCardUploader';
 import { createBatchCards, createRewardPool, createScheduledReward } from '@/lib/actions/rewards';
 import { getAdminRewardData } from '@/lib/data/admin-rewards';
 
-const inputClass = 'mt-2 w-full rounded-3xl border-0 bg-white/90 px-4 py-4 text-lg font-bold text-ink shadow-sm outline-none ring-2 ring-transparent focus:ring-blue-300';
-const labelClass = 'text-sm font-black text-slate-500';
+const inputClass = 'mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100';
+const labelClass = 'text-sm font-bold text-slate-600';
+const cardClass = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm';
 
 type AdminData = Awaited<ReturnType<typeof getAdminRewardData>>;
 
@@ -61,167 +62,183 @@ export default async function ParentCardsPage() {
     .sort((a, b) => Number(a.stock > 0) - Number(b.stock > 0));
 
   const uploadablePools = pools.filter((pool) => pool.seriesId);
+  const totalStock = pools.reduce((sum, pool) => sum + pool.stock, 0);
+  const emptyPoolCount = pools.filter((pool) => pool.stock <= 0).length;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-amber-50 px-4 py-5 text-ink md:px-8">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/parent/dashboard" className="rounded-full bg-white px-5 py-3 text-base font-black text-blue-700 shadow-sm ring-1 ring-blue-100">
-            ← 回後台
-          </Link>
-          <div className="rounded-full bg-blue-600 px-5 py-3 text-base font-black text-white shadow-soft">
-            獎池管理
+    <main className="min-h-screen bg-slate-50 px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-5">
+        <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Link href="/parent/dashboard" className="inline-flex items-center rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200">
+              ← 回後台
+            </Link>
+            <p className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-blue-500">Reward Pool Admin</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">獎池管理</h1>
+            <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600">
+              這裡只管理「獎池」。想到新的主題時直接新增一個獎池；獎池快空了，就點選該獎池批次上傳卡片補進去。
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:w-[300px]">
+            <div className="rounded-2xl bg-blue-50 p-3 text-center">
+              <p className="text-xs font-bold text-blue-500">獎池</p>
+              <p className="mt-1 text-2xl font-black text-blue-700">{pools.length}</p>
+            </div>
+            <div className="rounded-2xl bg-amber-50 p-3 text-center">
+              <p className="text-xs font-bold text-amber-600">庫存</p>
+              <p className="mt-1 text-2xl font-black text-amber-700">{totalStock}</p>
+            </div>
+            <div className="rounded-2xl bg-red-50 p-3 text-center">
+              <p className="text-xs font-bold text-red-500">待補</p>
+              <p className="mt-1 text-2xl font-black text-red-600">{emptyPoolCount}</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid gap-5 lg:grid-cols-[380px_1fr]">
+          <aside className="space-y-5">
+            <section className={cardClass}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 text-xl text-white">＋</div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-950">新增獎池</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-500">例如：布麗狗驚喜卡包、小車卡包、端午限定卡包。</p>
+                </div>
+              </div>
+              <form action={createRewardPool} className="mt-5 space-y-4">
+                <label className="block">
+                  <span className={labelClass}>獎池名稱</span>
+                  <input name="pool_name" className={inputClass} placeholder="布麗狗驚喜卡包" required />
+                </label>
+                <label className="block">
+                  <span className={labelClass}>描述</span>
+                  <textarea name="pool_description" rows={3} className={inputClass} placeholder="完成練習後可以抽布麗狗卡" />
+                </label>
+                <button className="w-full rounded-2xl bg-blue-600 px-5 py-4 text-base font-black text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99]">
+                  建立獎池
+                </button>
+              </form>
+            </section>
+
+            <section className={cardClass}>
+              <h2 className="text-xl font-black text-slate-950">指定下一張獎勵卡</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">端午、生日或今天想給特別驚喜時使用。孩子下一次完成練習會優先拿這張卡，領完自動失效。</p>
+              <form action={createScheduledReward} className="mt-5 space-y-4">
+                <label className="block">
+                  <span className={labelClass}>指定卡片</span>
+                  <select name="scheduled_card_id" className={inputClass} required>
+                    <option value="">選一張卡</option>
+                    {cards.map((card) => (
+                      <option key={card.id} value={card.id}>
+                        {card.card_no ? `${card.card_no}｜` : ''}{card.name}（{card.rarity}）
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block">
+                  <span className={labelClass}>原因</span>
+                  <select name="scheduled_reason" className={inputClass} defaultValue="爸爸指定獎勵">
+                    <option value="端午節限定獎勵">端午節限定獎勵</option>
+                    <option value="生日驚喜獎勵">生日驚喜獎勵</option>
+                    <option value="今天特別喜歡這張卡">今天特別喜歡這張卡</option>
+                    <option value="完成挑戰的特別獎勵">完成挑戰的特別獎勵</option>
+                    <option value="爸爸指定獎勵">爸爸指定獎勵</option>
+                  </select>
+                </label>
+                <label className="block">
+                  <span className={labelClass}>所屬獎池</span>
+                  <select name="scheduled_reward_pack_id" className={inputClass}>
+                    <option value="">使用目前啟用獎池</option>
+                    {packs.map((pack) => (
+                      <option key={pack.id} value={pack.id}>{pack.name}</option>
+                    ))}
+                  </select>
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className={labelClass}>開始</span>
+                    <input type="date" name="scheduled_starts_on" className={inputClass} defaultValue={today} />
+                  </label>
+                  <label className="block">
+                    <span className={labelClass}>有效到</span>
+                    <input type="date" name="scheduled_expires_on" className={inputClass} defaultValue={today} />
+                  </label>
+                </div>
+                <button className="w-full rounded-2xl bg-amber-400 px-5 py-4 text-base font-black text-slate-950 shadow-sm transition hover:bg-amber-300 active:scale-[0.99]">
+                  指定下一次獎勵
+                </button>
+              </form>
+
+              <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+                <p className="text-sm font-black text-slate-700">目前待領</p>
+                {scheduledRewards.length === 0 ? (
+                  <p className="mt-2 text-sm text-slate-500">目前沒有指定獎勵卡。</p>
+                ) : (
+                  <div className="mt-3 space-y-2">
+                    {scheduledRewards.map((reward) => (
+                      <div key={reward.id} className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+                        <p className="text-xs font-bold text-blue-500">{reward.reason}</p>
+                        <p className="mt-1 font-black text-slate-900">{reward.card?.name || '指定卡片'}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">{reward.card?.card_no || '未編號'}｜{reward.pack?.name || '目前啟用獎池'}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          </aside>
+
+          <div className="space-y-5">
+            <section className={cardClass}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-950">獎池列表</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500">紅色代表已經沒有可抽卡片。看到空了，就到下方批次補卡。</p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-600">共 {pools.length} 個獎池</span>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {pools.length === 0 ? (
+                  <div className="rounded-3xl bg-slate-50 p-6 text-center ring-1 ring-slate-200 sm:col-span-2 xl:col-span-3">
+                    <h3 className="text-xl font-black text-slate-900">還沒有獎池</h3>
+                    <p className="mt-2 text-sm text-slate-500">先在左側新增一個獎池。</p>
+                  </div>
+                ) : pools.map((pool) => (
+                  <div key={pool.packId} className={`rounded-3xl border p-4 ${pool.stock <= 0 ? 'border-red-200 bg-red-50' : 'border-blue-100 bg-blue-50/60'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className={`text-xs font-black ${pool.stock <= 0 ? 'text-red-500' : 'text-blue-500'}`}>{pool.stock <= 0 ? '需要補卡' : '可抽卡'}</p>
+                        <h3 className="mt-1 truncate text-lg font-black text-slate-950">{pool.name}</h3>
+                        {pool.description ? <p className="mt-1 line-clamp-2 text-sm text-slate-500">{pool.description}</p> : null}
+                      </div>
+                      <span className="shrink-0 rounded-2xl bg-white px-3 py-2 text-sm font-black text-slate-900 shadow-sm">{pool.stock} 張</span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="rounded-2xl bg-white p-3">
+                        <p className="text-xs font-bold text-slate-400">已建卡片</p>
+                        <p className="mt-1 text-lg font-black text-slate-900">{pool.cardCount} 張</p>
+                      </div>
+                      <div className="rounded-2xl bg-white p-3">
+                        <p className="text-xs font-bold text-slate-400">狀態</p>
+                        <p className={`mt-1 text-sm font-black ${pool.hasSeries ? 'text-blue-600' : 'text-red-500'}`}>{pool.hasSeries ? '可補卡' : '需重建'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className={cardClass}>
+              <form action={createBatchCards}>
+                <BatchCardUploader pools={uploadablePools} />
+                <button className="mt-5 w-full rounded-2xl bg-blue-600 px-5 py-4 text-base font-black text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99]">
+                  批次加入獎池
+                </button>
+              </form>
+            </section>
           </div>
         </div>
-
-        <section className="mt-5 rounded-[2rem] bg-white/90 p-6 shadow-soft ring-1 ring-blue-100">
-          <p className="text-base font-black text-blue-600">Reward Pools</p>
-          <h1 className="mt-2 text-3xl font-black leading-tight text-ink md:text-4xl">只建立獎池，空了就補卡</h1>
-          <p className="mt-3 max-w-3xl text-lg font-bold leading-relaxed text-slate-500">
-            後台已簡化：你不需要再分「系列」和「分類」。想到新的主題時，直接新增一個獎池，例如「布麗狗驚喜卡包」、「端午限定卡包」、「小車驚喜卡包」。建立後點選該獎池，上傳卡片即可。
-          </p>
-        </section>
-
-        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
-          <h2 className="text-2xl font-black text-ink">新增獎池</h2>
-          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-            獎池就是孩子完成練習後抽卡的地方。建立獎池時，系統會同步建立同名的卡片系列，之後上傳卡片會自動放進這個獎池。
-          </p>
-          <form action={createRewardPool} className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-            <label className="block">
-              <span className={labelClass}>獎池名稱</span>
-              <input name="pool_name" className={inputClass} placeholder="布麗狗驚喜卡包" required />
-            </label>
-            <label className="block">
-              <span className={labelClass}>描述</span>
-              <input name="pool_description" className={inputClass} placeholder="完成練習後可以抽布麗狗卡" />
-            </label>
-            <button className="rounded-[2rem] bg-blue-600 px-8 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-              新增獎池
-            </button>
-          </form>
-        </section>
-
-        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
-          <h2 className="text-2xl font-black text-ink">指定下一張獎勵卡</h2>
-          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-            端午節、生日、今天特別喜歡某張卡，或想給他一個驚喜時，就在這裡指定。下一次完成練習後會優先拿這張卡，領完自動失效。
-          </p>
-          <form action={createScheduledReward} className="mt-4 grid gap-4 md:grid-cols-2">
-            <label className="block md:col-span-2">
-              <span className={labelClass}>指定卡片</span>
-              <select name="scheduled_card_id" className={inputClass} required>
-                <option value="">選一張卡</option>
-                {cards.map((card) => (
-                  <option key={card.id} value={card.id}>
-                    {card.card_no ? `${card.card_no}｜` : ''}{card.name}（{card.rarity}）
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className={labelClass}>原因</span>
-              <select name="scheduled_reason" className={inputClass} defaultValue="爸爸指定獎勵">
-                <option value="端午節限定獎勵">端午節限定獎勵</option>
-                <option value="生日驚喜獎勵">生日驚喜獎勵</option>
-                <option value="今天特別喜歡這張卡">今天特別喜歡這張卡</option>
-                <option value="完成挑戰的特別獎勵">完成挑戰的特別獎勵</option>
-                <option value="爸爸指定獎勵">爸爸指定獎勵</option>
-              </select>
-            </label>
-            <label className="block">
-              <span className={labelClass}>指定所屬獎池</span>
-              <select name="scheduled_reward_pack_id" className={inputClass}>
-                <option value="">使用目前啟用獎池</option>
-                {packs.map((pack) => (
-                  <option key={pack.id} value={pack.id}>{pack.name}</option>
-                ))}
-              </select>
-            </label>
-            <label className="block">
-              <span className={labelClass}>開始日期</span>
-              <input type="date" name="scheduled_starts_on" className={inputClass} defaultValue={today} />
-            </label>
-            <label className="block">
-              <span className={labelClass}>有效到</span>
-              <input type="date" name="scheduled_expires_on" className={inputClass} defaultValue={today} />
-            </label>
-            <button className="md:col-span-2 w-full rounded-[2rem] bg-gradient-to-r from-amber-400 to-blue-500 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-              指定下一次完成練習的獎勵卡
-            </button>
-          </form>
-
-          <div className="mt-5 rounded-[1.75rem] bg-blue-50/80 p-4 ring-1 ring-blue-100">
-            <p className="text-sm font-black text-blue-600">目前待領指定卡</p>
-            {scheduledRewards.length === 0 ? (
-              <p className="mt-2 text-sm font-bold text-slate-500">目前沒有指定獎勵卡。</p>
-            ) : (
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
-                {scheduledRewards.map((reward) => (
-                  <div key={reward.id} className="rounded-3xl bg-white p-4 shadow-sm">
-                    <p className="text-xs font-black text-slate-400">{reward.reason}</p>
-                    <h3 className="mt-1 text-lg font-black text-ink">{reward.card?.name || '指定卡片'}</h3>
-                    <p className="mt-1 text-sm font-bold text-slate-500">
-                      {reward.card?.card_no || '未編號'}｜{reward.pack?.name || '目前啟用獎池'}
-                    </p>
-                    <p className="mt-2 text-xs font-black text-blue-500">
-                      {reward.starts_on || '今天'} ～ {reward.expires_on || '不限'}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
-          <h2 className="text-2xl font-black text-ink">獎池列表</h2>
-          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-            看哪個獎池快空了，就在下方選該獎池批次補卡。紅色標記代表已經沒有可抽卡片。
-          </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {pools.length === 0 ? (
-              <div className="rounded-[1.75rem] bg-blue-50/80 p-5 text-center ring-1 ring-blue-100 md:col-span-3">
-                <h3 className="text-xl font-black text-ink">還沒有獎池</h3>
-                <p className="mt-2 text-sm font-bold text-slate-500">先新增一個獎池，之後就能上傳卡片。</p>
-              </div>
-            ) : pools.map((pool) => (
-              <div key={pool.packId} className={`rounded-[1.75rem] p-4 ring-1 ${pool.stock <= 0 ? 'bg-red-50 ring-red-100' : 'bg-blue-50/80 ring-blue-100'}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className={`text-xs font-black ${pool.stock <= 0 ? 'text-red-500' : 'text-blue-500'}`}>{pool.stock <= 0 ? '需要補卡' : '獎池'}</p>
-                    <h3 className="mt-1 text-xl font-black text-ink">{pool.name}</h3>
-                    {pool.description ? <p className="mt-1 text-sm font-bold text-slate-500">{pool.description}</p> : null}
-                  </div>
-                  <span className="rounded-2xl bg-white px-3 py-2 text-sm font-black text-blue-700 shadow-sm">
-                    {pool.stock} 張
-                  </span>
-                </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white p-3 shadow-sm">
-                    <p className="text-xs font-black text-slate-400">已建卡片</p>
-                    <p className="mt-1 text-lg font-black text-ink">{pool.cardCount} 張</p>
-                  </div>
-                  <div className="rounded-2xl bg-white p-3 shadow-sm">
-                    <p className="text-xs font-black text-slate-400">狀態</p>
-                    <p className={`mt-1 text-sm font-black ${pool.hasSeries ? 'text-blue-600' : 'text-red-500'}`}>
-                      {pool.hasSeries ? '可補卡' : '需重新建立'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
-          <form action={createBatchCards}>
-            <BatchCardUploader pools={uploadablePools} />
-            <button className="mt-5 w-full rounded-[2rem] bg-blue-600 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-              批次加入獎池
-            </button>
-          </form>
-        </section>
       </div>
     </main>
   );
