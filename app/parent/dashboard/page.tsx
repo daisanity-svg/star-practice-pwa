@@ -1,12 +1,20 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { dashboardStats } from '@/lib/demo-data';
 import { getActiveEvent, getRewardPackSummaries } from '@/lib/data/events';
 
-const adminSections = [
+type AdminSection = {
+  title: string;
+  description: string;
+  icon: string;
+  href: Route;
+};
+
+const adminSections: AdminSection[] = [
   { title: '學習項目', description: '管理 ㄅ、ㄇ、A、B 與多記憶詞', icon: '📚', href: '/parent/learning' },
   { title: '學習進度', description: '查看熟練度、弱點與容易忘的項目', icon: '🔁', href: '/parent/progress' },
-  { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏', href: '/parent/cards' },
+  { title: '卡片獎池', description: '新增布麗狗、小車、節日限定卡包', icon: '🃏', href: '/parent/cards' },
   { title: '活動卡包', description: '設定主題週、限定卡包與首頁提示', icon: '🎁', href: '/parent/events' },
   { title: '題型模板', description: '管理自動出題的句型與模式', icon: '🧩', href: '/parent/templates' },
   { title: '今日規則', description: '查看每日題數、比例與抽卡條件', icon: '⚙️', href: '/parent/settings' }
