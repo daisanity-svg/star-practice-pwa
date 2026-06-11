@@ -83,7 +83,31 @@ export async function drawDailyReward(formData?: FormData): Promise<DrawRewardRe
   const packIdFromForm = formData?.get('reward_pack_id')?.toString();
   const practiceRecordId = formData?.get('practice_record_id')?.toString() || null;
 
-  const childId = childIdFromForm || (await getDefaultChildId());
+  let childId = childIdFromForm || null;
+
+  if (practiceRecordId) {
+    const { data: practiceRecord, error: practiceRecordError } = await supabase
+      .from('practice_records')
+      .select('id, child_id, completed, reward_claimed')
+      .eq('id', practiceRecordId)
+      .maybeSingle();
+
+    if (practiceRecordError || !practiceRecord?.id) {
+      return { ok: false, message: '找不到這次練習紀錄，請先完成今日練習。' };
+    }
+
+    if (!practiceRecord.completed) {
+      return { ok: false, message: '今日練習尚未完成，完成後才能打開卡包。' };
+    }
+
+    if (practiceRecord.reward_claimed) {
+      return { ok: false, message: '這次練習已經領過獎勵了，明天再來抽新卡。' };
+    }
+
+    childId = practiceRecord.child_id;
+  }
+
+  childId = childId || (await getDefaultChildId());
   if (!childId) {
     return { ok: false, message: '尚未建立孩子資料，請先到 Supabase seed 或後台新增孩子。' };
   }
