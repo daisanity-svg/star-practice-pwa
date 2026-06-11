@@ -43,7 +43,7 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
       <KidTopBar title="今日獎勵" backHref="/practice" backLabel="練習" rightLabel="🎁" />
 
       {!shouldDraw ? (
-        <section className="kid-card flex min-h-[560px] flex-col items-center justify-center overflow-hidden p-5 text-center">
+        <section className="kid-card-strong flex min-h-[560px] flex-col items-center justify-center overflow-hidden p-5 text-center">
           <div className="relative flex h-36 w-36 items-center justify-center rounded-[44px] bg-gradient-to-br from-[#dbeafe] via-white to-[#fff0b8] text-7xl shadow-[0_20px_44px_rgba(37,99,235,0.16)] animate-bounce-soft">
             🎁
             <span className="absolute -left-2 top-8 text-3xl">✨</span>
@@ -63,7 +63,7 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
           </div>
         </section>
       ) : (
-        <section className="kid-card relative flex min-h-[560px] flex-col overflow-hidden p-5 text-center">
+        <section className="kid-card-strong relative flex min-h-[560px] flex-col overflow-hidden p-5 text-center">
           <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto h-72 w-72 rounded-full bg-[#dbeafe] opacity-70 blur-3xl" />
           <div className="pointer-events-none absolute left-8 top-24 text-2xl">✨</div>
           <div className="pointer-events-none absolute right-8 top-36 text-2xl">🎉</div>
