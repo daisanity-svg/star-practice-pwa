@@ -4,6 +4,7 @@ import { isPracticeTestMode } from '@/lib/config/app-mode';
 import {
   SAFE_QUESTION_TEMPLATES,
   buildSafeDistractors,
+  pickTemplate,
   renderTemplate,
   validateQuestion
 } from '@/lib/services/question-validator';
@@ -66,8 +67,8 @@ function isBopomofoType(type: string) {
 }
 
 function inferModeFromText(questionText: string): SafePracticeMode {
-  if (questionText.includes('描一遍')) return 'tracing';
-  if (questionText.includes('聽一聽')) return 'listening';
+  if (questionText.includes('描') || questionText.includes('畫')) return 'tracing';
+  if (questionText.includes('聽') || questionText.includes('耳朵') || questionText.includes('聲音')) return 'listening';
   return 'choice';
 }
 
@@ -281,7 +282,8 @@ function buildQuestionRows(params: {
       const masteryLevel = params.progressByItem.get(item.id)?.mastery_level ?? 0;
       const hook = selectHook(item, params.hooks, masteryLevel);
       const practiceMode = selectPracticeMode(index, masteryLevel);
-      const template = SAFE_QUESTION_TEMPLATES[practiceMode];
+      const orderIndex = params.firstOrderIndex + index;
+      const template = pickTemplate(practiceMode, orderIndex);
       const questionText = renderTemplate(template, item, hook?.keyword);
       const options = practiceMode === 'tracing' ? [item.content] : buildSafeDistractors(item.content, item.type, params.allItems);
 
@@ -295,7 +297,7 @@ function buildQuestionRows(params: {
         question_text: questionText,
         options,
         correct_answer: [item.content],
-        order_index: params.firstOrderIndex + index,
+        order_index: orderIndex,
         practice_mode: practiceMode,
         learning_item: { id: item.id, content: item.content, display_text: item.display_text, type: item.type },
         memory_hook: hook ? { id: hook.id, keyword: hook.keyword, sentence: hook.sentence, image_url: hook.image_url } : null
@@ -313,7 +315,7 @@ function buildQuestionRows(params: {
         question_text: questionText,
         options,
         correct_answer: [item.content],
-        order_index: params.firstOrderIndex + index,
+        order_index: orderIndex,
         status: 'pending'
       };
     })
@@ -328,8 +330,14 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
 
   if (plan.is_completed && !isPracticeTestMode()) return [];
 
-  const existingQuestions = await getPendingQuestions(plan.id);
-  if (existingQuestions.length) return existingQuestions.slice(0, Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS));
+  if (!isPracticeTestMode()) {
+    const existingQuestions = await getPendingQuestions(plan.id);
+    if (existingQuestions.length) return existingQuestions.slice(0, Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS));
+  }
+
+  if (isPracticeTestMode()) {
+    await supabase!.from('generated_questions').delete().eq('daily_learning_plan_id', plan.id).eq('status', 'pending');
+  }
 
   const source = await fetchGenerationSource(childId);
   if (!source.items.length) return [];
@@ -355,7 +363,11 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
   if (!rows.length) return [];
 
   const { error } = await supabase!.from('generated_questions').insert(rows);
-  if (error) throw new Error(error.message);
+
+  if (error) {
+    console.error('Failed to auto-generate daily questions', error);
+    return [];
+  }
 
   return getPendingQuestions(plan.id);
 }
