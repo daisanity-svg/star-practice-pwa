@@ -24,7 +24,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute -left-16 top-48 h-36 w-36 rounded-full bg-[#d9fae8] opacity-80 blur-2xl" />
 
         <header className="relative z-10 flex items-center justify-between">
-          <div className="rounded-full bg-white/85 px-4 py-2 text-sm font-black text-[#6d5dfc] shadow-sm">
+          <div className="rounded-full bg-white/90 px-4 py-2 text-sm font-black text-[#6d5dfc] shadow-sm">
             星見練習本
           </div>
           <Link href="/parent/login" className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-xl shadow-sm active:scale-95">
