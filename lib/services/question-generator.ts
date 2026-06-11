@@ -1,5 +1,12 @@
 import { supabase } from '@/lib/supabase';
 import type { GeneratedQuestion } from '@/lib/types';
+import { isPracticeTestMode } from '@/lib/config/app-mode';
+import { 
+  validateQuestion, 
+  buildSafeDistractors, 
+  renderTemplate,
+  SAFE_QUESTION_TEMPLATES 
+} from '@/lib/services/question-validator';
 
 const DEFAULT_CHILD_NAME = '星見';
 const TOTAL_QUESTIONS = 10;
@@ -28,16 +35,6 @@ type MemoryHookRow = {
   image_url?: string | null;
 };
 
-type QuestionTemplateRow = {
-  id: string;
-  type: string;
-  practice_mode: string;
-  template_text: string;
-  instruction_audio_text: string | null;
-  answer_mode: string;
-  difficulty_level: number | null;
-};
-
 type ProgressRow = {
   learning_item_id: string;
   mastery_level: number;
@@ -62,36 +59,14 @@ function uniqueById<T extends { id: string }>(items: T[]) {
   });
 }
 
-function renderTemplate(template: string, item: LearningItemRow, hook?: MemoryHookRow | null) {
-  return template
-    .replaceAll('{content}', item.content)
-    .replaceAll('{letter}', item.content)
-    .replaceAll('{symbol}', item.content)
-    .replaceAll('{keyword}', hook?.keyword ?? item.display_text);
-}
-
-function isEnglishType(type: string) {
-  return type.includes('english');
-}
-
-function buildDistractors(item: LearningItemRow, allItems: LearningItemRow[]) {
-  const pool = allItems
-    .filter((candidate) => candidate.id !== item.id)
-    .filter((candidate) => isEnglishType(candidate.type) === isEnglishType(item.type))
-    .map((candidate) => candidate.content);
-
-  return shuffle([item.content, ...shuffle(pool).slice(0, 3)]).slice(0, 4);
-}
-
-function selectTemplate(templates: QuestionTemplateRow[], masteryLevel: number) {
-  const allowedModes = masteryLevel <= 1
-    ? ['choice', 'intro']
-    : masteryLevel <= 3
-      ? ['choice', 'listening', 'tracing']
-      : ['choice', 'listening', 'tracing', 'recall'];
-
-  const candidates = templates.filter((template) => allowedModes.includes(template.practice_mode));
-  return shuffle(candidates.length ? candidates : templates)[0];
+function selectPracticeMode(masteryLevel: number): keyof typeof SAFE_QUESTION_TEMPLATES {
+  if (masteryLevel <= 1) return 'choice';
+  if (masteryLevel <= 3) {
+    const modes: (keyof typeof SAFE_QUESTION_TEMPLATES)[] = ['choice', 'listening', 'tracing'];
+    return modes[Math.floor(Math.random() * modes.length)];
+  }
+  const modes: (keyof typeof SAFE_QUESTION_TEMPLATES)[] = ['choice', 'listening', 'tracing'];
+  return modes[Math.floor(Math.random() * modes.length)];
 }
 
 function selectHook(item: LearningItemRow, hooks: MemoryHookRow[], masteryLevel: number) {
@@ -125,12 +100,13 @@ async function ensureDefaultChild() {
   return created.id as string;
 }
 
-async function getActiveRewardPackId() {
+async function getActiveRewardPackIdWithStock() {
   const today = todayKey();
   const { data } = await supabase!
     .from('reward_packs')
-    .select('id')
+    .select(`id, reward_pack_items!inner(stock)`)
     .eq('is_active', true)
+    .gte('reward_pack_items.stock', 1)
     .or(`start_date.is.null,start_date.lte.${today}`)
     .or(`end_date.is.null,end_date.gte.${today}`)
     .order('created_at', { ascending: true })
@@ -151,7 +127,7 @@ async function getOrCreateTodayPlan(childId: string) {
 
   if (existing?.id) return existing;
 
-  const rewardPackId = await getActiveRewardPackId();
+  const rewardPackId = await getActiveRewardPackIdWithStock();
   const { data: created, error } = await supabase!
     .from('daily_learning_plan')
     .insert({
@@ -212,16 +188,14 @@ async function getPendingQuestions(planId: string): Promise<GeneratedQuestion[]>
 
 async function fetchGenerationSource(childId: string) {
   const now = new Date().toISOString();
-  const [itemsResult, hooksResult, templatesResult, progressResult] = await Promise.all([
+  const [itemsResult, hooksResult, progressResult] = await Promise.all([
     supabase!.from('learning_items').select('id, type, content, display_text, difficulty').eq('is_active', true).order('created_at', { ascending: true }),
     supabase!.from('learning_memory_hooks').select('id, learning_item_id, keyword, sentence, is_primary, difficulty_level, usage_stage, image_url').eq('is_active', true),
-    supabase!.from('question_templates').select('id, type, practice_mode, template_text, instruction_audio_text, answer_mode, difficulty_level').eq('is_active', true),
     supabase!.from('child_learning_progress').select('learning_item_id, mastery_level, is_weakness, next_review_at').eq('child_id', childId)
   ]);
 
   const items = (itemsResult.data ?? []) as LearningItemRow[];
   const hooks = (hooksResult.data ?? []) as MemoryHookRow[];
-  const templates = (templatesResult.data ?? []) as QuestionTemplateRow[];
   const progress = (progressResult.data ?? []) as ProgressRow[];
 
   const progressByItem = new Map(progress.map((item) => [item.learning_item_id, item]));
@@ -233,7 +207,7 @@ async function fetchGenerationSource(childId: string) {
   const newItems = items.filter((item) => !progressByItem.has(item.id));
   const fallbackItems = items.filter((item) => !weaknessItems.includes(item) && !reviewItems.includes(item) && !newItems.includes(item));
 
-  return { items, hooks, templates, progressByItem, weaknessItems, reviewItems, newItems, fallbackItems };
+  return { items, hooks, progressByItem, weaknessItems, reviewItems, newItems, fallbackItems };
 }
 
 function buildQuestionRows(params: {
@@ -241,36 +215,41 @@ function buildQuestionRows(params: {
   planId: string;
   selectedItems: LearningItemRow[];
   hooks: MemoryHookRow[];
-  templates: QuestionTemplateRow[];
   allItems: LearningItemRow[];
   progressByItem: Map<string, ProgressRow>;
 }) {
-  return params.selectedItems.map((item, index) => {
-    const masteryLevel = params.progressByItem.get(item.id)?.mastery_level ?? 0;
-    const hook = selectHook(item, params.hooks, masteryLevel);
-    const template = selectTemplate(params.templates, masteryLevel);
-    const practiceMode = template?.practice_mode ?? 'choice';
-    const questionText = template
-      ? renderTemplate(template.template_text, item, hook)
-      : `${hook?.keyword ?? item.display_text} 的 ${item.content} 在哪裡？`;
+  return params.selectedItems
+    .map((item, index) => {
+      const masteryLevel = params.progressByItem.get(item.id)?.mastery_level ?? 0;
+      const hook = selectHook(item, params.hooks, masteryLevel);
+      const practiceMode = selectPracticeMode(masteryLevel);
+      const template = SAFE_QUESTION_TEMPLATES[practiceMode];
+      const questionText = renderTemplate(template, item, hook?.keyword);
+      const options = buildSafeDistractors(item.content, item.type, params.allItems);
 
-    const options = practiceMode === 'tracing' || practiceMode === 'intro'
-      ? [item.content]
-      : buildDistractors(item, params.allItems);
+      const question = {
+        daily_learning_plan_id: params.planId,
+        child_id: params.childId,
+        learning_item_id: item.id,
+        memory_hook_id: hook?.id ?? null,
+        question_template_id: null,
+        question_text: questionText,
+        options,
+        correct_answer: [item.content],
+        order_index: index + 1,
+        status: 'pending'
+      };
 
-    return {
-      daily_learning_plan_id: params.planId,
-      child_id: params.childId,
-      learning_item_id: item.id,
-      memory_hook_id: hook?.id ?? null,
-      question_template_id: template?.id ?? null,
-      question_text: questionText,
-      options,
-      correct_answer: [item.content],
-      order_index: index + 1,
-      status: 'pending'
-    };
-  });
+      // 驗證題目
+      const validation = validateQuestion(question as any);
+      if (!validation.valid) {
+        console.warn(`Question validation failed for item ${item.id}:`, validation.errors);
+        return null;
+      }
+
+      return question;
+    })
+    .filter((q): q is NonNullable<typeof q> => q !== null);
 }
 
 export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
@@ -278,13 +257,17 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
 
   const childId = await ensureDefaultChild();
   const plan = await getOrCreateTodayPlan(childId);
-  if (plan.is_completed) return [];
+
+  // 測試模式下不受 is_completed 限制
+  if (plan.is_completed && !isPracticeTestMode()) {
+    return [];
+  }
 
   const existingQuestions = await getPendingQuestions(plan.id);
   if (existingQuestions.length) return existingQuestions;
 
   const source = await fetchGenerationSource(childId);
-  if (!source.items.length || !source.templates.length) return [];
+  if (!source.items.length) return [];
 
   const selected = uniqueById([
     ...shuffle(source.weaknessItems).slice(0, plan.weakness_item_count ?? DEFAULT_COUNTS.weakness_item_count),
@@ -299,7 +282,6 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
     planId: plan.id,
     selectedItems: selected,
     hooks: source.hooks,
-    templates: source.templates,
     allItems: source.items,
     progressByItem: source.progressByItem
   });
