@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { KidButton } from '@/components/KidButton';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { todayPracticeItems } from '@/lib/demo-data';
+import { getTodayQuestions } from '@/lib/data/learning';
 
-export default function PracticePage() {
-  const current = todayPracticeItems[0];
+export default async function PracticePage() {
+  const questions = await getTodayQuestions();
+  const current = questions[0];
 
   return (
     <PhoneFrame>
@@ -13,21 +14,25 @@ export default function PracticePage() {
           ← 回首頁
         </Link>
         <div className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-grape shadow-sm">
-          第 1 / 10 題
+          第 1 / {Math.max(questions.length, 10)} 題
         </div>
       </div>
 
       <section className="kid-card flex flex-1 flex-col p-6">
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-mint px-4 py-2 text-lg font-black text-emerald-900">{current.type}</span>
+          <span className="rounded-full bg-mint px-4 py-2 text-lg font-black text-emerald-900">
+            {current.learning_item?.type?.includes('english') ? '英文' : '注音'}
+          </span>
           <button className="flex h-14 w-14 items-center justify-center rounded-3xl bg-skysoft text-2xl shadow-sm" aria-label="播放聲音">
             🔊
           </button>
         </div>
 
         <div className="mt-8 rounded-[32px] bg-white p-6 text-center shadow-sm">
-          <p className="text-3xl font-black leading-tight text-ink">{current.prompt}</p>
-          <p className="mt-4 text-lg font-bold leading-relaxed text-slate-500">{current.helper}</p>
+          <p className="text-3xl font-black leading-tight text-ink">{current.question_text}</p>
+          <p className="mt-4 text-lg font-bold leading-relaxed text-slate-500">
+            {current.memory_hook?.sentence ?? '聽一聽，再找出正確的朋友'}
+          </p>
         </div>
 
         <div className="mt-7 grid grid-cols-2 gap-4">
@@ -40,7 +45,7 @@ export default function PracticePage() {
 
         <div className="mt-auto space-y-3 pt-8">
           <KidButton tone="butter">聽提示</KidButton>
-          <KidButton href="/" tone="white">先完成示範題</KidButton>
+          <KidButton href="/collection" tone="white">完成示範題，去看收納包</KidButton>
         </div>
       </section>
     </PhoneFrame>
