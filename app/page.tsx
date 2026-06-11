@@ -1,9 +1,12 @@
+import Link from 'next/link';
 import { KidButton } from '@/components/KidButton';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { ProgressPill } from '@/components/ProgressPill';
-import { cardCollections } from '@/lib/demo-data';
+import { getCollectionSummary } from '@/lib/data/rewards';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const collections = await getCollectionSummary();
+
   return (
     <PhoneFrame>
       <section className="kid-card flex flex-1 flex-col p-6">
@@ -28,20 +31,21 @@ export default function HomePage() {
 
         <div className="mt-6 space-y-3">
           <KidButton href="/practice">開始今天練習</KidButton>
+          <KidButton href="/collection" tone="butter">我的收納包</KidButton>
           <KidButton href="/parent/login" tone="white">家長後台</KidButton>
         </div>
 
         <div className="mt-8">
-          <h2 className="text-xl font-black text-ink">我的收納包</h2>
+          <h2 className="text-xl font-black text-ink">收藏進度</h2>
           <div className="mt-3 space-y-3">
-            {cardCollections.map((collection) => (
-              <div key={collection.name} className="flex items-center justify-between rounded-3xl bg-white/80 px-4 py-3 shadow-sm">
+            {collections.map((collection) => (
+              <Link key={collection.id} href="/collection" className="flex items-center justify-between rounded-3xl bg-white/80 px-4 py-3 shadow-sm active:scale-[0.99]">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{collection.emoji}</span>
+                  <span className="text-3xl">{collection.name.includes('車') ? '🚗' : collection.name.includes('狗') ? '🐶' : '🌱'}</span>
                   <span className="text-lg font-black text-ink">{collection.name}</span>
                 </div>
                 <span className="text-lg font-black text-grape">{collection.owned}/{collection.total}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
