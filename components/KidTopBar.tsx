@@ -10,7 +10,7 @@ type KidTopBarProps = {
 
 export function KidTopBar({ title, backHref = '/', backLabel = '首頁', rightLabel }: KidTopBarProps) {
   return (
-    <div className="sticky top-2 z-40 flex min-w-0 items-center gap-2 rounded-[26px] border border-[#d7eaff] bg-white/95 p-1.5 shadow-[0_14px_32px_rgba(37,99,235,0.13)] backdrop-blur-xl">
+    <div className="kid-topbar">
       <Link
         href={backHref}
         className="flex h-10 shrink-0 touch-manipulation items-center justify-center rounded-[20px] bg-[#eef6ff] px-3 text-[13px] font-black text-[#1766e6] active:scale-[0.98]"
