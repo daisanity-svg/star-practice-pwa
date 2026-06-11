@@ -20,17 +20,28 @@ function parseJsonArray(formData: FormData, key: string) {
     const parsed = JSON.parse(text);
     return Array.isArray(parsed) ? parsed.map((item) => String(item || '').trim()) : [];
   } catch {
-    return [] as string[];
+    return [];
   }
 }
 
 function safeFileName(text: string) {
-  return text
-    .trim()
+  const base = text
+    .replace(/\.[^.]+$/, '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5-]+/gi, '-')
+    .replace(/[^a-z0-9-]+/g, '-')
     .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '') || 'card';
+    .replace(/^-|-$/g, '');
+
+  return base || 'card';
+}
+
+function safeExtension(fileName: string, fallback = 'png') {
+  const ext = fileName.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!ext) return fallback;
+  if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) return ext === 'jpeg' ? 'jpg' : ext;
+  return fallback;
 }
 
 function cleanName(fileName: string) {
@@ -41,12 +52,18 @@ function cleanName(fileName: string) {
     .trim() || '新卡片';
 }
 
+function storagePath(folder: string, name: string, extension: string) {
+  const id = `${Date.now()}-${crypto.randomUUID()}`;
+  return `${folder}/${id}-${safeFileName(name)}.${extension}`;
+}
+
 async function uploadFileToStorage(file: File | null, folder: string) {
   if (!supabase || !file || file.size === 0) return null;
 
-  const ext = file.name.split('.').pop() || 'png';
-  const path = `${folder}/${Date.now()}-${safeFileName(file.name)}.${ext}`;
+  const ext = safeExtension(file.name);
+  const path = storagePath(folder, file.name, ext);
   const { error } = await supabase.storage.from('card-assets').upload(path, file, {
+    contentType: file.type || `image/${ext}`,
     cacheControl: '31536000',
     upsert: false
   });
@@ -67,9 +84,9 @@ async function uploadDataUrlToStorage(dataUrl: string | null, folder: string, na
 
   const mimeType = match[1];
   const base64 = match[2];
-  const extension = mimeType.includes('jpeg') ? 'jpg' : 'png';
+  const extension = mimeType.includes('jpeg') ? 'jpg' : mimeType.includes('webp') ? 'webp' : 'png';
   const buffer = Buffer.from(base64, 'base64');
-  const path = `${folder}/${Date.now()}-${safeFileName(name)}.${extension}`;
+  const path = storagePath(folder, name, extension);
 
   const { error } = await supabase.storage.from('card-assets').upload(path, buffer, {
     contentType: mimeType,
