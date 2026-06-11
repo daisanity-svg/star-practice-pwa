@@ -6,7 +6,7 @@ import { getChildInventory, getCollectionSummary } from '@/lib/data/rewards';
 
 const rarityLabel: Record<string, string> = {
   common: '普通',
-  rare: '稀有',
+  rare: '閃亮',
   super_rare: '超稀有',
   legendary: '傳說'
 };
@@ -20,8 +20,8 @@ const rarityStyle: Record<string, string> = {
 
 function seriesIcon(name: string) {
   if (name.includes('車')) return '🚗';
-  if (name.includes('狗')) return '🐶';
-  if (name.includes('植物')) return '🌱';
+  if (name.includes('狗') || name.includes('布麗')) return '🐶';
+  if (name.includes('植物') || name.includes('皮克')) return '🌱';
   return '⭐';
 }
 
@@ -35,17 +35,19 @@ export default async function CollectionPage() {
     <PhoneFrame>
       <KidTopBar title="我的收納包" rightLabel="🎒" />
 
-      <section className="kid-hero-blue rounded-[34px] p-5 text-white">
+      <section className="kid-hero-blue relative overflow-hidden rounded-[36px] p-5 text-white">
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/25 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-2 right-2 text-8xl opacity-20">☁️</div>
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-black text-white/80">星見的卡片圖鑑</p>
-            <h1 className="mt-1 text-[30px] font-black leading-tight tracking-[-0.04em]">收集新朋友</h1>
+            <h1 className="mt-1 text-[32px] font-black leading-tight tracking-[-0.04em]">收集新朋友</h1>
             <p className="mt-2 text-sm font-bold leading-relaxed text-white/90">每天完成練習，就把新的朋友放進這裡。</p>
           </div>
-          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[26px] bg-white/20 text-4xl">🎒</div>
+          <div className="learning-orb flex h-18 w-18 shrink-0 items-center justify-center rounded-[28px] text-4xl shadow-sm">🎒</div>
         </div>
 
-        <div className="mt-5 rounded-[26px] bg-white/18 p-4 backdrop-blur">
+        <div className="mt-5 rounded-[28px] bg-white/18 p-4 backdrop-blur">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-black text-white/84">總收藏進度</p>
             <p className="text-2xl font-black">{ownedTotal}/{cardTotal || 0}</p>
@@ -53,13 +55,14 @@ export default async function CollectionPage() {
           <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/25">
             <div className="h-full rounded-full bg-[#ffd95a]" style={{ width: `${totalPercent}%` }} />
           </div>
+          <p className="mt-3 text-center text-sm font-bold text-white/88">完成度 {totalPercent}%</p>
         </div>
       </section>
 
       <section className="space-y-4">
         {collections.map((collection) => {
           const percent = collection.total > 0 ? Math.round((collection.owned / collection.total) * 100) : 0;
-          const previewLength = Math.min(collection.total || 5, 8);
+          const previewLength = Math.min(Math.max(collection.total || 5, 5), 10);
 
           return (
             <div key={collection.id} className="kid-card overflow-hidden p-4">
@@ -84,12 +87,13 @@ export default async function CollectionPage() {
                   return (
                     <div
                       key={index}
-                      className={`flex aspect-[3/4] min-h-[78px] flex-col items-center justify-center rounded-[18px] text-lg font-black shadow-sm ${
+                      className={`relative flex aspect-[3/4] min-h-[82px] flex-col items-center justify-center overflow-hidden rounded-[20px] text-lg font-black shadow-sm ${
                         owned
                           ? 'bg-gradient-to-br from-[#e6f3ff] to-[#fff5c7] text-[#1766e6] ring-1 ring-[#b9dcff]'
                           : 'bg-white/75 text-[#aab4c2] ring-1 ring-dashed ring-[#d6e3f2]'
                       }`}
                     >
+                      {owned ? <span className="absolute right-1.5 top-1 text-xs">✨</span> : null}
                       <span className="text-2xl">{owned ? seriesIcon(collection.name) : '?'}</span>
                       <span className="mt-1 text-[10px] tracking-wide">{owned ? 'GET' : 'LOCK'}</span>
                     </div>
@@ -105,7 +109,7 @@ export default async function CollectionPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-black text-[#2f8cff]">已獲得卡片</p>
-            <h2 className="text-2xl font-black text-[#172033]">我的卡片</h2>
+            <h2 className="text-2xl font-black text-[#172033]">我的卡片牆</h2>
           </div>
           <div className="rounded-full bg-[#e9f4ff] px-3 py-2 text-sm font-black text-[#1766e6]">{inventory.length} 張</div>
         </div>
@@ -117,8 +121,8 @@ export default async function CollectionPage() {
               if (!card) return null;
 
               return (
-                <div key={item.id} className="rounded-[26px] bg-white p-2 shadow-[0_10px_22px_rgba(30,64,175,0.08)]">
-                  <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
+                <div key={item.id} className="rounded-[28px] bg-white p-2 shadow-[0_10px_22px_rgba(30,64,175,0.08)] active:scale-[0.99]">
+                  <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
                     {card.rendered_card_image_url ? (
                       <Image src={card.rendered_card_image_url} alt={card.name} fill className="object-cover" sizes="170px" />
                     ) : (
@@ -138,7 +142,7 @@ export default async function CollectionPage() {
             })}
           </div>
         ) : (
-          <div className="mt-4 rounded-[28px] bg-[#f5f9ff] p-6 text-center">
+          <div className="mt-4 rounded-[30px] bg-[#f5f9ff] p-6 text-center">
             <div className="text-5xl">🎁</div>
             <p className="mt-3 text-xl font-black text-[#172033]">還沒有卡片</p>
             <p className="mt-2 text-sm font-bold text-[#5f6f89]">完成今天的練習，就能拿到第一張卡。</p>
