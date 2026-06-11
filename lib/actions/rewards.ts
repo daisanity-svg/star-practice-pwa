@@ -13,6 +13,17 @@ function nullableValue(formData: FormData, key: string) {
   return text.length > 0 ? text : null;
 }
 
+function parseJsonArray(formData: FormData, key: string) {
+  const text = value(formData, key);
+  if (!text) return [] as string[];
+  try {
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed.map((item) => String(item || '').trim()) : [];
+  } catch {
+    return [] as string[];
+  }
+}
+
 function safeFileName(text: string) {
   return text
     .trim()
@@ -20,6 +31,14 @@ function safeFileName(text: string) {
     .replace(/[^a-z0-9\u4e00-\u9fa5-]+/gi, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '') || 'card';
+}
+
+function cleanName(fileName: string) {
+  return fileName
+    .replace(/\.[^.]+$/, '')
+    .replace(/^\d+[-_\s]*/, '')
+    .replace(/[-_]+/g, ' ')
+    .trim() || '新卡片';
 }
 
 async function uploadFileToStorage(file: File | null, folder: string) {
@@ -133,6 +152,78 @@ export async function createCard(formData: FormData) {
 
   revalidatePath('/parent/cards');
   revalidatePath('/collection');
+}
+
+export async function createBatchCards(formData: FormData) {
+  if (!supabase) return;
+
+  const seriesId = value(formData, 'batch_series_id');
+  if (!seriesId) return;
+
+  const files = formData.getAll('batch_source_files').filter((item): item is File => item instanceof File && item.size > 0);
+  if (files.length === 0) return;
+
+  const names = parseJsonArray(formData, 'batch_card_names');
+  const cardNos = parseJsonArray(formData, 'batch_card_nos');
+  const renderedDataUrls = parseJsonArray(formData, 'batch_rendered_data_urls');
+  const categoryId = nullableValue(formData, 'batch_category_id');
+  const rewardPackId = nullableValue(formData, 'batch_reward_pack_id');
+  const rarity = value(formData, 'batch_rarity') || 'common';
+  const stock = Number(value(formData, 'batch_stock') || '1');
+  const weight = Number(value(formData, 'batch_weight') || '10');
+
+  const cardRows = [];
+
+  for (let index = 0; index < files.length; index += 1) {
+    const file = files[index];
+    const name = names[index] || cleanName(file.name);
+    const cardNo = cardNos[index] || null;
+    const sourceImageUrl = await uploadFileToStorage(file, 'source');
+    const renderedCardImageUrl = await uploadDataUrlToStorage(
+      renderedDataUrls[index] || null,
+      'rendered',
+      `${cardNo || name}-rendered`
+    );
+
+    cardRows.push({
+      series_id: seriesId,
+      category_id: categoryId,
+      name,
+      card_no: cardNo,
+      rarity,
+      source_image_url: sourceImageUrl,
+      rendered_card_image_url: renderedCardImageUrl,
+      description: '批次上傳建立',
+      is_active: true
+    });
+  }
+
+  const { data: insertedCards, error } = await supabase
+    .from('cards')
+    .insert(cardRows)
+    .select('id');
+
+  if (error) {
+    console.error('createBatchCards insert error', error.message);
+    return;
+  }
+
+  if (rewardPackId && insertedCards && insertedCards.length > 0) {
+    await supabase.from('reward_pack_items').upsert(
+      insertedCards.map((card) => ({
+        reward_pack_id: rewardPackId,
+        card_id: card.id,
+        stock,
+        weight,
+        is_active: true
+      })),
+      { onConflict: 'reward_pack_id,card_id' }
+    );
+  }
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/collection');
+  revalidatePath('/reward');
 }
 
 export async function createRewardPack(formData: FormData) {
