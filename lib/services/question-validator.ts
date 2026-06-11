@@ -11,10 +11,25 @@ export type ValidationResult = {
 };
 
 export const SAFE_QUESTION_TEMPLATES = {
-  choice: '{keyword} 的 {symbol} 在哪裡？',
-  listening: '聽一聽，找出 {keyword} 的 {symbol}',
-  tracing: '幫「{keyword}」的 {symbol} 描一遍'
-};
+  choice: [
+    '小偵探任務：幫 {keyword} 找到 {symbol}。',
+    '星星躲貓貓：哪一個是 {keyword} 的 {symbol}？',
+    '朋友集合囉！{keyword} 要找 {symbol}。',
+    '魔法門打開：找到 {symbol}，幫 {keyword} 過關。'
+  ],
+  listening: [
+    '聽一聽：{keyword} 的開頭朋友是 {symbol}。',
+    '耳朵小任務：聽到 {keyword}，找出 {symbol}。',
+    '聲音小雷達：{keyword} 在叫 {symbol}。',
+    '叮咚！幫 {keyword} 找到聽起來像的 {symbol}。'
+  ],
+  tracing: [
+    '手指小畫家：描一描 {keyword} 的 {symbol}。',
+    '星星軌道：跟著線走，寫出 {symbol}。',
+    '小手出發：幫 {keyword} 把 {symbol} 描亮。',
+    '魔法筆任務：把 {symbol} 畫出來。'
+  ]
+} as const;
 
 export const FIXED_DISTRACTOR_POOLS = {
   bopomofo: ['ㄅ', 'ㄆ', 'ㄇ', 'ㄈ', 'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ', 'ㄍ', 'ㄎ', 'ㄏ'],
@@ -36,8 +51,8 @@ function getFixedDistractorPool(learningItemType: string | undefined | null): st
 
 function inferMode(question: GeneratedQuestion) {
   if (question.practice_mode) return question.practice_mode;
-  if (question.question_text.includes('描一遍')) return 'tracing';
-  if (question.question_text.includes('聽一聽')) return 'listening';
+  if (question.question_text.includes('描')) return 'tracing';
+  if (question.question_text.includes('聽')) return 'listening';
   return 'choice';
 }
 
@@ -134,6 +149,11 @@ export function buildSafeDistractors(
   }
 
   return options.slice(0, 4);
+}
+
+export function pickTemplate(mode: keyof typeof SAFE_QUESTION_TEMPLATES, orderIndex: number): string {
+  const templates = SAFE_QUESTION_TEMPLATES[mode];
+  return templates[orderIndex % templates.length];
 }
 
 export function renderTemplate(
