@@ -1,19 +1,10 @@
 import Link from 'next/link';
 import { BatchCardUploader } from '@/components/BatchCardUploader';
-import { CardDesigner } from '@/components/CardDesigner';
-import { PhoneFrame } from '@/components/PhoneFrame';
-import { addCardToPack, createBatchCards, createCard, createCardCategory, createCardSeries, createRewardPack } from '@/lib/actions/rewards';
+import { createBatchCards, createCardSeries, createRewardPack } from '@/lib/actions/rewards';
 import { getAdminRewardData } from '@/lib/data/admin-rewards';
 
 const inputClass = 'mt-2 w-full rounded-3xl border-0 bg-white/90 px-4 py-4 text-lg font-bold text-ink shadow-sm outline-none ring-2 ring-transparent focus:ring-blue-300';
 const labelClass = 'text-sm font-black text-slate-500';
-
-const rarityLabels: Record<string, string> = {
-  common: '普通',
-  rare: '稀有',
-  super_rare: '超稀有',
-  legendary: '傳說'
-};
 
 function getPackStock(packId: string, packItems: Awaited<ReturnType<typeof getAdminRewardData>>['packItems']) {
   return packItems
@@ -21,193 +12,123 @@ function getPackStock(packId: string, packItems: Awaited<ReturnType<typeof getAd
     .reduce((sum, item) => sum + Number(item.stock || 0), 0);
 }
 
+function getSeriesPack(seriesName: string, packs: Awaited<ReturnType<typeof getAdminRewardData>>['packs']) {
+  return packs.find((pack) => pack.name.includes(seriesName)) || null;
+}
+
 export default async function ParentCardsPage() {
-  const { series, categories, cards, packs, packItems } = await getAdminRewardData();
+  const { series, cards, packs, packItems } = await getAdminRewardData();
 
   return (
-    <PhoneFrame>
-      <div className="mb-4 flex items-center justify-between">
-        <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
-          ← 後台
-        </Link>
-        <div className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-blue-700 shadow-sm">
-          卡片管理
-        </div>
-      </div>
-
-      <section className="kid-card p-6">
-        <p className="text-base font-bold text-blue-600">Cards & Packs</p>
-        <h1 className="mt-2 text-3xl font-black leading-tight text-ink">獎池補卡管理</h1>
-        <p className="mt-3 text-lg font-bold leading-relaxed text-slate-500">
-          你只需要建立系列與獎池。之後看到哪個獎池空了，就批次上傳圖片，系統會自動編號、套版並加入獎池。
-        </p>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">獎池剩餘狀態</h2>
-        <div className="mt-4 space-y-3">
-          {packs.map((pack) => {
-            const stock = getPackStock(pack.id, packItems);
-            return (
-              <div key={pack.id} className={`rounded-3xl px-4 py-4 shadow-sm ${stock <= 0 ? 'bg-red-50' : 'bg-blue-50'}`}>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className={`text-xs font-black ${stock <= 0 ? 'text-red-500' : 'text-blue-500'}`}>{stock <= 0 ? '需要補卡' : '庫存正常'}</p>
-                    <h3 className="mt-1 text-lg font-black text-ink">{pack.name}</h3>
-                  </div>
-                  <span className={`rounded-2xl px-3 py-2 text-base font-black ${stock <= 0 ? 'bg-red-100 text-red-700' : 'bg-white text-blue-700'}`}>
-                    {stock} 張
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">新增系列</h2>
-        <form action={createCardSeries} className="mt-4 space-y-4">
-          <label className="block">
-            <span className={labelClass}>系列名稱</span>
-            <input name="name" className={inputClass} placeholder="夢想系列" required />
-          </label>
-          <label className="block">
-            <span className={labelClass}>封面圖片網址</span>
-            <input name="cover_image_url" className={inputClass} placeholder="可先空白" />
-          </label>
-          <label className="block">
-            <span className={labelClass}>描述</span>
-            <input name="description" className={inputClass} placeholder="孩子喜歡的收藏卡系列" />
-          </label>
-          <button className="w-full rounded-[2rem] bg-blue-600 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-            新增系列
-          </button>
-        </form>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">新增獎池</h2>
-        <form action={createRewardPack} className="mt-4 space-y-4">
-          <label className="block">
-            <span className={labelClass}>獎池名稱</span>
-            <input name="name" className={inputClass} placeholder="今日驚喜卡包" required />
-          </label>
-          <input type="hidden" name="draw_type" value="daily" />
-          <label className="block">
-            <span className={labelClass}>描述</span>
-            <input name="description" className={inputClass} placeholder="完成每日練習後可抽" />
-          </label>
-          <button className="w-full rounded-[2rem] bg-ink px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-            新增獎池
-          </button>
-        </form>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <form action={createBatchCards}>
-          <BatchCardUploader series={series} categories={categories} packs={packs} />
-          <button className="mt-5 w-full rounded-[2rem] bg-blue-600 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-            批次加入獎池
-          </button>
-        </form>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">單張上傳</h2>
-        <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
-          需要微調單張卡片時再使用。一般補卡建議使用上方批次上傳。
-        </p>
-        <form action={createCard} className="mt-4 space-y-5">
-          <CardDesigner series={series} categories={categories} />
-          <button className="w-full rounded-[2rem] bg-blue-600 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-            儲存單張卡片
-          </button>
-        </form>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">進階：新增分類</h2>
-        <form action={createCardCategory} className="mt-4 space-y-4">
-          <label className="block">
-            <span className={labelClass}>所屬系列</span>
-            <select name="series_id" className={inputClass}>
-              {series.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </label>
-          <label className="block">
-            <span className={labelClass}>分類名稱</span>
-            <input name="name" className={inputClass} placeholder="夢想卡" required />
-          </label>
-          <button className="w-full rounded-[2rem] bg-white px-5 py-5 text-xl font-black text-blue-700 shadow-sm active:scale-[0.99]">
-            新增分類
-          </button>
-        </form>
-      </section>
-
-      <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">進階：手動加入卡包</h2>
-        <form action={addCardToPack} className="mt-4 space-y-4">
-          <label className="block">
-            <span className={labelClass}>卡包</span>
-            <select name="reward_pack_id" className={inputClass}>
-              {packs.map((pack) => <option key={pack.id} value={pack.id}>{pack.name}</option>)}
-            </select>
-          </label>
-          <label className="block">
-            <span className={labelClass}>卡片</span>
-            <select name="card_id" className={inputClass}>
-              {cards.map((card) => <option key={card.id} value={card.id}>{card.card_no ? `${card.card_no}｜` : ''}{card.name}</option>)}
-            </select>
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className={labelClass}>庫存</span>
-              <input name="stock" className={inputClass} type="number" min="0" defaultValue="1" />
-            </label>
-            <label className="block">
-              <span className={labelClass}>權重</span>
-              <input name="weight" className={inputClass} type="number" min="0" defaultValue="10" />
-            </label>
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-amber-50 px-4 py-5 text-ink md:px-8">
+      <div className="mx-auto max-w-5xl">
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/parent/dashboard" className="rounded-full bg-white px-5 py-3 text-base font-black text-blue-700 shadow-sm ring-1 ring-blue-100">
+            ← 回後台
+          </Link>
+          <div className="rounded-full bg-blue-600 px-5 py-3 text-base font-black text-white shadow-soft">
+            系列池管理
           </div>
-          <button className="w-full rounded-[2rem] bg-white px-5 py-5 text-xl font-black text-blue-700 shadow-sm active:scale-[0.99]">
-            加入卡包
-          </button>
-        </form>
-      </section>
+        </div>
 
-      <section className="mt-5 space-y-4">
-        {series.map((item) => {
-          const seriesCards = cards.filter((card) => card.series_id === item.id);
-          return (
-            <div key={item.id} className="kid-card p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-blue-600">系列</p>
-                  <h2 className="text-2xl font-black text-ink">{item.name}</h2>
-                  {item.description ? <p className="mt-1 text-sm font-bold text-slate-500">{item.description}</p> : null}
-                </div>
-                <span className="rounded-3xl bg-blue-50 px-4 py-3 text-base font-black text-blue-700">
-                  {seriesCards.length} 張
-                </span>
-              </div>
+        <section className="mt-5 rounded-[2rem] bg-white/90 p-6 shadow-soft ring-1 ring-blue-100">
+          <p className="text-base font-black text-blue-600">Series Pools</p>
+          <h1 className="mt-2 text-3xl font-black leading-tight text-ink md:text-4xl">只管理系列池，空了就補卡</h1>
+          <p className="mt-3 max-w-3xl text-lg font-bold leading-relaxed text-slate-500">
+            這個後台已簡化：你只需要建立「系列池」，例如布麗狗夢想系列、小車系列、恐龍系列。之後點選該系列池或在下方選擇系列與獎池，直接批次上傳卡片即可。
+          </p>
+        </section>
 
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {seriesCards.map((card) => (
-                  <div key={card.id} className="rounded-3xl bg-white/75 p-3 shadow-sm">
-                    {card.rendered_card_image_url ? (
-                      <img src={card.rendered_card_image_url} alt={card.name} className="aspect-[3/4] w-full rounded-2xl object-cover" />
-                    ) : null}
-                    <p className="mt-3 text-xs font-black text-slate-400">{card.card_no || '自動編號'}</p>
-                    <h3 className="mt-1 text-lg font-black text-ink">{card.name}</h3>
-                    <p className="mt-1 text-sm font-bold text-blue-600">{rarityLabels[card.rarity] || card.rarity}</p>
+        <section className="mt-5 grid gap-4 md:grid-cols-2">
+          <div className="rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
+            <h2 className="text-2xl font-black text-ink">新增系列池</h2>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
+              只要建立大系列即可，不需要再建立分類。系列名稱會用來自動產生卡號前綴。
+            </p>
+            <form action={createCardSeries} className="mt-4 space-y-4">
+              <label className="block">
+                <span className={labelClass}>系列名稱</span>
+                <input name="name" className={inputClass} placeholder="布麗狗夢想系列" required />
+              </label>
+              <label className="block">
+                <span className={labelClass}>描述</span>
+                <input name="description" className={inputClass} placeholder="星見喜歡的收藏卡系列" />
+              </label>
+              <button className="w-full rounded-[2rem] bg-blue-600 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
+                新增系列池
+              </button>
+            </form>
+          </div>
+
+          <div className="rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
+            <h2 className="text-2xl font-black text-ink">新增獎池</h2>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
+              獎池就是孩子完成練習後抽卡的地方。建議名稱與系列一致，例如「布麗狗驚喜卡包」。
+            </p>
+            <form action={createRewardPack} className="mt-4 space-y-4">
+              <label className="block">
+                <span className={labelClass}>獎池名稱</span>
+                <input name="name" className={inputClass} placeholder="布麗狗驚喜卡包" required />
+              </label>
+              <input type="hidden" name="draw_type" value="daily" />
+              <label className="block">
+                <span className={labelClass}>描述</span>
+                <input name="description" className={inputClass} placeholder="完成練習後可以抽這個系列" />
+              </label>
+              <button className="w-full rounded-[2rem] bg-ink px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
+                新增獎池
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
+          <h2 className="text-2xl font-black text-ink">系列池列表</h2>
+          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
+            看哪個系列或獎池卡片快沒了，就往下方批次補卡。分類與手動卡號都已隱藏，系統會自動處理。
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {series.map((item) => {
+              const seriesCards = cards.filter((card) => card.series_id === item.id);
+              const relatedPack = getSeriesPack(item.name, packs);
+              const stock = relatedPack ? getPackStock(relatedPack.id, packItems) : 0;
+              return (
+                <div key={item.id} className="rounded-[1.75rem] bg-blue-50/80 p-4 ring-1 ring-blue-100">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black text-blue-500">系列池</p>
+                      <h3 className="mt-1 text-xl font-black text-ink">{item.name}</h3>
+                      {item.description ? <p className="mt-1 text-sm font-bold text-slate-500">{item.description}</p> : null}
+                    </div>
+                    <span className="rounded-2xl bg-white px-3 py-2 text-sm font-black text-blue-700 shadow-sm">
+                      {seriesCards.length} 張卡
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </section>
-    </PhoneFrame>
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl bg-white p-3 shadow-sm">
+                      <p className="text-xs font-black text-slate-400">對應獎池</p>
+                      <p className="mt-1 text-sm font-black text-ink">{relatedPack?.name || '尚未建立'}</p>
+                    </div>
+                    <div className={`rounded-2xl p-3 shadow-sm ${stock <= 0 ? 'bg-red-50' : 'bg-white'}`}>
+                      <p className={`text-xs font-black ${stock <= 0 ? 'text-red-500' : 'text-slate-400'}`}>{stock <= 0 ? '需要補卡' : '剩餘庫存'}</p>
+                      <p className="mt-1 text-lg font-black text-ink">{stock} 張</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
+          <form action={createBatchCards}>
+            <BatchCardUploader series={series} packs={packs} />
+            <button className="mt-5 w-full rounded-[2rem] bg-blue-600 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
+              批次加入獎池
+            </button>
+          </form>
+        </section>
+      </div>
+    </main>
   );
 }
