@@ -1,9 +1,16 @@
 'use client';
 
 import Link from 'next/link';
+import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 
-const items = [
+type NavItem = {
+  href: Route;
+  label: string;
+  icon: string;
+};
+
+const items: NavItem[] = [
   { href: '/', label: '首頁', icon: '🏠' },
   { href: '/practice', label: '練習', icon: '✏️' },
   { href: '/collection', label: '收納', icon: '🎒' },
