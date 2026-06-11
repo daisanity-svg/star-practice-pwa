@@ -45,7 +45,7 @@ export default async function PracticePage() {
 
         <div className="mt-auto space-y-3 pt-8">
           <KidButton tone="butter">聽提示</KidButton>
-          <KidButton href="/collection" tone="white">完成示範題，去看收納包</KidButton>
+          <KidButton href="/reward" tone="white">完成今日練習，去拿獎勵</KidButton>
         </div>
       </section>
     </PhoneFrame>
