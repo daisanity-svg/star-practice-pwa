@@ -1,9 +1,17 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { getCollectionSummary } from '@/lib/data/rewards';
+import { getChildInventory, getCollectionSummary } from '@/lib/data/rewards';
+
+const rarityLabel: Record<string, string> = {
+  common: '普通',
+  rare: '稀有',
+  super_rare: '超稀有',
+  legendary: '傳說'
+};
 
 export default async function CollectionPage() {
-  const collections = await getCollectionSummary();
+  const [collections, inventory] = await Promise.all([getCollectionSummary(), getChildInventory()]);
 
   return (
     <PhoneFrame>
@@ -61,6 +69,34 @@ export default async function CollectionPage() {
             </div>
           );
         })}
+      </section>
+
+      <section className="mt-5 kid-card p-5">
+        <h2 className="text-2xl font-black text-ink">已獲得卡片</h2>
+        <p className="mt-1 text-base font-bold text-slate-500">最近拿到的新朋友會排在最前面。</p>
+        <div className="mt-5 grid grid-cols-2 gap-4">
+          {inventory.map((item) => {
+            const card = item.card;
+            if (!card) return null;
+
+            return (
+              <div key={item.id} className="rounded-[28px] bg-white p-3 shadow-sm">
+                <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-br from-skysoft to-butter">
+                  {card.rendered_card_image_url ? (
+                    <Image src={card.rendered_card_image_url} alt={card.name} fill className="object-cover" sizes="160px" />
+                  ) : (
+                    <div className="text-5xl">{card.name.includes('車') ? '🚗' : card.name.includes('狗') ? '🐶' : '⭐'}</div>
+                  )}
+                </div>
+                <h3 className="mt-3 text-lg font-black text-ink">{card.name}</h3>
+                <p className="mt-1 text-sm font-bold text-slate-500">
+                  {card.series?.name ?? '收藏卡'}｜{rarityLabel[card.rarity] ?? card.rarity}
+                </p>
+                <p className="mt-1 text-sm font-black text-grape">持有 {item.quantity} 張</p>
+              </div>
+            );
+          })}
+        </div>
       </section>
     </PhoneFrame>
   );
