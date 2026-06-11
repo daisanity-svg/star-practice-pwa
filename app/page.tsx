@@ -2,10 +2,13 @@ import Link from 'next/link';
 import { KidButton } from '@/components/KidButton';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { ProgressPill } from '@/components/ProgressPill';
+import { getActiveEvent } from '@/lib/data/events';
 import { getCollectionSummary } from '@/lib/data/rewards';
 
 export default async function HomePage() {
-  const collections = await getCollectionSummary();
+  const [collections, activeEvent] = await Promise.all([getCollectionSummary(), getActiveEvent()]);
+  const eventText = activeEvent?.banner_text ?? '完成今天練習，可以打開 1 個小車驚喜卡包！';
+  const eventPackName = activeEvent?.reward_pack?.name ?? '今日驚喜卡包';
 
   return (
     <PhoneFrame>
@@ -19,8 +22,11 @@ export default async function HomePage() {
         </div>
 
         <div className="mt-6 rounded-[28px] bg-skysoft p-5 text-blue-950">
-          <p className="text-xl font-black">完成今天練習</p>
-          <p className="mt-2 text-lg font-semibold">可以打開 1 個小車驚喜卡包！</p>
+          <p className="text-xl font-black">{activeEvent?.name ?? '完成今天練習'}</p>
+          <p className="mt-2 text-lg font-semibold leading-relaxed">{eventText}</p>
+          <p className="mt-3 inline-flex rounded-full bg-white/70 px-4 py-2 text-base font-black text-grape">
+            今天獎勵：{eventPackName}
+          </p>
         </div>
 
         <div className="mt-5 grid grid-cols-3 gap-3">
