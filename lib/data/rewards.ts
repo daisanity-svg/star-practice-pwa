@@ -53,9 +53,10 @@ export const demoInventory: ChildCardInventoryItem[] = [
 ];
 
 export async function getDefaultChildId() {
-  if (!supabase) return null;
+  const client = supabase;
+  if (!client) return null;
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('children')
     .select('id')
     .order('created_at', { ascending: true })
@@ -67,9 +68,10 @@ export async function getDefaultChildId() {
 }
 
 export async function getCollectionSummary(): Promise<CardCollectionSummary[]> {
-  if (!supabase) return demoCollections;
+  const client = supabase;
+  if (!client) return demoCollections;
 
-  const { data: series, error: seriesError } = await supabase
+  const { data: series, error: seriesError } = await client
     .from('card_series')
     .select('id, name, cover_image_url')
     .eq('is_active', true)
@@ -82,13 +84,13 @@ export async function getCollectionSummary(): Promise<CardCollectionSummary[]> {
   const summaries = await Promise.all(
     series.map(async (item) => {
       const [{ count: total }, { count: owned }] = await Promise.all([
-        supabase
+        client
           .from('cards')
           .select('id', { count: 'exact', head: true })
           .eq('series_id', item.id)
           .eq('is_active', true),
         childId
-          ? supabase
+          ? client
               .from('child_card_inventory')
               .select('cards!inner(id)', { count: 'exact', head: true })
               .eq('child_id', childId)
@@ -110,12 +112,13 @@ export async function getCollectionSummary(): Promise<CardCollectionSummary[]> {
 }
 
 export async function getChildInventory(): Promise<ChildCardInventoryItem[]> {
-  if (!supabase) return demoInventory;
+  const client = supabase;
+  if (!client) return demoInventory;
 
   const childId = await getDefaultChildId();
   if (!childId) return demoInventory;
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('child_card_inventory')
     .select(`
       id,
