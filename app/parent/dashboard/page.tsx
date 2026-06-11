@@ -5,10 +5,10 @@ import { dashboardStats } from '@/lib/demo-data';
 const adminSections = [
   { title: '學習項目', description: '管理 ㄅ、ㄇ、A、B 與多記憶詞', icon: '📚', href: '/parent/learning' },
   { title: '學習進度', description: '查看熟練度、弱點與容易忘的項目', icon: '🔁', href: '/parent/progress' },
-  { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏', href: '/collection' },
-  { title: '卡包庫存', description: '管理抽卡池、庫存與活動卡包', icon: '🎁', href: '/parent/dashboard' },
-  { title: '題型模板', description: '管理自動出題的句型與模式', icon: '🧩', href: '/parent/learning' },
-  { title: '今日規則', description: '設定題數、比例與抽卡條件', icon: '⚙️', href: '/parent/dashboard' }
+  { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏', href: '/parent/cards' },
+  { title: '卡包庫存', description: '管理抽卡池、庫存與活動卡包', icon: '🎁', href: '/parent/cards' },
+  { title: '題型模板', description: '管理自動出題的句型與模式', icon: '🧩', href: '/parent/templates' },
+  { title: '今日規則', description: '下一階段設定題數、比例與抽卡條件', icon: '⚙️', href: '/parent/dashboard' }
 ];
 
 export default function ParentDashboardPage() {
