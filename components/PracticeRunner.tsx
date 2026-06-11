@@ -32,6 +32,13 @@ function questionEmoji(question: GeneratedQuestion) {
   return 'ㄅ';
 }
 
+function shortModeLabel(question: GeneratedQuestion) {
+  if (question.practice_mode === 'listening') return '聽一聽';
+  if (question.practice_mode === 'tracing') return '描一描';
+  if (question.practice_mode === 'intro') return '認識它';
+  return '找朋友';
+}
+
 export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -50,7 +57,6 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
   function speakQuestion() {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
     const utterance = new SpeechSynthesisUtterance(current.question_text);
     utterance.lang = current.learning_item?.type?.includes('english') ? 'en-US' : 'zh-TW';
     utterance.rate = 0.82;
@@ -139,7 +145,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
           <span className="absolute -left-3 top-4 text-3xl">✨</span>
           <span className="absolute -right-3 bottom-5 text-3xl">🎉</span>
         </div>
-        <p className="mt-8 rounded-full bg-[#f4f0ff] px-5 py-2 text-base font-black text-[#5b4be8]">Practice Complete</p>
+        <p className="mt-8 rounded-full bg-[#f4f0ff] px-5 py-2 text-base font-black text-[#5b4be8]">完成任務</p>
         <h1 className="mt-4 text-4xl font-black leading-tight text-ink">今天練習完成！</h1>
         <p className="mt-4 text-xl font-bold leading-relaxed text-slate-500">
           答對 {completionStats?.correct ?? 0} 題，準備打開今天的驚喜卡包。
@@ -154,40 +160,47 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   }
 
   return (
-    <section className="kid-card flex flex-1 flex-col overflow-hidden p-5">
-      <div className="rounded-[30px] bg-gradient-to-br from-[#6d5dfc] to-[#8f7cff] p-5 text-white shadow-[0_18px_38px_rgba(109,93,252,0.25)]">
+    <section className="flex flex-1 flex-col">
+      <div className="rounded-[36px] bg-gradient-to-br from-[#6d5dfc] via-[#7f6cff] to-[#9b8cff] p-5 text-white shadow-[0_20px_46px_rgba(109,93,252,0.28)]">
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-white/20 px-4 py-2 text-base font-black text-white">
-            {current.learning_item?.type?.includes('english') ? '英文朋友' : '注音朋友'}
+          <span className="rounded-full bg-white/20 px-4 py-2 text-sm font-black text-white">
+            {shortModeLabel(current)}
           </span>
-          <span className="rounded-full bg-white px-4 py-2 text-base font-black text-[#5b4be8]">第 {progressText} 題</span>
+          <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-[#5b4be8]">第 {progressText} 題</span>
         </div>
-        <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/25">
+        <div className="mt-5 h-4 overflow-hidden rounded-full bg-white/25">
           <div className="h-full rounded-full bg-[#fff0b8] transition-all" style={{ width: `${progressPercent}%` }} />
+        </div>
+        <div className="mt-5 flex items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-white/20 text-4xl font-black">
+            {questionEmoji(current)}
+          </div>
+          <div>
+            <p className="text-sm font-black text-white/70">今天的字母朋友</p>
+            <p className="text-3xl font-black leading-none">{current.learning_item?.content ?? current.correct_answer[0]}</p>
+          </div>
         </div>
       </div>
 
-      <div className="mt-5 rounded-[34px] bg-white p-5 text-center shadow-[0_12px_28px_rgba(77,68,111,0.08)]">
+      <div className="mt-5 rounded-[38px] bg-white p-5 text-center shadow-[0_16px_36px_rgba(77,68,111,0.1)]">
         <button
           type="button"
           onClick={speakQuestion}
-          className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[30px] bg-[#dff0ff] text-4xl shadow-sm active:scale-[0.98]"
+          className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-[34px] bg-[#dff0ff] text-5xl shadow-sm active:scale-[0.98]"
           aria-label="播放題目聲音"
         >
           🔊
         </button>
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#fff8df] text-4xl font-black text-[#5b4be8]">
-          {questionEmoji(current)}
-        </div>
-        <p className="text-3xl font-black leading-tight text-ink">{current.question_text}</p>
-        <p className="mt-4 rounded-[24px] bg-[#fff8ec] px-4 py-3 text-lg font-bold leading-relaxed text-slate-500">
+        <p className="text-[34px] font-black leading-tight text-ink">{current.question_text}</p>
+        <p className="mt-4 rounded-[26px] bg-[#fff8ec] px-4 py-3 text-lg font-bold leading-relaxed text-slate-500">
           {current.memory_hook?.sentence ?? '聽一聽，再找出正確的朋友'}
         </p>
       </div>
 
       {isTracingQuestion(current) ? (
-        <div className="mt-5 rounded-[34px] bg-[#fff6d7] p-5 text-center shadow-inner">
-          <div className="flex min-h-[260px] items-center justify-center rounded-[30px] border-4 border-dashed border-white bg-white/75 text-[140px] font-black text-slate-300">
+        <div className="mt-5 rounded-[38px] bg-[#fff6d7] p-5 text-center shadow-inner">
+          <div className="relative flex min-h-[285px] items-center justify-center overflow-hidden rounded-[32px] border-4 border-dashed border-white bg-white/75 text-[150px] font-black text-slate-300">
+            <span className="absolute left-4 top-4 rounded-full bg-[#f4f0ff] px-4 py-2 text-base font-black text-[#5b4be8]">用手指描</span>
             {current.learning_item?.content ?? current.correct_answer[0]}
           </div>
           <button
@@ -210,7 +223,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
                 key={option}
                 type="button"
                 onClick={() => handleSelect(option)}
-                className={`flex h-28 items-center justify-center rounded-[32px] border-2 text-5xl font-black shadow-[0_10px_22px_rgba(77,68,111,0.08)] transition active:scale-[0.98] ${
+                className={`flex h-32 items-center justify-center rounded-[34px] border-2 text-5xl font-black shadow-[0_12px_26px_rgba(77,68,111,0.1)] transition active:scale-[0.98] ${
                   showState && correct
                     ? 'border-emerald-200 bg-[#d9fae8] text-emerald-900'
                     : showState && isSelected
@@ -226,7 +239,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
       )}
 
       {answeredCurrent ? (
-        <div className={`mt-5 rounded-[30px] p-5 text-center shadow-sm ${isTracingQuestion(current) || currentIsCorrect ? 'bg-[#d9fae8]' : 'bg-[#fff1bd]'}`}>
+        <div className={`mt-5 rounded-[32px] p-5 text-center shadow-sm ${isTracingQuestion(current) || currentIsCorrect ? 'bg-[#d9fae8]' : 'bg-[#fff1bd]'}`}>
           <p className="text-2xl font-black text-ink">
             {isTracingQuestion(current) || currentIsCorrect ? '太棒了！' : '差一點點，再記一次'}
           </p>
@@ -244,11 +257,13 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
           type="button"
           disabled={!answeredCurrent || isPending}
           onClick={goNext}
-          className="block min-h-[68px] w-full rounded-[30px] bg-gradient-to-r from-[#fff0b8] to-[#ffe08a] px-6 py-4 text-center text-xl font-black text-amber-950 shadow-[0_12px_26px_rgba(245,158,11,0.16)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="block min-h-[72px] w-full rounded-[30px] bg-gradient-to-r from-[#fff0b8] to-[#ffe08a] px-6 py-4 text-center text-xl font-black text-amber-950 shadow-[0_12px_26px_rgba(245,158,11,0.16)] transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isPending ? '正在記錄...' : currentIndex === questions.length - 1 ? '完成今日練習' : '下一題'}
+          {isPending ? '儲存中...' : currentIndex < questions.length - 1 ? '下一題 →' : '完成今天練習'}
         </button>
-        <Link href="/" className="block text-center text-base font-bold text-slate-400">先回首頁</Link>
+        <Link href="/" className="block py-2 text-center text-base font-black text-slate-400">
+          回首頁
+        </Link>
       </div>
     </section>
   );
