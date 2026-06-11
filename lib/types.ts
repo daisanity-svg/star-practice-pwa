@@ -36,6 +36,7 @@ export type MemoryHook = {
 
 export type GeneratedQuestion = {
   id: string;
+  daily_learning_plan_id?: string | null;
   child_id?: string | null;
   learning_item_id?: string | null;
   memory_hook_id?: string | null;
@@ -51,6 +52,7 @@ export type GeneratedQuestion = {
 
 export type SubmittedPracticeAnswer = {
   child_id?: string | null;
+  daily_learning_plan_id?: string | null;
   generated_question_id?: string | null;
   learning_item_id?: string | null;
   memory_hook_id?: string | null;
