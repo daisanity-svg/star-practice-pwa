@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 
 type KidTopBarProps = {
   title: string;
-  backHref?: string;
+  backHref?: Route;
   backLabel?: string;
   rightLabel?: string;
 };
