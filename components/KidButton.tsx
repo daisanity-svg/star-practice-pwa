@@ -1,8 +1,9 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 type KidButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  href?: string;
+  href?: Route;
   children: ReactNode;
   tone?: 'primary' | 'mint' | 'butter' | 'sky' | 'white' | 'soft';
   className?: string;
