@@ -35,12 +35,12 @@ export default async function CollectionPage() {
     <PhoneFrame>
       <KidTopBar title="我的收納包" rightLabel="🎒" />
 
-      <section className="kid-hero-blue rounded-[32px] p-5 text-white">
+      <section className="kid-hero-blue rounded-[34px] p-5 text-white">
         <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-black text-white/78">星見的卡片圖鑑</p>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-white/80">星見的卡片圖鑑</p>
             <h1 className="mt-1 text-[30px] font-black leading-tight tracking-[-0.04em]">收集新朋友</h1>
-            <p className="mt-2 text-sm font-bold leading-relaxed text-white/88">每天完成練習，就把新的朋友放進這裡。</p>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-white/90">每天完成練習，就把新的朋友放進這裡。</p>
           </div>
           <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[26px] bg-white/20 text-4xl">🎒</div>
         </div>
@@ -78,16 +78,16 @@ export default async function CollectionPage() {
                 <div className="h-full rounded-full bg-gradient-to-r from-[#2f8cff] to-[#ffd95a]" style={{ width: `${percent}%` }} />
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-2">
+              <div className="card-grid-soft mt-4">
                 {Array.from({ length: previewLength }).map((_, index) => {
                   const owned = index < collection.owned;
                   return (
                     <div
                       key={index}
-                      className={`flex aspect-[3/4] min-h-[82px] flex-col items-center justify-center rounded-[18px] text-lg font-black shadow-sm ${
+                      className={`flex aspect-[3/4] min-h-[78px] flex-col items-center justify-center rounded-[18px] text-lg font-black shadow-sm ${
                         owned
                           ? 'bg-gradient-to-br from-[#e6f3ff] to-[#fff5c7] text-[#1766e6] ring-1 ring-[#b9dcff]'
-                          : 'bg-white/72 text-[#aab4c2] ring-1 ring-dashed ring-[#d6e3f2]'
+                          : 'bg-white/75 text-[#aab4c2] ring-1 ring-dashed ring-[#d6e3f2]'
                       }`}
                     >
                       <span className="text-2xl">{owned ? seriesIcon(collection.name) : '?'}</span>
