@@ -10,23 +10,29 @@ const config: Config = {
     extend: {
       colors: {
         cream: '#FFF8EC',
-        butter: '#FFE9A8',
-        mint: '#CFF7DF',
-        skysoft: '#DDEBFF',
-        grape: '#7257FF',
-        ink: '#1F2937'
+        butter: '#FFD95A',
+        mint: '#DFF8EF',
+        skysoft: '#DCEEFF',
+        grape: '#2387F7',
+        ink: '#12304F'
       },
       boxShadow: {
-        soft: '0 18px 45px rgba(62, 58, 89, 0.12)'
+        soft: '0 18px 45px rgba(35, 135, 247, 0.14)',
+        card: '0 14px 34px rgba(18, 48, 79, 0.1)'
       },
       keyframes: {
         'bounce-soft': {
           '0%, 100%': { transform: 'translateY(0) scale(1)' },
           '50%': { transform: 'translateY(-8px) scale(1.03)' }
+        },
+        'float-card': {
+          '0%, 100%': { transform: 'translateY(0) rotate(-1deg)' },
+          '50%': { transform: 'translateY(-10px) rotate(1deg)' }
         }
       },
       animation: {
-        'bounce-soft': 'bounce-soft 1.8s ease-in-out infinite'
+        'bounce-soft': 'bounce-soft 1.8s ease-in-out infinite',
+        'float-card': 'float-card 2.8s ease-in-out infinite'
       }
     }
   },
