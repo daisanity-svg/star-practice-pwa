@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { ensureTodayQuestions } from '@/lib/services/question-generator';
 import type { GeneratedQuestion, LearningItem, LearningProgress, MemoryHook } from '@/lib/types';
 
 export const demoLearningItems: LearningItem[] = [
@@ -18,6 +19,7 @@ export const demoMemoryHooks: MemoryHook[] = [
 export const demoGeneratedQuestions: GeneratedQuestion[] = [
   {
     id: 'q-b-choice',
+    daily_learning_plan_id: 'demo-plan',
     child_id: 'demo-child',
     learning_item_id: 'demo-b',
     memory_hook_id: 'hook-b-1',
@@ -31,6 +33,7 @@ export const demoGeneratedQuestions: GeneratedQuestion[] = [
   },
   {
     id: 'q-a-choice',
+    daily_learning_plan_id: 'demo-plan',
     child_id: 'demo-child',
     learning_item_id: 'demo-a',
     memory_hook_id: 'hook-a-1',
@@ -44,6 +47,7 @@ export const demoGeneratedQuestions: GeneratedQuestion[] = [
   },
   {
     id: 'q-m-choice',
+    daily_learning_plan_id: 'demo-plan',
     child_id: 'demo-child',
     learning_item_id: 'demo-m',
     memory_hook_id: 'hook-m-1',
@@ -54,6 +58,20 @@ export const demoGeneratedQuestions: GeneratedQuestion[] = [
     practice_mode: 'choice',
     learning_item: { id: 'demo-m', content: 'ㄇ', display_text: 'ㄇ', type: 'bopomofo_initial' },
     memory_hook: { id: 'hook-m-1', keyword: '蜜蜂', sentence: '蜜蜂的 ㄇ' }
+  },
+  {
+    id: 'q-b-trace',
+    daily_learning_plan_id: 'demo-plan',
+    child_id: 'demo-child',
+    learning_item_id: 'demo-b',
+    memory_hook_id: 'hook-b-2',
+    question_text: '幫拜拜的 ㄅ 描一遍',
+    options: ['ㄅ'],
+    correct_answer: ['ㄅ'],
+    order_index: 4,
+    practice_mode: 'tracing',
+    learning_item: { id: 'demo-b', content: 'ㄅ', display_text: 'ㄅ', type: 'bopomofo_initial' },
+    memory_hook: { id: 'hook-b-2', keyword: '拜拜', sentence: '拜拜也有 ㄅ' }
   }
 ];
 
@@ -117,43 +135,14 @@ export async function getMemoryHooks(): Promise<MemoryHook[]> {
 export async function getTodayQuestions(): Promise<GeneratedQuestion[]> {
   if (!supabase) return demoGeneratedQuestions;
 
-  const { data, error } = await supabase
-    .from('generated_questions')
-    .select(`
-      id,
-      child_id,
-      learning_item_id,
-      memory_hook_id,
-      question_template_id,
-      question_text,
-      options,
-      correct_answer,
-      order_index,
-      status,
-      question_templates(practice_mode),
-      learning_items(id, content, display_text, type),
-      learning_memory_hooks(id, keyword, sentence, image_url)
-    `)
-    .neq('status', 'completed')
-    .order('order_index', { ascending: true })
-    .limit(10);
+  try {
+    const generated = await ensureTodayQuestions();
+    if (generated.length) return generated;
+  } catch (error) {
+    console.error('Failed to auto-generate daily questions', error);
+  }
 
-  if (error || !data?.length) return demoGeneratedQuestions;
-
-  return data.map((row: any) => ({
-    id: row.id,
-    child_id: row.child_id,
-    learning_item_id: row.learning_item_id,
-    memory_hook_id: row.memory_hook_id,
-    question_template_id: row.question_template_id,
-    question_text: row.question_text,
-    options: Array.isArray(row.options) ? row.options : [],
-    correct_answer: Array.isArray(row.correct_answer) ? row.correct_answer : [],
-    order_index: row.order_index,
-    practice_mode: row.question_templates?.practice_mode ?? 'choice',
-    learning_item: row.learning_items ?? null,
-    memory_hook: row.learning_memory_hooks ?? null
-  }));
+  return [];
 }
 
 export async function getLearningProgress(): Promise<LearningProgress[]> {
