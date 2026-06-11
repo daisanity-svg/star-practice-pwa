@@ -86,6 +86,48 @@ async function uploadDataUrlToStorage(dataUrl: string | null, folder: string, na
   return data.publicUrl;
 }
 
+export async function createRewardPool(formData: FormData) {
+  if (!supabase) return;
+
+  const name = value(formData, 'pool_name');
+  if (!name) return;
+
+  const description = nullableValue(formData, 'pool_description');
+
+  const { data: insertedSeries, error: seriesError } = await supabase
+    .from('card_series')
+    .insert({
+      name,
+      cover_image_url: null,
+      description: description || `${name} 的收藏卡系列`,
+      is_active: true
+    })
+    .select('id')
+    .single();
+
+  if (seriesError) {
+    console.error('createRewardPool series error', seriesError.message);
+    return;
+  }
+
+  const { error: packError } = await supabase.from('reward_packs').insert({
+    name,
+    description: description || `完成練習後可抽 ${name}`,
+    draw_type: 'daily',
+    is_active: true
+  });
+
+  if (packError) {
+    console.error('createRewardPool pack error', packError.message);
+    return;
+  }
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/parent/dashboard');
+  revalidatePath('/collection');
+  revalidatePath('/');
+}
+
 export async function createCardSeries(formData: FormData) {
   if (!supabase) return;
 
