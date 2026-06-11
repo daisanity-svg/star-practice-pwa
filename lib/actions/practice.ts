@@ -24,6 +24,15 @@ async function getDefaultChildId() {
   return data.id as string;
 }
 
+async function markDailyPlanComplete(planId: string | null) {
+  if (!planId) return;
+
+  await supabase!
+    .from('daily_learning_plan')
+    .update({ is_completed: true, completed_at: new Date().toISOString() })
+    .eq('id', planId);
+}
+
 export async function completePracticeSession(
   answers: SubmittedPracticeAnswer[]
 ): Promise<PracticeCompletionResult> {
@@ -100,6 +109,19 @@ export async function completePracticeSession(
     await supabase.from('generated_questions').update({ status: 'completed' }).in('id', questionIds);
   }
 
+  const explicitPlanId = validAnswers.find((answer) => answer.daily_learning_plan_id)?.daily_learning_plan_id ?? null;
+  if (explicitPlanId) {
+    await markDailyPlanComplete(explicitPlanId);
+  } else if (questionIds.length) {
+    const { data: firstQuestion } = await supabase
+      .from('generated_questions')
+      .select('daily_learning_plan_id')
+      .eq('id', questionIds[0])
+      .maybeSingle();
+    await markDailyPlanComplete(firstQuestion?.daily_learning_plan_id ?? null);
+  }
+
+  revalidatePath('/');
   revalidatePath('/practice');
   revalidatePath('/reward');
   revalidatePath('/parent/dashboard');
