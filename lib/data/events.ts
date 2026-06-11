@@ -62,11 +62,12 @@ export const demoRewardPacks: RewardPackSummary[] = [
 ];
 
 export async function getActiveEvent(): Promise<ActiveEventSummary | null> {
-  if (!supabase) return demoActiveEvent;
+  const client = supabase;
+  if (!client) return demoActiveEvent;
 
   const today = new Date().toISOString().slice(0, 10);
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('events')
     .select(`
       id,
@@ -90,9 +91,10 @@ export async function getActiveEvent(): Promise<ActiveEventSummary | null> {
 }
 
 export async function getRewardPackSummaries(): Promise<RewardPackSummary[]> {
-  if (!supabase) return demoRewardPacks;
+  const client = supabase;
+  if (!client) return demoRewardPacks;
 
-  const { data: packs, error } = await supabase
+  const { data: packs, error } = await client
     .from('reward_packs')
     .select('id, name, description, draw_type, start_date, end_date, is_active')
     .order('created_at', { ascending: false });
@@ -101,7 +103,7 @@ export async function getRewardPackSummaries(): Promise<RewardPackSummary[]> {
 
   const summaries = await Promise.all(
     packs.map(async (pack) => {
-      const { data: items } = await supabase
+      const { data: items } = await client
         .from('reward_pack_items')
         .select('stock')
         .eq('reward_pack_id', pack.id)
