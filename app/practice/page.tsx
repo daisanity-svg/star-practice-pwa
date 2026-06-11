@@ -1,6 +1,7 @@
-import Link from 'next/link';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { PracticeRunner } from '@/components/PracticeRunner';
+import { KidTopBar } from '@/components/KidTopBar';
+import { KidBottomNav } from '@/components/KidBottomNav';
 import { getTodayQuestions } from '@/lib/data/learning';
 
 export default async function PracticePage() {
@@ -8,16 +9,9 @@ export default async function PracticePage() {
 
   return (
     <PhoneFrame>
-      <div className="mb-4 flex items-center justify-between">
-        <Link href="/" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
-          ← 回首頁
-        </Link>
-        <div className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-grape shadow-sm">
-          今日練習
-        </div>
-      </div>
-
+      <KidTopBar title="今日練習" rightLabel={`${questions.length || 0} 題`} />
       <PracticeRunner questions={questions} />
+      <KidBottomNav />
     </PhoneFrame>
   );
 }
