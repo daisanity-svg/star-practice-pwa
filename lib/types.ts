@@ -130,6 +130,6 @@ export type DrawRewardResult = {
   message: string;
   card?: RewardCard;
   is_new?: boolean;
-  remaining_stock?: number;
+  remaining_stock?: number | null;
   demo?: boolean;
 };
