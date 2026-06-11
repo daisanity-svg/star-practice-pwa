@@ -89,7 +89,7 @@ async function renderCard(file: File, options: { cardName: string; cardNo: strin
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 900, 1200);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
   roundRect(ctx, 50, 50, 800, 1100, 78);
   ctx.fill();
 
@@ -185,30 +185,31 @@ export function BatchCardUploader({ pools }: Props) {
 
   if (pools.length === 0) {
     return (
-      <div className="rounded-[2rem] bg-amber-50 p-5 text-center ring-1 ring-amber-100">
-        <h3 className="text-2xl font-black text-ink">還沒有獎池</h3>
-        <p className="mt-2 text-sm font-bold text-slate-500">先在上方建立一個獎池，例如「布麗狗驚喜卡包」，再回來上傳卡片。</p>
+      <div className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-center">
+        <h3 className="text-xl font-black text-slate-900">還沒有獎池</h3>
+        <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">先建立一個獎池，例如「布麗狗驚喜卡包」，再回來批次上傳卡片。</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-[2rem] bg-blue-50/80 p-5 ring-1 ring-blue-100">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-black text-blue-600">補卡到獎池</p>
-          <h3 className="mt-1 text-2xl font-black text-slate-900">批次上傳新卡</h3>
-          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-            選一個獎池，一次上傳多張圖片。系統會自動命名、編號、套版，並直接放進這個獎池。
-          </p>
+    <div className="space-y-5">
+      <div className="rounded-3xl border border-blue-100 bg-blue-50/70 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-500">Batch Upload</p>
+            <h3 className="mt-1 text-2xl font-black text-slate-900">批次補卡到獎池</h3>
+            <p className="mt-1 text-sm font-medium leading-relaxed text-slate-600">選擇獎池後一次上傳多張圖片，系統會自動命名、編號、套版並加入獎池。</p>
+          </div>
+          <div className="rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
+            <p className="text-xs font-bold text-slate-400">本次預覽</p>
+            <p className="text-2xl font-black text-blue-600">{previews.length}</p>
+          </div>
         </div>
-        <span className="rounded-2xl bg-white px-3 py-2 text-sm font-black text-blue-700 shadow-sm">
-          {previews.length} 張
-        </span>
       </div>
 
-      <label className="mt-5 block">
-        <span className="text-sm font-black text-slate-500">選擇要補卡的獎池</span>
+      <label className="block">
+        <span className="text-sm font-bold text-slate-600">選擇要補卡的獎池</span>
         <select
           name="batch_reward_pack_id"
           value={selectedPoolId}
@@ -216,7 +217,7 @@ export function BatchCardUploader({ pools }: Props) {
             setSelectedPoolId(event.target.value);
             setPreviews([]);
           }}
-          className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-4 text-lg font-black text-slate-900 shadow-sm"
+          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base font-bold text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
         >
           {pools.map((item) => (
             <option key={item.packId} value={item.packId}>
@@ -231,30 +232,34 @@ export function BatchCardUploader({ pools }: Props) {
       <input type="hidden" name="batch_prefix" value={autoPrefix} />
       <input type="hidden" name="batch_start_number" value={String(startNumber)} />
 
-      <div className="mt-3 grid gap-3 md:grid-cols-3">
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">稀有度</span>
-          <select name="batch_rarity" value={rarity} onChange={(event) => setRarity(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
-            {rarityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">每張庫存</span>
-          <input name="batch_stock" type="number" min="0" value={stock} onChange={(event) => setStock(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">抽中權重</span>
-          <input name="batch_weight" type="number" min="0" value={weight} onChange={(event) => setWeight(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm" />
-        </label>
-      </div>
+      <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <summary className="cursor-pointer text-sm font-black text-slate-700">進階設定：稀有度、庫存、抽中權重</summary>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <label className="block">
+            <span className="text-sm font-bold text-slate-600">稀有度</span>
+            <select name="batch_rarity" value={rarity} onChange={(event) => setRarity(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-900">
+              {rarityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-sm font-bold text-slate-600">每張庫存</span>
+            <input name="batch_stock" type="number" min="0" value={stock} onChange={(event) => setStock(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-900" />
+          </label>
+          <label className="block">
+            <span className="text-sm font-bold text-slate-600">抽中權重</span>
+            <input name="batch_weight" type="number" min="0" value={weight} onChange={(event) => setWeight(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-900" />
+          </label>
+        </div>
+      </details>
 
-      <div className="mt-3 rounded-3xl bg-white/80 px-4 py-3 text-sm font-black text-blue-700 shadow-sm">
+      <div className="rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-relaxed text-blue-700 ring-1 ring-blue-100">
         系統會自動產生卡號：{autoPrefix}-{pad(startNumber)}、{autoPrefix}-{pad(startNumber + 1)}、{autoPrefix}-{pad(startNumber + 2)}...
       </div>
 
-      <label className="mt-4 block rounded-[1.75rem] border-2 border-dashed border-blue-200 bg-white/80 p-5 text-center shadow-sm">
-        <span className="text-base font-black text-blue-700">選擇多張圖片</span>
-        <input name="batch_source_files" type="file" accept="image/*" multiple onChange={onFilesChange} className="mt-3 block w-full text-sm font-bold text-slate-600" />
+      <label className="block rounded-3xl border-2 border-dashed border-blue-200 bg-white p-6 text-center transition hover:bg-blue-50/40">
+        <span className="text-lg font-black text-blue-700">選擇多張圖片</span>
+        <p className="mt-2 text-sm font-medium text-slate-500">支援 PNG、JPG、WEBP。檔名會自動成為卡片名稱。</p>
+        <input name="batch_source_files" type="file" accept="image/*" multiple onChange={onFilesChange} className="mt-4 block w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600" />
       </label>
 
       <input type="hidden" name="batch_card_names" value={JSON.stringify(previews.map((item) => item.cardName))} />
@@ -262,18 +267,18 @@ export function BatchCardUploader({ pools }: Props) {
       <input type="hidden" name="batch_rendered_data_urls" value={JSON.stringify(previews.map((item) => item.dataUrl))} />
 
       {isRendering ? (
-        <div className="mt-4 rounded-3xl bg-white p-4 text-center text-base font-black text-blue-700 shadow-sm">
+        <div className="rounded-3xl bg-blue-50 p-4 text-center text-base font-black text-blue-700 ring-1 ring-blue-100">
           正在套版卡片中...
         </div>
       ) : null}
 
       {previews.length > 0 ? (
-        <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {previews.map((item) => (
-            <div key={item.id} className="rounded-3xl bg-white p-3 shadow-sm ring-1 ring-blue-100">
+            <div key={item.id} className="rounded-3xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
               <img src={item.dataUrl} alt={item.cardName} className="aspect-[3/4] w-full rounded-2xl object-cover" />
               <p className="mt-2 text-xs font-black text-blue-500">{item.cardNo}</p>
-              <p className="text-sm font-black text-slate-900">{item.cardName}</p>
+              <p className="line-clamp-2 text-sm font-black text-slate-900">{item.cardName}</p>
             </div>
           ))}
         </div>
