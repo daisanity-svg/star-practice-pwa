@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CardDesigner } from '@/components/CardDesigner';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { addCardToPack, createCard, createCardCategory, createCardSeries, createRewardPack } from '@/lib/actions/rewards';
 import { getAdminRewardData } from '@/lib/data/admin-rewards';
@@ -31,7 +32,7 @@ export default async function ParentCardsPage() {
         <p className="text-base font-bold text-grape">Cards & Packs</p>
         <h1 className="mt-2 text-3xl font-black leading-tight text-ink">卡片、系列與卡包</h1>
         <p className="mt-3 text-lg font-bold leading-relaxed text-slate-500">
-          先完成「可新增資料」的閉環。圖片暫時用網址欄位；下一階段再做上傳與 Canvas 套版。
+          Phase 4 已加入圖片上傳與 Canvas 套版。你可以先上傳圖片，系統會產生 3:4 統一規格收藏卡，再存進 Supabase Storage。
         </p>
       </section>
 
@@ -80,60 +81,14 @@ export default async function ParentCardsPage() {
       </section>
 
       <section className="mt-5 kid-card p-5">
-        <h2 className="text-2xl font-black text-ink">新增卡片</h2>
-        <form action={createCard} className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className={labelClass}>系列</span>
-              <select name="series_id" className={inputClass}>
-                {series.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
-            </label>
-            <label className="block">
-              <span className={labelClass}>分類</span>
-              <select name="category_id" className={inputClass} defaultValue="">
-                <option value="">不指定</option>
-                {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-              </select>
-            </label>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className={labelClass}>卡片名稱</span>
-              <input name="name" className={inputClass} placeholder="紅色消防車" required />
-            </label>
-            <label className="block">
-              <span className={labelClass}>卡號</span>
-              <input name="card_no" className={inputClass} placeholder="CAR-001" />
-            </label>
-          </div>
-
-          <label className="block">
-            <span className={labelClass}>稀有度</span>
-            <select name="rarity" className={inputClass} defaultValue="common">
-              <option value="common">普通</option>
-              <option value="rare">稀有</option>
-              <option value="super_rare">超稀有</option>
-              <option value="legendary">傳說</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className={labelClass}>原圖網址</span>
-            <input name="source_image_url" className={inputClass} placeholder="下一階段改成上傳" />
-          </label>
-          <label className="block">
-            <span className={labelClass}>套版後圖片網址</span>
-            <input name="rendered_card_image_url" className={inputClass} placeholder="下一階段由 Canvas 產生" />
-          </label>
-          <label className="block">
-            <span className={labelClass}>描述</span>
-            <input name="description" className={inputClass} placeholder="可先空白" />
-          </label>
-
+        <h2 className="text-2xl font-black text-ink">上傳圖片並套版成卡片</h2>
+        <p className="mt-2 text-base font-bold leading-relaxed text-slate-500">
+          選一張圖，填卡名與卡號，按「重新套版預覽」確認後送出。送出時會同時儲存原圖與套版後卡圖。
+        </p>
+        <form action={createCard} className="mt-4 space-y-5">
+          <CardDesigner series={series} categories={categories} />
           <button className="w-full rounded-[2rem] bg-grape px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
-            新增卡片
+            儲存套版卡片
           </button>
         </form>
       </section>
@@ -223,8 +178,11 @@ export default async function ParentCardsPage() {
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 {seriesCards.map((card) => (
-                  <div key={card.id} className="rounded-3xl bg-white/75 p-4 shadow-sm">
-                    <p className="text-xs font-black text-slate-400">{card.card_no || '未編號'}</p>
+                  <div key={card.id} className="rounded-3xl bg-white/75 p-3 shadow-sm">
+                    {card.rendered_card_image_url ? (
+                      <img src={card.rendered_card_image_url} alt={card.name} className="aspect-[3/4] w-full rounded-2xl object-cover" />
+                    ) : null}
+                    <p className="mt-3 text-xs font-black text-slate-400">{card.card_no || '未編號'}</p>
                     <h3 className="mt-1 text-lg font-black text-ink">{card.name}</h3>
                     <p className="mt-1 text-sm font-bold text-grape">{rarityLabels[card.rarity] || card.rarity}</p>
                   </div>
