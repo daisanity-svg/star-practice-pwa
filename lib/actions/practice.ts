@@ -67,10 +67,47 @@ export async function completePracticeSession(
   const correctCount = validAnswers.filter((answer) => answer.is_correct).length;
   const wrongCount = validAnswers.length - correctCount;
 
+  // 獲取 daily_learning_plan_id 與 reward_pack_id
+  let dailyLearningPlanId: string | null = null;
+  let rewardPackId: string | null = null;
+
+  const explicitPlanId = validAnswers.find((answer) => answer.daily_learning_plan_id)?.daily_learning_plan_id ?? null;
+  if (explicitPlanId) {
+    dailyLearningPlanId = explicitPlanId;
+    // 從 daily_learning_plan 取 reward_pack_id
+    const { data: planData } = await supabase
+      .from('daily_learning_plan')
+      .select('reward_pack_id')
+      .eq('id', explicitPlanId)
+      .maybeSingle();
+    rewardPackId = planData?.reward_pack_id ?? null;
+  } else {
+    const questionIds = validAnswers.map((answer) => answer.generated_question_id).filter(Boolean) as string[];
+    if (questionIds.length) {
+      const { data: firstQuestion } = await supabase
+        .from('generated_questions')
+        .select('daily_learning_plan_id')
+        .eq('id', questionIds[0])
+        .maybeSingle();
+      dailyLearningPlanId = firstQuestion?.daily_learning_plan_id ?? null;
+
+      if (dailyLearningPlanId) {
+        const { data: planData } = await supabase
+          .from('daily_learning_plan')
+          .select('reward_pack_id')
+          .eq('id', dailyLearningPlanId)
+          .maybeSingle();
+        rewardPackId = planData?.reward_pack_id ?? null;
+      }
+    }
+  }
+
   const { data: record, error: recordError } = await supabase
     .from('practice_records')
     .insert({
       child_id: childId,
+      daily_learning_plan_id: dailyLearningPlanId,
+      reward_pack_id: rewardPackId,
       practice_type: 'daily',
       total_questions: validAnswers.length,
       correct_count: correctCount,
@@ -109,16 +146,10 @@ export async function completePracticeSession(
     await supabase.from('generated_questions').update({ status: 'completed' }).in('id', questionIds);
   }
 
-  const explicitPlanId = validAnswers.find((answer) => answer.daily_learning_plan_id)?.daily_learning_plan_id ?? null;
   if (explicitPlanId) {
     await markDailyPlanComplete(explicitPlanId);
-  } else if (questionIds.length) {
-    const { data: firstQuestion } = await supabase
-      .from('generated_questions')
-      .select('daily_learning_plan_id')
-      .eq('id', questionIds[0])
-      .maybeSingle();
-    await markDailyPlanComplete(firstQuestion?.daily_learning_plan_id ?? null);
+  } else if (questionIds.length && dailyLearningPlanId) {
+    await markDailyPlanComplete(dailyLearningPlanId);
   }
 
   revalidatePath('/');
