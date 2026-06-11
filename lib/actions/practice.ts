@@ -33,6 +33,86 @@ async function markDailyPlanComplete(planId: string | null) {
     .eq('id', planId);
 }
 
+async function resolvePlanAndPack(validAnswers: SubmittedPracticeAnswer[]) {
+  const explicitPlanId = validAnswers.find((answer) => answer.daily_learning_plan_id)?.daily_learning_plan_id ?? null;
+  let dailyLearningPlanId = explicitPlanId;
+  let rewardPackId: string | null = null;
+
+  if (!dailyLearningPlanId) {
+    const questionIds = validAnswers.map((answer) => answer.generated_question_id).filter(Boolean) as string[];
+    if (questionIds.length) {
+      const { data: firstQuestion } = await supabase!
+        .from('generated_questions')
+        .select('daily_learning_plan_id')
+        .eq('id', questionIds[0])
+        .maybeSingle();
+
+      dailyLearningPlanId = firstQuestion?.daily_learning_plan_id ?? null;
+    }
+  }
+
+  if (dailyLearningPlanId) {
+    const { data: planData } = await supabase!
+      .from('daily_learning_plan')
+      .select('reward_pack_id')
+      .eq('id', dailyLearningPlanId)
+      .maybeSingle();
+
+    rewardPackId = planData?.reward_pack_id ?? null;
+  }
+
+  return { dailyLearningPlanId, rewardPackId };
+}
+
+async function insertPracticeRecord(params: {
+  childId: string;
+  dailyLearningPlanId: string | null;
+  rewardPackId: string | null;
+  totalQuestions: number;
+  correctCount: number;
+  wrongCount: number;
+}) {
+  const basePayload = {
+    child_id: params.childId,
+    practice_type: 'daily',
+    total_questions: params.totalQuestions,
+    correct_count: params.correctCount,
+    wrong_count: params.wrongCount,
+    completed: true,
+    completed_at: new Date().toISOString(),
+    reward_claimed: false
+  };
+
+  const extendedPayload = {
+    ...basePayload,
+    daily_learning_plan_id: params.dailyLearningPlanId,
+    reward_pack_id: params.rewardPackId
+  };
+
+  const extendedResult = await supabase!
+    .from('practice_records')
+    .insert(extendedPayload)
+    .select('id')
+    .single();
+
+  if (!extendedResult.error && extendedResult.data?.id) {
+    return { record: extendedResult.data, error: null };
+  }
+
+  const shouldFallback = extendedResult.error?.message?.includes('daily_learning_plan_id') || extendedResult.error?.message?.includes('reward_pack_id');
+  if (!shouldFallback) {
+    return { record: null, error: extendedResult.error };
+  }
+
+  const fallbackResult = await supabase!
+    .from('practice_records')
+    .insert(basePayload)
+    .select('id')
+    .single();
+
+  return { record: fallbackResult.data, error: fallbackResult.error };
+}
+
 export async function completePracticeSession(
   answers: SubmittedPracticeAnswer[]
 ): Promise<PracticeCompletionResult> {
@@ -44,7 +124,7 @@ export async function completePracticeSession(
     const correctCount = answers.filter((answer) => answer.is_correct).length;
     return {
       ok: true,
-      message: '示範模式已完成今日練習，可以前往領取獎勵。',
+      message: '示範模式已完成練習，可以前往領取獎勵。',
       demo: true,
       practice_record_id: 'demo-practice-record',
       total_questions: answers.length,
@@ -66,58 +146,16 @@ export async function completePracticeSession(
 
   const correctCount = validAnswers.filter((answer) => answer.is_correct).length;
   const wrongCount = validAnswers.length - correctCount;
+  const { dailyLearningPlanId, rewardPackId } = await resolvePlanAndPack(validAnswers);
 
-  // 獲取 daily_learning_plan_id 與 reward_pack_id
-  let dailyLearningPlanId: string | null = null;
-  let rewardPackId: string | null = null;
-
-  const explicitPlanId = validAnswers.find((answer) => answer.daily_learning_plan_id)?.daily_learning_plan_id ?? null;
-  if (explicitPlanId) {
-    dailyLearningPlanId = explicitPlanId;
-    // 從 daily_learning_plan 取 reward_pack_id
-    const { data: planData } = await supabase
-      .from('daily_learning_plan')
-      .select('reward_pack_id')
-      .eq('id', explicitPlanId)
-      .maybeSingle();
-    rewardPackId = planData?.reward_pack_id ?? null;
-  } else {
-    const questionIds = validAnswers.map((answer) => answer.generated_question_id).filter(Boolean) as string[];
-    if (questionIds.length) {
-      const { data: firstQuestion } = await supabase
-        .from('generated_questions')
-        .select('daily_learning_plan_id')
-        .eq('id', questionIds[0])
-        .maybeSingle();
-      dailyLearningPlanId = firstQuestion?.daily_learning_plan_id ?? null;
-
-      if (dailyLearningPlanId) {
-        const { data: planData } = await supabase
-          .from('daily_learning_plan')
-          .select('reward_pack_id')
-          .eq('id', dailyLearningPlanId)
-          .maybeSingle();
-        rewardPackId = planData?.reward_pack_id ?? null;
-      }
-    }
-  }
-
-  const { data: record, error: recordError } = await supabase
-    .from('practice_records')
-    .insert({
-      child_id: childId,
-      daily_learning_plan_id: dailyLearningPlanId,
-      reward_pack_id: rewardPackId,
-      practice_type: 'daily',
-      total_questions: validAnswers.length,
-      correct_count: correctCount,
-      wrong_count: wrongCount,
-      completed: true,
-      completed_at: new Date().toISOString(),
-      reward_claimed: false
-    })
-    .select('id')
-    .single();
+  const { record, error: recordError } = await insertPracticeRecord({
+    childId,
+    dailyLearningPlanId,
+    rewardPackId,
+    totalQuestions: validAnswers.length,
+    correctCount,
+    wrongCount
+  });
 
   if (recordError || !record?.id) {
     return { ok: false, message: `建立練習總紀錄失敗：${recordError?.message ?? '未知錯誤'}` };
@@ -146,11 +184,7 @@ export async function completePracticeSession(
     await supabase.from('generated_questions').update({ status: 'completed' }).in('id', questionIds);
   }
 
-  if (explicitPlanId) {
-    await markDailyPlanComplete(explicitPlanId);
-  } else if (questionIds.length && dailyLearningPlanId) {
-    await markDailyPlanComplete(dailyLearningPlanId);
-  }
+  await markDailyPlanComplete(dailyLearningPlanId);
 
   revalidatePath('/');
   revalidatePath('/practice');
@@ -160,7 +194,7 @@ export async function completePracticeSession(
 
   return {
     ok: true,
-    message: '今日練習完成，可以前往領取獎勵。',
+    message: rewardPackId ? '練習完成，可以打開今天的卡包。' : '練習完成，可以前往領取獎勵。',
     practice_record_id: record.id,
     total_questions: validAnswers.length,
     correct_count: correctCount,
