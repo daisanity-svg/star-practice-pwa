@@ -6,6 +6,16 @@ import { getActiveEvent, getRewardPackSummaries } from '@/lib/data/events';
 const inputClass = 'w-full rounded-3xl border border-white/80 bg-white/90 px-4 py-3 text-base font-bold text-ink outline-none ring-grape/20 focus:ring-4';
 const labelClass = 'text-sm font-black text-slate-500';
 
+async function submitCreateEvent(formData: FormData) {
+  'use server';
+  await createEvent(formData);
+}
+
+async function submitCreateRewardPack(formData: FormData) {
+  'use server';
+  await createRewardPack(formData);
+}
+
 export default async function ParentEventsPage() {
   const [activeEvent, packs] = await Promise.all([getActiveEvent(), getRewardPackSummaries()]);
 
@@ -43,7 +53,7 @@ export default async function ParentEventsPage() {
 
       <section className="mt-5 kid-card p-5">
         <h2 className="text-2xl font-black text-ink">新增活動</h2>
-        <form action={createEvent} className="mt-4 space-y-3">
+        <form action={submitCreateEvent} className="mt-4 space-y-3">
           <div>
             <label className={labelClass}>活動名稱</label>
             <input name="name" className={inputClass} placeholder="例如：小車週" />
@@ -90,7 +100,7 @@ export default async function ParentEventsPage() {
 
       <section className="mt-5 kid-card p-5">
         <h2 className="text-2xl font-black text-ink">新增卡包</h2>
-        <form action={createRewardPack} className="mt-4 space-y-3">
+        <form action={submitCreateRewardPack} className="mt-4 space-y-3">
           <div>
             <label className={labelClass}>卡包名稱</label>
             <input name="name" className={inputClass} placeholder="例如：週末限定卡包" />
