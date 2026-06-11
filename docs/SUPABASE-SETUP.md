@@ -36,20 +36,33 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的 Supabase anon public key
 
 如果部署到 Vercel，也要在 Vercel Project Settings > Environment Variables 放入同樣兩個變數。
 
-## 5. Storage 建議
+## 5. Storage 設定
 
-之後需要上傳卡片圖片、記憶詞圖片與音檔時，建議建立以下 bucket：
+Phase 4 已加入卡片圖片上傳與 Canvas 套版，請先建立以下 bucket：
+
+```txt
+card-assets
+```
+
+建議設定：
+
+1. Public bucket：開啟
+2. 檔案大小上限：5MB
+3. 支援格式：png、jpg、jpeg、webp
+
+此 bucket 會存兩種檔案：
+
+1. `source/`：家長上傳的原圖
+2. `rendered/`：系統套版後的卡片圖
+
+未來如果要再細分，也可以再建立：
 
 1. `memory-images`：記憶詞圖片
 2. `memory-audio`：記憶詞音檔
-3. `card-source-images`：原始卡片圖片
-4. `rendered-cards`：套版後卡片圖片
 
-第一版可以先只建立 `card-source-images` 與 `rendered-cards`。
+## 6. RLS 與 Storage Policy 注意事項
 
-## 6. RLS 注意事項
-
-第一版家庭自用、未公開前，可以先在開發階段關閉 RLS 或使用簡單 policy。
+第一版是家庭自用 MVP。若你只在自己家使用，可先用簡單 policy 讓後台可以上傳圖片。
 
 正式部署並公開網址後，建議：
 
@@ -57,12 +70,36 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=你的 Supabase anon public key
 2. 僅允許已登入家長管理後台資料。
 3. 小孩端只讀取必要資料。
 4. 不要把 service role key 放到前端。
+5. Storage 上傳權限需限制在家長登入後才可使用。
 
-## 7. 下一步
+## 7. 本機測試
 
-完成 Supabase 設定後，下一個開發階段是：
+```bash
+npm install
+npm run dev
+```
 
-1. 將小孩端首頁改為讀取 Supabase 的孩子資料。
-2. 將今日練習頁改為讀取 `generated_questions`。
-3. 建立後台學習項目管理頁。
-4. 建立後台記憶詞管理頁。
+測試頁面：
+
+```txt
+/parent/cards
+```
+
+測試流程：
+
+1. 新增系列。
+2. 新增分類。
+3. 上傳圖片並套版成卡片。
+4. 儲存卡片。
+5. 建立卡包。
+6. 把卡片加入卡包並設定庫存。
+
+## 8. 下一步
+
+完成 Supabase 設定後，下一個開發階段是 Phase 5：
+
+1. 完成練習後觸發抽卡。
+2. 從 `reward_pack_items` 加權隨機抽卡。
+3. 寫入 `child_card_inventory`。
+4. 寫入 `reward_draw_logs`。
+5. 卡包庫存自動減 1。
