@@ -3,12 +3,12 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 import { dashboardStats } from '@/lib/demo-data';
 
 const adminSections = [
-  { title: '學習項目', description: '管理 ㄅ、ㄇ、A、B 等練習主項目', icon: '📚' },
-  { title: '記憶詞', description: '設定爸爸ㄅ、拜拜ㄅ、Apple 的 A', icon: '🧠' },
-  { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏' },
-  { title: '卡包庫存', description: '管理抽卡池、庫存與活動卡包', icon: '🎁' },
-  { title: '弱點清單', description: '查看容易忘、常答錯的項目', icon: '🔁' },
-  { title: '今日規則', description: '設定題數、比例與抽卡條件', icon: '⚙️' }
+  { title: '學習項目', description: '管理 ㄅ、ㄇ、A、B 與多記憶詞', icon: '📚', href: '/parent/learning' },
+  { title: '學習進度', description: '查看熟練度、弱點與容易忘的項目', icon: '🔁', href: '/parent/progress' },
+  { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏', href: '/collection' },
+  { title: '卡包庫存', description: '管理抽卡池、庫存與活動卡包', icon: '🎁', href: '/parent/dashboard' },
+  { title: '題型模板', description: '管理自動出題的句型與模式', icon: '🧩', href: '/parent/learning' },
+  { title: '今日規則', description: '設定題數、比例與抽卡條件', icon: '⚙️', href: '/parent/dashboard' }
 ];
 
 export default function ParentDashboardPage() {
@@ -39,7 +39,7 @@ export default function ParentDashboardPage() {
 
       <section className="mt-5 space-y-3">
         {adminSections.map((section) => (
-          <div key={section.title} className="kid-card flex items-center gap-4 p-4">
+          <Link key={section.title} href={section.href} className="kid-card flex items-center gap-4 p-4 active:scale-[0.99]">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-butter text-2xl">
               {section.icon}
             </div>
@@ -47,7 +47,7 @@ export default function ParentDashboardPage() {
               <h2 className="text-xl font-black text-ink">{section.title}</h2>
               <p className="mt-1 text-sm font-semibold leading-relaxed text-slate-500">{section.description}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </section>
     </PhoneFrame>
