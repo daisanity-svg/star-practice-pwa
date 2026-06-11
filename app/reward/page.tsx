@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import type { Route } from 'next';
 import { KidButton } from '@/components/KidButton';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
@@ -36,7 +37,9 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
 
   const result = shouldDraw ? await drawDailyReward(drawForm) : null;
   const card = result?.card;
-  const drawHref = practiceRecordId ? `/reward?draw=1&practice_record_id=${practiceRecordId}` : '/reward?draw=1';
+  const drawHref: Route = practiceRecordId
+    ? (`/reward?draw=1&practice_record_id=${practiceRecordId}` as Route)
+    : '/reward?draw=1';
 
   return (
     <PhoneFrame>
