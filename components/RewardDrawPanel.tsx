@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useActionState } from 'react';
 import { drawDailyRewardFromState } from '@/lib/actions/draw-reward-state';
-import type { DrawRewardResult } from '@/lib/types';
+import type { DrawRewardResult, RewardCard } from '@/lib/types';
 
 const rarityLabel: Record<string, string> = {
   common: '普通',
@@ -23,11 +23,25 @@ type RewardDrawPanelProps = {
   practiceRecordId?: string;
 };
 
+function getCardImageUrl(card: RewardCard) {
+  return card.rendered_card_image_url || card.source_image_url || null;
+}
+
+function getCardFallbackEmoji(card: RewardCard) {
+  const text = `${card.name} ${card.series?.name ?? ''}`;
+  if (text.includes('車')) return '🚗';
+  if (text.includes('狗') || text.includes('布麗')) return '🐶';
+  if (text.includes('植物') || text.includes('皮克')) return '🌱';
+  return '⭐';
+}
+
 export function RewardDrawPanel({ practiceRecordId }: RewardDrawPanelProps) {
   const [result, formAction, isPending] = useActionState<DrawRewardResult | null, FormData>(drawDailyRewardFromState, null);
   const card = result?.card;
 
   if (result) {
+    const cardImageUrl = card ? getCardImageUrl(card) : null;
+
     return (
       <section className="kid-card-strong relative flex min-h-[570px] flex-col overflow-hidden p-5 text-center">
         <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto h-80 w-80 rounded-full bg-[#dbeafe] opacity-70 blur-3xl" />
@@ -42,14 +56,14 @@ export function RewardDrawPanel({ practiceRecordId }: RewardDrawPanelProps) {
 
         <div className="relative z-10 mt-6 flex flex-1 flex-col items-center justify-center">
           {result.ok && card ? (
-            <div className="animate-pack-open relative w-full max-w-[252px] rounded-[34px] bg-white p-3 shadow-[0_24px_52px_rgba(30,64,175,0.18)]">
+            <div className="animate-pack-open relative w-full max-w-[270px] rounded-[34px] bg-white p-3 shadow-[0_24px_52px_rgba(30,64,175,0.18)]">
               <div className="absolute -left-3 top-4 z-10 rounded-full bg-[#ffd95a] px-3 py-1 text-xs font-black text-[#193153] shadow-sm">{card.card_no ?? 'NEW'}</div>
               <div className="absolute -right-3 top-4 z-10 rounded-full bg-[#2f8cff] px-3 py-1 text-xs font-black text-white shadow-sm">{result.is_new ? '新朋友' : '再收一張'}</div>
               <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[26px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
-                {card.rendered_card_image_url ? (
-                  <Image src={card.rendered_card_image_url} alt={card.name} fill className="object-cover" sizes="260px" />
+                {cardImageUrl ? (
+                  <Image src={cardImageUrl} alt={card.name} fill className="object-cover" sizes="280px" unoptimized />
                 ) : (
-                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/70 text-7xl shadow-inner">{card.name.includes('車') ? '🚗' : card.name.includes('狗') ? '🐶' : '⭐'}</div>
+                  <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/70 text-7xl shadow-inner">{getCardFallbackEmoji(card)}</div>
                 )}
               </div>
               <div className="mt-3 rounded-[24px] bg-[#f5f9ff] px-4 py-3">
