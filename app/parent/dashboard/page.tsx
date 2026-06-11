@@ -9,7 +9,7 @@ const adminSections = [
   { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏', href: '/parent/cards' },
   { title: '活動卡包', description: '設定主題週、限定卡包與首頁提示', icon: '🎁', href: '/parent/events' },
   { title: '題型模板', description: '管理自動出題的句型與模式', icon: '🧩', href: '/parent/templates' },
-  { title: '今日規則', description: '下一階段設定題數、比例與抽卡條件', icon: '⚙️', href: '/parent/dashboard' }
+  { title: '今日規則', description: '查看每日題數、比例與抽卡條件', icon: '⚙️', href: '/parent/settings' }
 ];
 
 export default async function ParentDashboardPage() {
