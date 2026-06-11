@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { BatchCardUploader } from '@/components/BatchCardUploader';
-import { createBatchCards, createCardSeries, createRewardPack } from '@/lib/actions/rewards';
+import { createBatchCards, createCardSeries, createRewardPack, createScheduledReward } from '@/lib/actions/rewards';
 import { getAdminRewardData } from '@/lib/data/admin-rewards';
 
 const inputClass = 'mt-2 w-full rounded-3xl border-0 bg-white/90 px-4 py-4 text-lg font-bold text-ink shadow-sm outline-none ring-2 ring-transparent focus:ring-blue-300';
@@ -16,8 +16,13 @@ function getSeriesPack(seriesName: string, packs: Awaited<ReturnType<typeof getA
   return packs.find((pack) => pack.name.includes(seriesName)) || null;
 }
 
+function todayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default async function ParentCardsPage() {
-  const { series, cards, packs, packItems } = await getAdminRewardData();
+  const { series, cards, packs, packItems, scheduledRewards } = await getAdminRewardData();
+  const today = todayString();
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-amber-50 px-4 py-5 text-ink md:px-8">
@@ -79,6 +84,78 @@ export default async function ParentCardsPage() {
                 新增獎池
               </button>
             </form>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[2rem] bg-white/90 p-5 shadow-soft ring-1 ring-blue-100">
+          <h2 className="text-2xl font-black text-ink">指定下一張獎勵卡</h2>
+          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
+            端午節、生日、今天特別喜歡某張卡，或想給他一個驚喜時，就在這裡指定。下一次完成練習後會優先拿這張卡，領完自動失效。
+          </p>
+          <form action={createScheduledReward} className="mt-4 grid gap-4 md:grid-cols-2">
+            <label className="block md:col-span-2">
+              <span className={labelClass}>指定卡片</span>
+              <select name="scheduled_card_id" className={inputClass} required>
+                <option value="">選一張卡</option>
+                {cards.map((card) => (
+                  <option key={card.id} value={card.id}>
+                    {card.card_no ? `${card.card_no}｜` : ''}{card.name}（{card.rarity}）
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className={labelClass}>原因</span>
+              <select name="scheduled_reason" className={inputClass} defaultValue="爸爸指定獎勵">
+                <option value="端午節限定獎勵">端午節限定獎勵</option>
+                <option value="生日驚喜獎勵">生日驚喜獎勵</option>
+                <option value="今天特別喜歡這張卡">今天特別喜歡這張卡</option>
+                <option value="完成挑戰的特別獎勵">完成挑戰的特別獎勵</option>
+                <option value="爸爸指定獎勵">爸爸指定獎勵</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className={labelClass}>指定所屬獎池</span>
+              <select name="scheduled_reward_pack_id" className={inputClass}>
+                <option value="">使用目前啟用獎池</option>
+                {packs.map((pack) => (
+                  <option key={pack.id} value={pack.id}>{pack.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className={labelClass}>開始日期</span>
+              <input type="date" name="scheduled_starts_on" className={inputClass} defaultValue={today} />
+            </label>
+            <label className="block">
+              <span className={labelClass}>有效到</span>
+              <input type="date" name="scheduled_expires_on" className={inputClass} defaultValue={today} />
+            </label>
+            <button className="md:col-span-2 w-full rounded-[2rem] bg-gradient-to-r from-amber-400 to-blue-500 px-5 py-5 text-xl font-black text-white shadow-soft active:scale-[0.99]">
+              指定下一次完成練習的獎勵卡
+            </button>
+          </form>
+
+          <div className="mt-5 rounded-[1.75rem] bg-blue-50/80 p-4 ring-1 ring-blue-100">
+            <p className="text-sm font-black text-blue-600">目前待領指定卡</p>
+            {scheduledRewards.length === 0 ? (
+              <p className="mt-2 text-sm font-bold text-slate-500">目前沒有指定獎勵卡。</p>
+            ) : (
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {scheduledRewards.map((reward) => (
+                  <div key={reward.id} className="rounded-3xl bg-white p-4 shadow-sm">
+                    <p className="text-xs font-black text-slate-400">{reward.reason}</p>
+                    <h3 className="mt-1 text-lg font-black text-ink">{reward.card?.name || '指定卡片'}</h3>
+                    <p className="mt-1 text-sm font-bold text-slate-500">
+                      {reward.card?.card_no || '未編號'}｜{reward.pack?.name || '目前啟用獎池'}
+                    </p>
+                    <p className="mt-2 text-xs font-black text-blue-500">
+                      {reward.starts_on || '今天'} ～ {reward.expires_on || '不限'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
