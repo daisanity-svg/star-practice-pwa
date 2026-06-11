@@ -6,7 +6,6 @@ type Option = { id: string; name: string };
 
 type Props = {
   series: Option[];
-  categories: Option[];
   packs: Option[];
 };
 
@@ -35,6 +34,16 @@ function cleanName(fileName: string) {
 
 function pad(num: number) {
   return String(num).padStart(3, '0');
+}
+
+function getSeriesPrefix(seriesName: string) {
+  const normalized = seriesName.trim().toUpperCase();
+  if (normalized.includes('布麗') || normalized.includes('BLUEY')) return 'BRI';
+  if (normalized.includes('小車') || normalized.includes('車') || normalized.includes('CAR')) return 'CAR';
+  if (normalized.includes('狗')) return 'DOG';
+  if (normalized.includes('恐龍')) return 'DINO';
+  if (normalized.includes('植物') || normalized.includes('PIK')) return 'PIK';
+  return 'CARD';
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -73,13 +82,13 @@ async function renderCard(file: File, options: { cardName: string; cardNo: strin
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, 900, 1200);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.82)';
-  roundRect(ctx, 50, 50, 800, 1100, 64);
+  ctx.fillStyle = 'rgba(255,255,255,0.86)';
+  roundRect(ctx, 50, 50, 800, 1100, 70);
   ctx.fill();
 
   ctx.strokeStyle = rarity.frame;
-  ctx.lineWidth = 18;
-  roundRect(ctx, 50, 50, 800, 1100, 64);
+  ctx.lineWidth = 16;
+  roundRect(ctx, 50, 50, 800, 1100, 70);
   ctx.stroke();
 
   ctx.fillStyle = '#0F3F8C';
@@ -96,11 +105,11 @@ async function renderCard(file: File, options: { cardName: string; cardNo: strin
   ctx.textAlign = 'left';
 
   ctx.fillStyle = '#FFFFFF';
-  roundRect(ctx, 105, 185, 690, 700, 50);
+  roundRect(ctx, 105, 185, 690, 700, 52);
   ctx.fill();
   ctx.strokeStyle = 'rgba(37, 99, 235, 0.16)';
   ctx.lineWidth = 6;
-  roundRect(ctx, 105, 185, 690, 700, 50);
+  roundRect(ctx, 105, 185, 690, 700, 52);
   ctx.stroke();
 
   const box = { x: 125, y: 205, w: 650, h: 660 };
@@ -129,13 +138,10 @@ async function renderCard(file: File, options: { cardName: string; cardNo: strin
   return canvas.toDataURL('image/png');
 }
 
-export function BatchCardUploader({ series, categories, packs }: Props) {
+export function BatchCardUploader({ series, packs }: Props) {
   const [selectedSeriesId, setSelectedSeriesId] = useState(series[0]?.id || '');
-  const [selectedCategoryId, setSelectedCategoryId] = useState(categories[0]?.id || '');
   const [selectedPackId, setSelectedPackId] = useState(packs[0]?.id || '');
   const [rarity, setRarity] = useState('common');
-  const [prefix, setPrefix] = useState('BRI');
-  const [startNumber, setStartNumber] = useState(1);
   const [stock, setStock] = useState(1);
   const [weight, setWeight] = useState(10);
   const [previews, setPreviews] = useState<PreviewCard[]>([]);
@@ -145,6 +151,8 @@ export function BatchCardUploader({ series, categories, packs }: Props) {
     () => series.find((item) => item.id === selectedSeriesId)?.name || '收藏系列',
     [series, selectedSeriesId]
   );
+
+  const autoPrefix = useMemo(() => getSeriesPrefix(selectedSeriesName), [selectedSeriesName]);
 
   async function onFilesChange(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files || []);
@@ -158,9 +166,8 @@ export function BatchCardUploader({ series, categories, packs }: Props) {
 
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
-      const number = startNumber + index;
       const cardName = cleanName(file.name);
-      const cardNo = `${prefix || 'CARD'}-${pad(number)}`;
+      const cardNo = `${autoPrefix}-${pad(index + 1)}`;
       const dataUrl = await renderCard(file, { cardName, cardNo, seriesName: selectedSeriesName, rarity });
       rendered.push({ id: `${file.name}-${file.size}-${index}`, fileName: file.name, cardName, cardNo, dataUrl });
     }
@@ -170,13 +177,13 @@ export function BatchCardUploader({ series, categories, packs }: Props) {
   }
 
   return (
-    <div className="rounded-[2rem] bg-blue-50/70 p-5 ring-1 ring-blue-100">
+    <div className="rounded-[2rem] bg-blue-50/80 p-5 ring-1 ring-blue-100">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-black text-blue-600">Batch Upload</p>
-          <h3 className="mt-1 text-2xl font-black text-slate-900">批次上傳卡片</h3>
+          <p className="text-sm font-black text-blue-600">補卡到獎池</p>
+          <h3 className="mt-1 text-2xl font-black text-slate-900">批次上傳新卡</h3>
           <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-            一次選多張圖片，自動依檔名命名、依序編號、套成統一卡面，並可直接加入指定卡包。
+            選系列、選獎池、一次上傳多張圖片。系統會自動命名、編號、套版並放進獎池。
           </p>
         </div>
         <span className="rounded-2xl bg-white px-3 py-2 text-sm font-black text-blue-700 shadow-sm">
@@ -186,45 +193,31 @@ export function BatchCardUploader({ series, categories, packs }: Props) {
 
       <div className="mt-5 grid gap-3 md:grid-cols-2">
         <label className="block">
-          <span className="text-sm font-black text-slate-500">系列</span>
+          <span className="text-sm font-black text-slate-500">選擇系列池</span>
           <select name="batch_series_id" value={selectedSeriesId} onChange={(event) => setSelectedSeriesId(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
             {series.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         </label>
         <label className="block">
-          <span className="text-sm font-black text-slate-500">分類</span>
-          <select name="batch_category_id" value={selectedCategoryId} onChange={(event) => setSelectedCategoryId(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
-            <option value="">不指定</option>
-            {categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+          <span className="text-sm font-black text-slate-500">補到哪個獎池</span>
+          <select name="batch_reward_pack_id" value={selectedPackId} onChange={(event) => setSelectedPackId(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
+            <option value="">只建卡，不加入獎池</option>
+            {packs.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         </label>
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-4">
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">卡號前綴</span>
-          <input name="batch_prefix" value={prefix} onChange={(event) => setPrefix(event.target.value.toUpperCase())} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm" />
-        </label>
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">起始編號</span>
-          <input name="batch_start_number" type="number" min="1" value={startNumber} onChange={(event) => setStartNumber(Number(event.target.value || 1))} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm" />
-        </label>
+      <input type="hidden" name="batch_category_id" value="" />
+      <input type="hidden" name="batch_prefix" value={autoPrefix} />
+      <input type="hidden" name="batch_start_number" value="1" />
+
+      <div className="mt-3 grid gap-3 md:grid-cols-3">
         <label className="block">
           <span className="text-sm font-black text-slate-500">稀有度</span>
           <select name="batch_rarity" value={rarity} onChange={(event) => setRarity(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
             {rarityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
         </label>
-        <label className="block">
-          <span className="text-sm font-black text-slate-500">加入卡包</span>
-          <select name="batch_reward_pack_id" value={selectedPackId} onChange={(event) => setSelectedPackId(event.target.value)} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm">
-            <option value="">只建卡，不加入卡包</option>
-            {packs.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="text-sm font-black text-slate-500">每張庫存</span>
           <input name="batch_stock" type="number" min="0" value={stock} onChange={(event) => setStock(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm" />
@@ -233,6 +226,10 @@ export function BatchCardUploader({ series, categories, packs }: Props) {
           <span className="text-sm font-black text-slate-500">抽中權重</span>
           <input name="batch_weight" type="number" min="0" value={weight} onChange={(event) => setWeight(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border-0 bg-white px-4 py-3 font-bold text-slate-900 shadow-sm" />
         </label>
+      </div>
+
+      <div className="mt-3 rounded-3xl bg-white/80 px-4 py-3 text-sm font-black text-blue-700 shadow-sm">
+        系統會自動產生卡號：{autoPrefix}-001、{autoPrefix}-002、{autoPrefix}-003...
       </div>
 
       <label className="mt-4 block rounded-[1.75rem] border-2 border-dashed border-blue-200 bg-white/80 p-5 text-center shadow-sm">
