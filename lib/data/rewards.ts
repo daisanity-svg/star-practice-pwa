@@ -4,7 +4,7 @@ import type { CardCollectionSummary, ChildCardInventoryItem } from '@/lib/types'
 export const demoCollections: CardCollectionSummary[] = [
   { id: 'cars', name: '小車系列', owned: 5, total: 12 },
   { id: 'dogs', name: '狗狗系列', owned: 2, total: 8 },
-  { id: 'plants', name: '植物朋友', owned: 1, total: 10 }
+  { id: 'animals', name: '動物系列', owned: 1, total: 10 }
 ];
 
 export const demoInventory: ChildCardInventoryItem[] = [
@@ -17,6 +17,7 @@ export const demoInventory: ChildCardInventoryItem[] = [
       name: '紅色小車',
       card_no: 'CAR-001',
       rarity: 'rare',
+      rendered_card_image_url: null,
       series: { id: 'cars', name: '小車系列' },
       category: { id: 'cars-main', name: '小車' }
     }
@@ -26,10 +27,25 @@ export const demoInventory: ChildCardInventoryItem[] = [
     quantity: 1,
     obtained_at: new Date().toISOString(),
     card: {
+      id: 'demo-blue-car',
+      name: '藍色小車',
+      card_no: 'CAR-002',
+      rarity: 'common',
+      rendered_card_image_url: null,
+      series: { id: 'cars', name: '小車系列' },
+      category: { id: 'cars-main', name: '小車' }
+    }
+  },
+  {
+    id: 'demo-inventory-3',
+    quantity: 1,
+    obtained_at: new Date().toISOString(),
+    card: {
       id: 'demo-blue-dog',
       name: '藍色狗狗',
       card_no: 'DOG-001',
       rarity: 'common',
+      rendered_card_image_url: null,
       series: { id: 'dogs', name: '狗狗系列' },
       category: { id: 'dogs-main', name: '日常' }
     }
