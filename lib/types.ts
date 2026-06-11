@@ -36,13 +36,42 @@ export type MemoryHook = {
 
 export type GeneratedQuestion = {
   id: string;
+  child_id?: string | null;
+  learning_item_id?: string | null;
+  memory_hook_id?: string | null;
+  question_template_id?: string | null;
   question_text: string;
   options: string[];
   correct_answer: string[];
   order_index: number;
   practice_mode?: PracticeMode | string;
-  learning_item?: Pick<LearningItem, 'content' | 'display_text' | 'type'> | null;
-  memory_hook?: Pick<MemoryHook, 'keyword' | 'sentence' | 'image_url'> | null;
+  learning_item?: Pick<LearningItem, 'id' | 'content' | 'display_text' | 'type'> | null;
+  memory_hook?: Pick<MemoryHook, 'id' | 'keyword' | 'sentence' | 'image_url'> | null;
+};
+
+export type SubmittedPracticeAnswer = {
+  child_id?: string | null;
+  generated_question_id?: string | null;
+  learning_item_id?: string | null;
+  memory_hook_id?: string | null;
+  practice_mode?: PracticeMode | string;
+  selected_answer?: string | string[] | null;
+  correct_answer?: string[];
+  is_correct: boolean;
+  score?: number;
+  time_spent_seconds?: number;
+  mistake_type?: string | null;
+};
+
+export type PracticeCompletionResult = {
+  ok: boolean;
+  message: string;
+  practice_record_id?: string;
+  total_questions?: number;
+  correct_count?: number;
+  wrong_count?: number;
+  reward_available?: boolean;
+  demo?: boolean;
 };
 
 export type LearningProgress = {
