@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidButton } from '@/components/KidButton';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { getActiveEvent } from '@/lib/data/events';
@@ -23,7 +24,7 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute -left-16 top-48 h-36 w-36 rounded-full bg-[#d9fae8] opacity-80 blur-2xl" />
 
         <header className="relative z-10 flex items-center justify-between">
-          <div className="rounded-full bg-white/80 px-4 py-2 text-sm font-black text-[#6d5dfc] shadow-sm">
+          <div className="rounded-full bg-white/85 px-4 py-2 text-sm font-black text-[#6d5dfc] shadow-sm">
             星見練習本
           </div>
           <Link href="/parent/login" className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-xl shadow-sm active:scale-95">
@@ -31,20 +32,20 @@ export default async function HomePage() {
           </Link>
         </header>
 
-        <section className="relative z-10 mt-5 rounded-[34px] bg-gradient-to-br from-[#6d5dfc] to-[#9888ff] p-5 text-white shadow-[0_20px_42px_rgba(109,93,252,0.28)]">
+        <section className="relative z-10 mt-5 rounded-[36px] bg-gradient-to-br from-[#6d5dfc] to-[#9888ff] p-5 text-white shadow-[0_20px_42px_rgba(109,93,252,0.28)]">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-base font-bold opacity-90">今天的任務</p>
-              <h1 className="mt-2 text-[34px] font-black leading-tight tracking-[-0.04em]">
+              <h1 className="mt-2 text-[36px] font-black leading-tight tracking-[-0.04em]">
                 找找看，<br />字母朋友！
               </h1>
             </div>
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] bg-white/20 text-4xl backdrop-blur">
+            <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-[26px] bg-white/20 p-4 text-4xl backdrop-blur">
               ⭐
             </div>
           </div>
 
-          <div className="mt-5 rounded-[26px] bg-white/20 p-4 backdrop-blur">
+          <div className="mt-5 rounded-[28px] bg-white/20 p-4 backdrop-blur">
             <p className="text-lg font-black">{activeEvent?.name ?? '小車週'}</p>
             <p className="mt-1 text-base font-semibold leading-relaxed text-white/90">{eventText}</p>
             <div className="mt-3 inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-[#6d5dfc]">
@@ -111,6 +112,7 @@ export default async function HomePage() {
           </div>
         </section>
       </section>
+      <KidBottomNav />
     </PhoneFrame>
   );
 }
