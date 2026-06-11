@@ -46,6 +46,20 @@ export type RewardPackItem = {
   card?: Pick<Card, 'name' | 'rarity' | 'card_no'> | null;
 };
 
+export type ScheduledReward = {
+  id: string;
+  child_id?: string | null;
+  card_id: string;
+  reward_pack_id?: string | null;
+  reason: string;
+  starts_on?: string | null;
+  expires_on?: string | null;
+  is_claimed: boolean;
+  claimed_at?: string | null;
+  card?: Pick<Card, 'name' | 'rarity' | 'card_no' | 'rendered_card_image_url'> | null;
+  pack?: Pick<RewardPack, 'name'> | null;
+};
+
 export const demoSeries: CardSeries[] = [
   { id: 'cars', name: '小車系列', description: 'Tomica 與交通工具收藏' },
   { id: 'dogs', name: '狗狗系列', description: '布麗狗與可愛狗狗朋友' }
@@ -70,6 +84,8 @@ export const demoPackItems: RewardPackItem[] = [
   { id: 'pack-item-1', reward_pack_id: 'daily-pack', card_id: 'card-red-car', stock: 1, weight: 10, card: { name: '紅色消防車', rarity: 'common', card_no: 'CAR-001' } }
 ];
 
+export const demoScheduledRewards: ScheduledReward[] = [];
+
 export async function getAdminRewardData() {
   if (!supabase) {
     return {
@@ -77,16 +93,22 @@ export async function getAdminRewardData() {
       categories: demoCategories,
       cards: demoCards,
       packs: demoPacks,
-      packItems: demoPackItems
+      packItems: demoPackItems,
+      scheduledRewards: demoScheduledRewards
     };
   }
 
-  const [seriesRes, categoriesRes, cardsRes, packsRes, packItemsRes] = await Promise.all([
+  const [seriesRes, categoriesRes, cardsRes, packsRes, packItemsRes, scheduledRewardsRes] = await Promise.all([
     supabase.from('card_series').select('*').order('created_at', { ascending: true }),
     supabase.from('card_categories').select('*').order('created_at', { ascending: true }),
     supabase.from('cards').select('*').order('created_at', { ascending: true }),
     supabase.from('reward_packs').select('*').order('created_at', { ascending: true }),
-    supabase.from('reward_pack_items').select('*, cards(name, rarity, card_no)').order('created_at', { ascending: true })
+    supabase.from('reward_pack_items').select('*, cards(name, rarity, card_no)').order('created_at', { ascending: true }),
+    supabase
+      .from('scheduled_rewards')
+      .select('*, cards(name, rarity, card_no, rendered_card_image_url), reward_packs(name)')
+      .eq('is_claimed', false)
+      .order('created_at', { ascending: false })
   ]);
 
   return {
@@ -96,6 +118,9 @@ export async function getAdminRewardData() {
     packs: (packsRes.data?.length ? packsRes.data : demoPacks) as RewardPack[],
     packItems: (packItemsRes.data?.length
       ? packItemsRes.data.map((item: any) => ({ ...item, card: item.cards }))
-      : demoPackItems) as RewardPackItem[]
+      : demoPackItems) as RewardPackItem[],
+    scheduledRewards: (scheduledRewardsRes.data?.length
+      ? scheduledRewardsRes.data.map((item: any) => ({ ...item, card: item.cards, pack: item.reward_packs }))
+      : demoScheduledRewards) as ScheduledReward[]
   };
 }
