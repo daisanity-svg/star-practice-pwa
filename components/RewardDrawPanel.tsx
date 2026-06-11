@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useActionState } from 'react';
-import { drawDailyRewardFromState } from '@/lib/actions/draw-reward';
+import { drawDailyRewardFromState } from '@/lib/actions/draw-reward-state';
 import type { DrawRewardResult } from '@/lib/types';
 
 const rarityLabel: Record<string, string> = {
