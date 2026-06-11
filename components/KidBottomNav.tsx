@@ -14,7 +14,7 @@ export function KidBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-[max(10px,env(safe-area-inset-bottom))] z-50 mx-auto w-[calc(100%-24px)] max-w-[402px] rounded-[28px] border border-white/80 bg-white/92 p-1.5 shadow-[0_18px_42px_rgba(30,64,175,0.16)] backdrop-blur-xl">
+    <nav className="fixed inset-x-0 bottom-3 z-50 mx-auto w-[calc(100%-24px)] max-w-[402px] rounded-[30px] border border-[#d8eaff] bg-white/94 p-1.5 shadow-[0_18px_42px_rgba(30,64,175,0.16)] backdrop-blur-xl">
       <div className="grid grid-cols-4 gap-1">
         {items.map((item) => {
           const active = pathname === item.href;
@@ -26,9 +26,9 @@ export function KidBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={'flex min-h-[58px] touch-manipulation select-none flex-col items-center justify-center rounded-[22px] text-[12px] font-black transition active:scale-[0.98] ' + itemClass}
+              className={'flex min-h-[56px] touch-manipulation select-none flex-col items-center justify-center rounded-[23px] text-[12px] font-black transition active:scale-[0.98] ' + itemClass}
             >
-              <span className="text-xl leading-none">{item.icon}</span>
+              <span className="text-[21px] leading-none">{item.icon}</span>
               <span className="mt-1 leading-none">{item.label}</span>
             </Link>
           );
