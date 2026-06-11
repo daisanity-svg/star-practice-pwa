@@ -1,17 +1,22 @@
 import Link from 'next/link';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { dashboardStats } from '@/lib/demo-data';
+import { getActiveEvent, getRewardPackSummaries } from '@/lib/data/events';
 
 const adminSections = [
   { title: '學習項目', description: '管理 ㄅ、ㄇ、A、B 與多記憶詞', icon: '📚', href: '/parent/learning' },
   { title: '學習進度', description: '查看熟練度、弱點與容易忘的項目', icon: '🔁', href: '/parent/progress' },
   { title: '卡片系列', description: '新增小車、狗狗、植物朋友系列', icon: '🃏', href: '/parent/cards' },
-  { title: '卡包庫存', description: '管理抽卡池、庫存與活動卡包', icon: '🎁', href: '/parent/cards' },
+  { title: '活動卡包', description: '設定主題週、限定卡包與首頁提示', icon: '🎁', href: '/parent/events' },
   { title: '題型模板', description: '管理自動出題的句型與模式', icon: '🧩', href: '/parent/templates' },
   { title: '今日規則', description: '下一階段設定題數、比例與抽卡條件', icon: '⚙️', href: '/parent/dashboard' }
 ];
 
-export default function ParentDashboardPage() {
+export default async function ParentDashboardPage() {
+  const [activeEvent, packs] = await Promise.all([getActiveEvent(), getRewardPackSummaries()]);
+  const activePackCount = packs.filter((pack) => pack.is_active !== false).length;
+  const remainingStock = packs.reduce((sum, pack) => sum + pack.remaining_stock, 0);
+
   return (
     <PhoneFrame>
       <div className="mb-4 flex items-center justify-between">
@@ -34,7 +39,26 @@ export default function ParentDashboardPage() {
               <p className="mt-1 text-2xl font-black text-grape">{stat.value}</p>
             </div>
           ))}
+          <div className="rounded-3xl bg-white/80 p-4 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">啟用卡包</p>
+            <p className="mt-1 text-2xl font-black text-grape">{activePackCount}</p>
+          </div>
+          <div className="rounded-3xl bg-white/80 p-4 shadow-sm">
+            <p className="text-sm font-bold text-slate-500">剩餘庫存</p>
+            <p className="mt-1 text-2xl font-black text-grape">{remainingStock}</p>
+          </div>
         </div>
+      </section>
+
+      <section className="mt-5 rounded-[32px] bg-grape p-5 text-white shadow-sm">
+        <p className="text-sm font-black opacity-80">目前活動</p>
+        <h2 className="mt-2 text-2xl font-black">{activeEvent?.name ?? '尚未設定活動'}</h2>
+        <p className="mt-2 text-base font-bold leading-relaxed opacity-90">
+          {activeEvent?.banner_text ?? '到活動卡包頁建立主題週，讓小孩端首頁有新鮮感提示。'}
+        </p>
+        <Link href="/parent/events" className="mt-4 inline-flex rounded-full bg-white px-5 py-3 text-base font-black text-grape">
+          管理活動卡包
+        </Link>
       </section>
 
       <section className="mt-5 space-y-3">
