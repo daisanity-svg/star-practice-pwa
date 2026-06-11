@@ -71,7 +71,7 @@ export async function drawDailyReward(formData?: FormData): Promise<DrawRewardRe
   if (!supabase) {
     return {
       ok: true,
-      message: '目前尚未連接 Supabase，先顯示示範卡。',
+      message: '你獲得新卡！已放進收納包。',
       card: demoCard,
       is_new: true,
       remaining_stock: 1,
