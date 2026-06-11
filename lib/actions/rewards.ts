@@ -13,6 +13,60 @@ function nullableValue(formData: FormData, key: string) {
   return text.length > 0 ? text : null;
 }
 
+function safeFileName(text: string) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5-]+/gi, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'card';
+}
+
+async function uploadFileToStorage(file: File | null, folder: string) {
+  if (!supabase || !file || file.size === 0) return null;
+
+  const ext = file.name.split('.').pop() || 'png';
+  const path = `${folder}/${Date.now()}-${safeFileName(file.name)}.${ext}`;
+  const { error } = await supabase.storage.from('card-assets').upload(path, file, {
+    cacheControl: '31536000',
+    upsert: false
+  });
+
+  if (error) {
+    console.error('uploadFileToStorage error', error.message);
+    return null;
+  }
+
+  const { data } = supabase.storage.from('card-assets').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+async function uploadDataUrlToStorage(dataUrl: string | null, folder: string, name: string) {
+  if (!supabase || !dataUrl) return null;
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) return null;
+
+  const mimeType = match[1];
+  const base64 = match[2];
+  const extension = mimeType.includes('jpeg') ? 'jpg' : 'png';
+  const buffer = Buffer.from(base64, 'base64');
+  const path = `${folder}/${Date.now()}-${safeFileName(name)}.${extension}`;
+
+  const { error } = await supabase.storage.from('card-assets').upload(path, buffer, {
+    contentType: mimeType,
+    cacheControl: '31536000',
+    upsert: false
+  });
+
+  if (error) {
+    console.error('uploadDataUrlToStorage error', error.message);
+    return null;
+  }
+
+  const { data } = supabase.storage.from('card-assets').getPublicUrl(path);
+  return data.publicUrl;
+}
+
 export async function createCardSeries(formData: FormData) {
   if (!supabase) return;
 
@@ -54,14 +108,25 @@ export async function createCard(formData: FormData) {
   const name = value(formData, 'name');
   if (!seriesId || !name) return;
 
+  const sourceFile = formData.get('source_image_file');
+  const sourceImageUrl = sourceFile instanceof File
+    ? await uploadFileToStorage(sourceFile, 'source')
+    : nullableValue(formData, 'source_image_url');
+
+  const renderedCardImageUrl = await uploadDataUrlToStorage(
+    nullableValue(formData, 'rendered_card_data_url'),
+    'rendered',
+    `${value(formData, 'card_no') || name}-rendered`
+  ) || nullableValue(formData, 'rendered_card_image_url');
+
   await supabase.from('cards').insert({
     series_id: seriesId,
     category_id: nullableValue(formData, 'category_id'),
     name,
     card_no: nullableValue(formData, 'card_no'),
     rarity: value(formData, 'rarity') || 'common',
-    source_image_url: nullableValue(formData, 'source_image_url'),
-    rendered_card_image_url: nullableValue(formData, 'rendered_card_image_url'),
+    source_image_url: sourceImageUrl,
+    rendered_card_image_url: renderedCardImageUrl,
     description: nullableValue(formData, 'description'),
     is_active: true
   });
