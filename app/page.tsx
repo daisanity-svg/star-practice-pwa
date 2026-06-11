@@ -40,7 +40,7 @@ export default async function HomePage() {
                 找找看，<br />字母朋友！
               </h1>
             </div>
-            <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-[26px] bg-white/20 p-4 text-4xl backdrop-blur">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[26px] bg-white/20 text-4xl backdrop-blur">
               ⭐
             </div>
           </div>
