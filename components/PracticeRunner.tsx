@@ -17,7 +17,7 @@ type CompletionStats = {
 };
 
 function isTracingQuestion(question: GeneratedQuestion) {
-  return question.practice_mode === 'tracing';
+  return question.practice_mode === 'tracing' || question.practice_mode === 'intro';
 }
 
 function isAnswerCorrect(question: GeneratedQuestion, selected: string) {
@@ -54,6 +54,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
     return {
       child_id: current.child_id,
+      daily_learning_plan_id: current.daily_learning_plan_id,
       generated_question_id: current.id,
       learning_item_id: current.learning_item_id ?? current.learning_item?.id ?? null,
       memory_hook_id: current.memory_hook_id ?? current.memory_hook?.id ?? null,
@@ -107,9 +108,10 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
     return (
       <section className="kid-card flex min-h-[620px] flex-col items-center justify-center p-6 text-center">
         <div className="text-7xl">🌙</div>
-        <h1 className="mt-6 text-4xl font-black text-ink">今天還沒有題目</h1>
-        <p className="mt-4 text-xl font-bold text-slate-500">請到家長後台新增學習項目與每日題目。</p>
-        <div className="mt-8 w-full">
+        <h1 className="mt-6 text-4xl font-black text-ink">今天已經完成囉</h1>
+        <p className="mt-4 text-xl font-bold text-slate-500">明天會自動產生新的練習，也可以到後台新增更多學習朋友。</p>
+        <div className="mt-8 w-full space-y-3">
+          <KidButton href="/collection" tone="butter">看我的收納包</KidButton>
           <KidButton href="/parent/dashboard" tone="white">去家長後台</KidButton>
         </div>
       </section>
@@ -168,7 +170,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
             onClick={handleTracingDone}
             className={`mt-5 h-20 w-full rounded-[30px] text-2xl font-black shadow-sm active:scale-[0.98] ${answeredCurrent ? 'bg-mint text-emerald-900' : 'bg-butter text-amber-900'}`}
           >
-            {answeredCurrent ? '描好了！' : '我描好了'}
+            {answeredCurrent ? '完成了！' : current.practice_mode === 'intro' ? '我認識了' : '我描好了'}
           </button>
         </div>
       ) : (
