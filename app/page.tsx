@@ -44,7 +44,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="mt-5 rounded-[26px] bg-white/18 p-4 backdrop-blur">
+          <div className="mt-5 rounded-[26px] bg-white/20 p-4 backdrop-blur">
             <p className="text-lg font-black">{activeEvent?.name ?? '小車週'}</p>
             <p className="mt-1 text-base font-semibold leading-relaxed text-white/90">{eventText}</p>
             <div className="mt-3 inline-flex rounded-full bg-white px-4 py-2 text-sm font-black text-[#6d5dfc]">
@@ -59,7 +59,7 @@ export default async function HomePage() {
             { label: '星星', value: '0', icon: '⭐' },
             { label: '連續', value: '2天', icon: '🔥' }
           ].map((item) => (
-            <div key={item.label} className="rounded-[28px] bg-white/86 p-3 text-center shadow-sm">
+            <div key={item.label} className="rounded-[28px] bg-white/90 p-3 text-center shadow-sm">
               <div className="text-2xl">{item.icon}</div>
               <div className="mt-1 text-xs font-black text-slate-400">{item.label}</div>
               <div className="text-xl font-black text-ink">{item.value}</div>
@@ -87,7 +87,7 @@ export default async function HomePage() {
             {collections.map((collection) => {
               const percent = collection.total > 0 ? Math.round((collection.owned / collection.total) * 100) : 0;
               return (
-                <Link key={collection.id} href="/collection" className="rounded-[30px] bg-white/88 p-4 shadow-sm active:scale-[0.99]">
+                <Link key={collection.id} href="/collection" className="rounded-[30px] bg-white/90 p-4 shadow-sm active:scale-[0.99]">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-14 w-14 items-center justify-center rounded-[22px] bg-[#fff5d7] text-3xl">
