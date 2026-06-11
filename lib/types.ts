@@ -8,7 +8,7 @@ export type LearningItemType =
   | 'bopomofo_tone'
   | 'bopomofo_combo';
 
-export type PracticeMode = 'intro' | 'choice' | 'listening' | 'tracing' | 'recall' | 'classification';
+export type PracticeMode = 'intro' | 'choice' | 'listening' | 'tracing' | 'recall' | 'classification' | 'sorting';
 
 export type LearningItem = {
   id: string;
@@ -67,4 +67,38 @@ export type CardCollectionSummary = {
   cover_image_url?: string | null;
   owned: number;
   total: number;
+};
+
+export type RewardCard = {
+  id: string;
+  name: string;
+  card_no?: string | null;
+  rarity: 'common' | 'rare' | 'super_rare' | 'legendary' | string;
+  source_image_url?: string | null;
+  rendered_card_image_url?: string | null;
+  description?: string | null;
+  series?: {
+    id: string;
+    name: string;
+  } | null;
+  category?: {
+    id: string;
+    name: string;
+  } | null;
+};
+
+export type ChildCardInventoryItem = {
+  id: string;
+  quantity: number;
+  obtained_at: string;
+  card: RewardCard | null;
+};
+
+export type DrawRewardResult = {
+  ok: boolean;
+  message: string;
+  card?: RewardCard;
+  is_new?: boolean;
+  remaining_stock?: number;
+  demo?: boolean;
 };
