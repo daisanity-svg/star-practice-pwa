@@ -1,26 +1,24 @@
 import { supabase } from '@/lib/supabase';
-import type { GeneratedQuestion } from '@/lib/types';
+import type { GeneratedQuestion, LearningItem } from '@/lib/types';
 import { isPracticeTestMode } from '@/lib/config/app-mode';
-import { 
-  validateQuestion, 
-  buildSafeDistractors, 
+import {
+  SAFE_QUESTION_TEMPLATES,
+  buildSafeDistractors,
   renderTemplate,
-  SAFE_QUESTION_TEMPLATES 
+  validateQuestion
 } from '@/lib/services/question-validator';
 
 const DEFAULT_CHILD_NAME = '星見';
-const TOTAL_QUESTIONS = 10;
+const TOTAL_QUESTIONS = 5;
 const DEFAULT_COUNTS = {
-  new_item_count: 3,
-  review_item_count: 4,
-  weakness_item_count: 3
+  new_item_count: 2,
+  review_item_count: 2,
+  weakness_item_count: 1
 };
 
-type LearningItemRow = {
-  id: string;
-  type: string;
-  content: string;
-  display_text: string;
+type SafePracticeMode = keyof typeof SAFE_QUESTION_TEMPLATES;
+
+type LearningItemRow = LearningItem & {
   difficulty: number | null;
 };
 
@@ -59,18 +57,29 @@ function uniqueById<T extends { id: string }>(items: T[]) {
   });
 }
 
-function selectPracticeMode(masteryLevel: number): keyof typeof SAFE_QUESTION_TEMPLATES {
-  if (masteryLevel <= 1) return 'choice';
-  if (masteryLevel <= 3) {
-    const modes: (keyof typeof SAFE_QUESTION_TEMPLATES)[] = ['choice', 'listening', 'tracing'];
-    return modes[Math.floor(Math.random() * modes.length)];
-  }
-  const modes: (keyof typeof SAFE_QUESTION_TEMPLATES)[] = ['choice', 'listening', 'tracing'];
-  return modes[Math.floor(Math.random() * modes.length)];
+function isEnglishType(type: string) {
+  return type.includes('english');
+}
+
+function isBopomofoType(type: string) {
+  return type.includes('bopomofo');
+}
+
+function inferModeFromText(questionText: string): SafePracticeMode {
+  if (questionText.includes('描一遍')) return 'tracing';
+  if (questionText.includes('聽一聽')) return 'listening';
+  return 'choice';
+}
+
+function selectPracticeMode(index: number, masteryLevel: number): SafePracticeMode {
+  if (index === 0 || masteryLevel <= 1) return 'choice';
+  if (index % 5 === 4) return 'tracing';
+  if (index % 3 === 1) return 'listening';
+  return 'choice';
 }
 
 function selectHook(item: LearningItemRow, hooks: MemoryHookRow[], masteryLevel: number) {
-  const itemHooks = hooks.filter((hook) => hook.learning_item_id === item.id);
+  const itemHooks = hooks.filter((hook) => hook.learning_item_id === item.id && hook.keyword?.trim());
   if (!itemHooks.length) return null;
 
   if (masteryLevel <= 1) {
@@ -102,18 +111,28 @@ async function ensureDefaultChild() {
 
 async function getActiveRewardPackIdWithStock() {
   const today = todayKey();
-  const { data } = await supabase!
+  const { data: packs, error } = await supabase!
     .from('reward_packs')
-    .select(`id, reward_pack_items!inner(stock)`)
+    .select('id, created_at')
     .eq('is_active', true)
-    .gte('reward_pack_items.stock', 1)
     .or(`start_date.is.null,start_date.lte.${today}`)
     .or(`end_date.is.null,end_date.gte.${today}`)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order('created_at', { ascending: false });
 
-  return data?.id ?? null;
+  if (error || !packs?.length) return null;
+
+  for (const pack of packs) {
+    const { count } = await supabase!
+      .from('reward_pack_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('reward_pack_id', pack.id)
+      .eq('is_active', true)
+      .gt('stock', 0);
+
+    if ((count ?? 0) > 0) return pack.id as string;
+  }
+
+  return null;
 }
 
 async function getOrCreateTodayPlan(childId: string) {
@@ -125,9 +144,34 @@ async function getOrCreateTodayPlan(childId: string) {
     .eq('date', today)
     .maybeSingle();
 
-  if (existing?.id) return existing;
-
   const rewardPackId = await getActiveRewardPackIdWithStock();
+
+  if (existing?.id) {
+    const updatePayload: Record<string, unknown> = {};
+
+    if (isPracticeTestMode() && existing.is_completed) {
+      updatePayload.is_completed = false;
+      updatePayload.completed_at = null;
+    }
+
+    if (!existing.reward_pack_id && rewardPackId) {
+      updatePayload.reward_pack_id = rewardPackId;
+    }
+
+    if (Object.keys(updatePayload).length) {
+      const { data: updated } = await supabase!
+        .from('daily_learning_plan')
+        .update(updatePayload)
+        .eq('id', existing.id)
+        .select('*')
+        .single();
+
+      return updated ?? existing;
+    }
+
+    return existing;
+  }
+
   const { data: created, error } = await supabase!
     .from('daily_learning_plan')
     .insert({
@@ -159,7 +203,6 @@ async function getPendingQuestions(planId: string): Promise<GeneratedQuestion[]>
       correct_answer,
       order_index,
       status,
-      question_templates(practice_mode),
       learning_items(id, content, display_text, type),
       learning_memory_hooks(id, keyword, sentence, image_url)
     `)
@@ -180,7 +223,7 @@ async function getPendingQuestions(planId: string): Promise<GeneratedQuestion[]>
     options: Array.isArray(row.options) ? row.options : [],
     correct_answer: Array.isArray(row.correct_answer) ? row.correct_answer : [],
     order_index: row.order_index,
-    practice_mode: row.question_templates?.practice_mode ?? 'choice',
+    practice_mode: inferModeFromText(row.question_text),
     learning_item: row.learning_items ?? null,
     memory_hook: row.learning_memory_hooks ?? null
   }));
@@ -194,7 +237,9 @@ async function fetchGenerationSource(childId: string) {
     supabase!.from('child_learning_progress').select('learning_item_id, mastery_level, is_weakness, next_review_at').eq('child_id', childId)
   ]);
 
-  const items = (itemsResult.data ?? []) as LearningItemRow[];
+  const items = ((itemsResult.data ?? []) as LearningItemRow[])
+    .filter((item) => item.content?.trim())
+    .filter((item) => isEnglishType(item.type) || isBopomofoType(item.type));
   const hooks = (hooksResult.data ?? []) as MemoryHookRow[];
   const progress = (progressResult.data ?? []) as ProgressRow[];
 
@@ -210,6 +255,18 @@ async function fetchGenerationSource(childId: string) {
   return { items, hooks, progressByItem, weaknessItems, reviewItems, newItems, fallbackItems };
 }
 
+async function getNextOrderIndex(planId: string) {
+  const { data } = await supabase!
+    .from('generated_questions')
+    .select('order_index')
+    .eq('daily_learning_plan_id', planId)
+    .order('order_index', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return Number(data?.order_index ?? 0) + 1;
+}
+
 function buildQuestionRows(params: {
   childId: string;
   planId: string;
@@ -217,17 +274,19 @@ function buildQuestionRows(params: {
   hooks: MemoryHookRow[];
   allItems: LearningItemRow[];
   progressByItem: Map<string, ProgressRow>;
+  firstOrderIndex: number;
 }) {
   return params.selectedItems
     .map((item, index) => {
       const masteryLevel = params.progressByItem.get(item.id)?.mastery_level ?? 0;
       const hook = selectHook(item, params.hooks, masteryLevel);
-      const practiceMode = selectPracticeMode(masteryLevel);
+      const practiceMode = selectPracticeMode(index, masteryLevel);
       const template = SAFE_QUESTION_TEMPLATES[practiceMode];
       const questionText = renderTemplate(template, item, hook?.keyword);
-      const options = buildSafeDistractors(item.content, item.type, params.allItems);
+      const options = practiceMode === 'tracing' ? [item.content] : buildSafeDistractors(item.content, item.type, params.allItems);
 
-      const question = {
+      const question: GeneratedQuestion = {
+        id: `pending-${item.id}-${index}`,
         daily_learning_plan_id: params.planId,
         child_id: params.childId,
         learning_item_id: item.id,
@@ -236,18 +295,27 @@ function buildQuestionRows(params: {
         question_text: questionText,
         options,
         correct_answer: [item.content],
-        order_index: index + 1,
-        status: 'pending'
+        order_index: params.firstOrderIndex + index,
+        practice_mode: practiceMode,
+        learning_item: { id: item.id, content: item.content, display_text: item.display_text, type: item.type },
+        memory_hook: hook ? { id: hook.id, keyword: hook.keyword, sentence: hook.sentence, image_url: hook.image_url } : null
       };
 
-      // 驗證題目
-      const validation = validateQuestion(question as any);
-      if (!validation.valid) {
-        console.warn(`Question validation failed for item ${item.id}:`, validation.errors);
-        return null;
-      }
+      const validation = validateQuestion(question);
+      if (!validation.valid) return null;
 
-      return question;
+      return {
+        daily_learning_plan_id: params.planId,
+        child_id: params.childId,
+        learning_item_id: item.id,
+        memory_hook_id: hook?.id ?? null,
+        question_template_id: null,
+        question_text: questionText,
+        options,
+        correct_answer: [item.content],
+        order_index: params.firstOrderIndex + index,
+        status: 'pending'
+      };
     })
     .filter((q): q is NonNullable<typeof q> => q !== null);
 }
@@ -258,13 +326,10 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
   const childId = await ensureDefaultChild();
   const plan = await getOrCreateTodayPlan(childId);
 
-  // 測試模式下不受 is_completed 限制
-  if (plan.is_completed && !isPracticeTestMode()) {
-    return [];
-  }
+  if (plan.is_completed && !isPracticeTestMode()) return [];
 
   const existingQuestions = await getPendingQuestions(plan.id);
-  if (existingQuestions.length) return existingQuestions;
+  if (existingQuestions.length) return existingQuestions.slice(0, Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS));
 
   const source = await fetchGenerationSource(childId);
   if (!source.items.length) return [];
@@ -275,7 +340,7 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
     ...shuffle(source.newItems).slice(0, plan.new_item_count ?? DEFAULT_COUNTS.new_item_count),
     ...shuffle(source.fallbackItems),
     ...shuffle(source.items)
-  ]).slice(0, plan.total_required_questions ?? TOTAL_QUESTIONS);
+  ]).slice(0, Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS));
 
   const rows = buildQuestionRows({
     childId,
@@ -283,7 +348,8 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
     selectedItems: selected,
     hooks: source.hooks,
     allItems: source.items,
-    progressByItem: source.progressByItem
+    progressByItem: source.progressByItem,
+    firstOrderIndex: await getNextOrderIndex(plan.id)
   });
 
   if (!rows.length) return [];
