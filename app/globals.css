@@ -4,8 +4,13 @@
 
 :root {
   color-scheme: light;
-  --background: #fff8ec;
-  --foreground: #1f2937;
+  --background: #eef7ff;
+  --foreground: #12304f;
+  --blue: #2387f7;
+  --blue-deep: #1167d8;
+  --blue-soft: #dceeff;
+  --yellow: #ffd95a;
+  --mint: #dff8ef;
 }
 
 * {
@@ -26,9 +31,9 @@ body {
   margin: 0;
   overflow-x: hidden;
   background:
-    radial-gradient(circle at 10% 8%, rgba(255, 222, 130, 0.46), transparent 18rem),
-    radial-gradient(circle at 90% 4%, rgba(194, 245, 220, 0.6), transparent 20rem),
-    linear-gradient(180deg, #fffaf0 0%, #fff4e4 54%, #eef8ff 100%);
+    radial-gradient(circle at 15% 0%, rgba(125, 196, 255, 0.45), transparent 22rem),
+    radial-gradient(circle at 92% 12%, rgba(255, 224, 102, 0.42), transparent 18rem),
+    linear-gradient(180deg, #eef7ff 0%, #f7fbff 46%, #fff8ea 100%);
   color: var(--foreground);
   font-family: ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -48,20 +53,35 @@ button, a {
 }
 
 .safe-screen {
-  min-height: 100svh;
-  padding-bottom: env(safe-area-inset-bottom);
+  min-height: 100dvh;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(108px, calc(92px + env(safe-area-inset-bottom)));
 }
 
 .kid-card {
   border: 1px solid rgba(255, 255, 255, 0.86);
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 42px rgba(77, 68, 111, 0.12);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 44px rgba(35, 135, 247, 0.12);
   backdrop-filter: blur(18px);
 }
 
+.kid-hero-blue {
+  background:
+    radial-gradient(circle at 82% 12%, rgba(255, 255, 255, 0.38), transparent 7rem),
+    radial-gradient(circle at 8% 96%, rgba(181, 219, 255, 0.56), transparent 9rem),
+    linear-gradient(135deg, #45a6ff 0%, #2387f7 56%, #1167d8 100%);
+  box-shadow: 0 20px 48px rgba(35, 135, 247, 0.26);
+}
+
+.kid-soft-panel {
+  border: 1px solid rgba(205, 228, 255, 0.8);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 14px 34px rgba(18, 48, 79, 0.08);
+}
+
 .tap-target {
-  min-height: 60px;
+  min-height: 58px;
   border-radius: 24px;
 }
 
