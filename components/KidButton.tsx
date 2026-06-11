@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-type KidButtonProps = {
+type KidButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   href?: string;
   children: ReactNode;
   tone?: 'primary' | 'mint' | 'butter' | 'sky' | 'white';
@@ -16,7 +16,7 @@ const toneClass = {
   white: 'bg-white text-ink border border-slate-100'
 };
 
-export function KidButton({ href, children, tone = 'primary', className = '' }: KidButtonProps) {
+export function KidButton({ href, children, tone = 'primary', className = '', type = 'button', ...buttonProps }: KidButtonProps) {
   const classes = `tap-target flex items-center justify-center px-6 text-center text-xl font-bold active:scale-[0.98] transition ${toneClass[tone]} ${className}`;
 
   if (href) {
@@ -27,5 +27,5 @@ export function KidButton({ href, children, tone = 'primary', className = '' }: 
     );
   }
 
-  return <button className={classes}>{children}</button>;
+  return <button type={type} className={classes} {...buttonProps}>{children}</button>;
 }
