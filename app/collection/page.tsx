@@ -44,7 +44,7 @@ export default async function CollectionPage() {
             <h1 className="mt-1 text-[32px] font-black leading-tight tracking-[-0.04em]">收集新朋友</h1>
             <p className="mt-2 text-sm font-bold leading-relaxed text-white/90">每天完成練習，就把新的朋友放進這裡。</p>
           </div>
-          <div className="learning-orb flex h-18 w-18 shrink-0 items-center justify-center rounded-[28px] text-4xl shadow-sm">🎒</div>
+          <div className="learning-orb flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-[28px] text-4xl shadow-sm">🎒</div>
         </div>
 
         <div className="mt-5 rounded-[28px] bg-white/18 p-4 backdrop-blur">
