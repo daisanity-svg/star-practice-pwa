@@ -3,6 +3,7 @@ import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { getChildInventory, getCollectionSummary } from '@/lib/data/rewards';
+import type { RewardCard } from '@/lib/types';
 
 const rarityLabel: Record<string, string> = {
   common: '普通',
@@ -22,6 +23,18 @@ function seriesIcon(name: string) {
   if (name.includes('車')) return '🚗';
   if (name.includes('狗') || name.includes('布麗')) return '🐶';
   if (name.includes('植物') || name.includes('皮克')) return '🌱';
+  return '⭐';
+}
+
+function cardImageUrl(card: RewardCard) {
+  return card.rendered_card_image_url || card.source_image_url || null;
+}
+
+function cardFallbackEmoji(card: RewardCard) {
+  const text = `${card.name} ${card.series?.name ?? ''}`;
+  if (text.includes('車')) return '🚗';
+  if (text.includes('狗') || text.includes('布麗')) return '🐶';
+  if (text.includes('植物') || text.includes('皮克')) return '🌱';
   return '⭐';
 }
 
@@ -119,14 +132,15 @@ export default async function CollectionPage() {
             {inventory.map((item) => {
               const card = item.card;
               if (!card) return null;
+              const imageUrl = cardImageUrl(card);
 
               return (
                 <div key={item.id} className="rounded-[28px] bg-white p-2 shadow-[0_10px_22px_rgba(30,64,175,0.08)] active:scale-[0.99]">
                   <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
-                    {card.rendered_card_image_url ? (
-                      <Image src={card.rendered_card_image_url} alt={card.name} fill className="object-cover" sizes="170px" />
+                    {imageUrl ? (
+                      <Image src={imageUrl} alt={card.name} fill className="object-cover" sizes="170px" unoptimized />
                     ) : (
-                      <div className="text-6xl">{card.name.includes('車') ? '🚗' : card.name.includes('狗') ? '🐶' : '⭐'}</div>
+                      <div className="text-6xl">{cardFallbackEmoji(card)}</div>
                     )}
                   </div>
                   <h3 className="mt-2 truncate text-base font-black text-[#172033]">{card.name}</h3>
