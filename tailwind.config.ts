@@ -18,6 +18,15 @@ const config: Config = {
       },
       boxShadow: {
         soft: '0 18px 45px rgba(62, 58, 89, 0.12)'
+      },
+      keyframes: {
+        'bounce-soft': {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '50%': { transform: 'translateY(-8px) scale(1.03)' }
+        }
+      },
+      animation: {
+        'bounce-soft': 'bounce-soft 1.8s ease-in-out infinite'
       }
     }
   },
