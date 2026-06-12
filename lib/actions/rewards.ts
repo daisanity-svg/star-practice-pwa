@@ -44,12 +44,30 @@ function safeExtension(fileName: string, fallback = 'png') {
   return fallback;
 }
 
-function cleanName(fileName: string) {
-  return fileName
-    .replace(/\.[^.]+$/, '')
-    .replace(/^\d+[-_\s]*/, '')
-    .replace(/[-_]+/g, ' ')
-    .trim() || '新卡片';
+function pad(num: number) {
+  return String(num).padStart(3, '0');
+}
+
+function poolBaseName(name: string) {
+  if (name.includes('布麗') || name.includes('狗')) return '布麗狗卡';
+  if (name.includes('小車') || name.includes('車')) return '小車卡';
+  if (name.includes('爸爸')) return '爸爸特製卡';
+  if (name.includes('冒險')) return '冒險卡';
+  if (name.includes('生日')) return '生日卡';
+  if (name.includes('端午')) return '端午卡';
+  if (name.includes('植物') || name.includes('皮克')) return '植物卡';
+
+  return name
+    .replace(/驚喜卡包/g, '')
+    .replace(/卡包/g, '')
+    .replace(/系列/g, '')
+    .trim() || '神秘卡片';
+}
+
+function fallbackCardName(formData: FormData, index: number, cardNo?: string | null) {
+  const rewardPackName = value(formData, 'batch_reward_pack_name') || value(formData, 'pool_name') || '神秘卡片';
+  const number = cardNo?.match(/(\d{1,4})$/)?.[1] ?? pad(index + 1);
+  return `${poolBaseName(rewardPackName)} ${pad(Number(number) || index + 1)}`;
 }
 
 function storagePath(folder: string, name: string, extension: string) {
@@ -235,8 +253,8 @@ export async function createBatchCards(formData: FormData) {
 
   for (let index = 0; index < files.length; index += 1) {
     const file = files[index];
-    const name = names[index] || cleanName(file.name);
     const cardNo = cardNos[index] || null;
+    const name = names[index] || fallbackCardName(formData, index, cardNo);
     const sourceImageUrl = await uploadFileToStorage(file, 'source');
     const renderedCardImageUrl = await uploadDataUrlToStorage(
       renderedDataUrls[index] || null,
@@ -321,32 +339,6 @@ export async function addCardToPack(formData: FormData) {
     },
     { onConflict: 'reward_pack_id,card_id' }
   );
-
-  revalidatePath('/parent/cards');
-}
-
-export async function createScheduledReward(formData: FormData) {
-  if (!supabase) return;
-
-  const cardId = value(formData, 'scheduled_card_id');
-  if (!cardId) return;
-
-  const today = new Date().toISOString().slice(0, 10);
-  const childId = nullableValue(formData, 'scheduled_child_id');
-  const rewardPackId = nullableValue(formData, 'scheduled_reward_pack_id');
-  const reason = value(formData, 'scheduled_reason') || '爸爸指定獎勵';
-  const startsOn = nullableValue(formData, 'scheduled_starts_on') || today;
-  const expiresOn = nullableValue(formData, 'scheduled_expires_on') || today;
-
-  await supabase.from('scheduled_rewards').insert({
-    child_id: childId,
-    card_id: cardId,
-    reward_pack_id: rewardPackId,
-    reason,
-    starts_on: startsOn,
-    expires_on: expiresOn,
-    is_claimed: false
-  });
 
   revalidatePath('/parent/cards');
   revalidatePath('/reward');
