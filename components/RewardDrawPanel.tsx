@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useActionState } from 'react';
 import { drawDailyRewardFromState, saveDrawnRewardFromState } from '@/lib/actions/draw-reward-state';
+import { getRewardCardDisplayName } from '@/lib/cards/display';
 import type { RewardDrawResult, RewardCard, SaveRewardResult } from '@/lib/types';
 
 const rarityLabel: Record<string, string> = {
@@ -30,7 +31,7 @@ function getCardImageUrl(card: RewardCard) {
 }
 
 function getCardFallbackEmoji(card: RewardCard) {
-  const text = `${card.name} ${card.series?.name ?? ''}`;
+  const text = `${getRewardCardDisplayName(card)} ${card.series?.name ?? ''}`;
   if (text.includes('車')) return '🚗';
   if (text.includes('狗') || text.includes('布麗')) return '🐶';
   if (text.includes('植物') || text.includes('皮克')) return '🌱';
@@ -39,6 +40,7 @@ function getCardFallbackEmoji(card: RewardCard) {
 
 function RewardCardPreview({ card }: { card: RewardCard }) {
   const cardImageUrl = getCardImageUrl(card);
+  const displayName = getRewardCardDisplayName(card);
 
   return (
     <div className="animate-pack-open relative w-full max-w-[286px] rounded-[34px] bg-white p-3 shadow-[0_24px_52px_rgba(30,64,175,0.18)]">
@@ -46,14 +48,14 @@ function RewardCardPreview({ card }: { card: RewardCard }) {
       <div className="absolute -right-3 top-4 z-10 rounded-full bg-[#2f8cff] px-3 py-1 text-xs font-black text-white shadow-sm">今日卡片</div>
       <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[26px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
         {cardImageUrl ? (
-          <Image src={cardImageUrl} alt={card.name} fill className="object-cover" sizes="300px" unoptimized />
+          <Image src={cardImageUrl} alt={displayName} fill className="object-cover" sizes="300px" unoptimized />
         ) : (
           <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/70 text-7xl shadow-inner">{getCardFallbackEmoji(card)}</div>
         )}
       </div>
       <div className="mt-3 rounded-[24px] bg-[#f5f9ff] px-4 py-3">
         <p className="text-xs font-black text-[#1766e6]">{card.series?.name ?? '收藏卡'}</p>
-        <h2 className="mt-1 truncate text-2xl font-black text-[#172033]">{card.name}</h2>
+        <h2 className="mt-1 truncate text-2xl font-black text-[#172033]">{displayName}</h2>
         <div className="mt-3 flex items-center justify-center gap-2">
           <span className={`rounded-full px-3 py-1 text-xs font-black ${rarityStyle[card.rarity] ?? rarityStyle.common}`}>
             {rarityLabel[card.rarity] ?? card.rarity}
