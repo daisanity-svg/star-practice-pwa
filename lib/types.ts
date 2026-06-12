@@ -125,11 +125,22 @@ export type ChildCardInventoryItem = {
   card: RewardCard | null;
 };
 
-export type DrawRewardResult = {
+export type RewardDrawResult = {
+  ok: boolean;
+  message: string;
+  card?: RewardCard;
+  draw_log_id?: string;
+  is_new?: boolean;
+  remaining_stock?: number | null;
+  saved_to_inventory?: boolean;
+  demo?: boolean;
+};
+
+export type SaveRewardResult = {
   ok: boolean;
   message: string;
   card?: RewardCard;
   is_new?: boolean;
-  remaining_stock?: number | null;
+  saved_to_inventory?: boolean;
   demo?: boolean;
 };
