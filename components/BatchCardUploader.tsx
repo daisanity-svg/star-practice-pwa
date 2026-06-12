@@ -29,14 +29,6 @@ type PreviewCard = {
   dataUrl: string;
 };
 
-function cleanName(fileName: string) {
-  return fileName
-    .replace(/\.[^.]+$/, '')
-    .replace(/^\d+[-_\s]*/, '')
-    .replace(/[-_]+/g, ' ')
-    .trim() || '新卡片';
-}
-
 function pad(num: number) {
   return String(num).padStart(3, '0');
 }
@@ -51,6 +43,27 @@ function getPoolPrefix(poolName: string) {
   if (normalized.includes('生日')) return 'BDAY';
   if (normalized.includes('植物') || normalized.includes('PIK')) return 'PIK';
   return 'CARD';
+}
+
+function getPoolCardBaseName(poolName: string) {
+  const name = poolName.trim();
+  if (name.includes('布麗') || name.includes('狗')) return '布麗狗卡';
+  if (name.includes('小車') || name.includes('車')) return '小車卡';
+  if (name.includes('爸爸')) return '爸爸特製卡';
+  if (name.includes('冒險')) return '冒險卡';
+  if (name.includes('生日')) return '生日卡';
+  if (name.includes('端午')) return '端午卡';
+  if (name.includes('植物') || name.includes('皮克')) return '植物卡';
+
+  return name
+    .replace(/驚喜卡包/g, '')
+    .replace(/卡包/g, '')
+    .replace(/系列/g, '')
+    .trim() || '神秘卡片';
+}
+
+function createCardName(poolName: string, cardNumber: number) {
+  return `${getPoolCardBaseName(poolName)} ${pad(cardNumber)}`;
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
@@ -173,8 +186,9 @@ export function BatchCardUploader({ pools }: Props) {
 
     for (let index = 0; index < files.length; index += 1) {
       const file = files[index];
-      const cardName = cleanName(file.name);
-      const cardNo = `${autoPrefix}-${pad(startNumber + index)}`;
+      const cardNumber = startNumber + index;
+      const cardName = createCardName(selectedPool.name, cardNumber);
+      const cardNo = `${autoPrefix}-${pad(cardNumber)}`;
       const dataUrl = await renderCard(file, { cardName, cardNo, poolName: selectedPool.name, rarity });
       rendered.push({ id: `${file.name}-${file.size}-${index}`, fileName: file.name, cardName, cardNo, dataUrl });
     }
@@ -199,7 +213,7 @@ export function BatchCardUploader({ pools }: Props) {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-500">Batch Upload</p>
             <h3 className="mt-1 text-2xl font-black text-slate-900">批次補卡到獎池</h3>
-            <p className="mt-1 text-sm font-medium leading-relaxed text-slate-600">選擇獎池後一次上傳多張圖片，系統會自動命名、編號、套版並加入獎池。</p>
+            <p className="mt-1 text-sm font-medium leading-relaxed text-slate-600">選擇獎池後一次上傳多張圖片，系統會自動產生卡片名稱、卡號、套版並加入獎池。</p>
           </div>
           <div className="rounded-2xl bg-white px-4 py-3 text-center shadow-sm">
             <p className="text-xs font-bold text-slate-400">本次預覽</p>
@@ -253,12 +267,12 @@ export function BatchCardUploader({ pools }: Props) {
       </details>
 
       <div className="rounded-2xl bg-white px-4 py-3 text-sm font-bold leading-relaxed text-blue-700 ring-1 ring-blue-100">
-        系統會自動產生卡號：{autoPrefix}-{pad(startNumber)}、{autoPrefix}-{pad(startNumber + 1)}、{autoPrefix}-{pad(startNumber + 2)}...
+        系統會自動產生卡號：{autoPrefix}-{pad(startNumber)}、{autoPrefix}-{pad(startNumber + 1)}、{autoPrefix}-{pad(startNumber + 2)}...；卡名會顯示為「{createCardName(selectedPool?.name || '卡片', startNumber)}」這種兒童可讀名稱。
       </div>
 
       <label className="block rounded-3xl border-2 border-dashed border-blue-200 bg-white p-6 text-center transition hover:bg-blue-50/40">
         <span className="text-lg font-black text-blue-700">選擇多張圖片</span>
-        <p className="mt-2 text-sm font-medium text-slate-500">支援 PNG、JPG、WEBP。檔名會自動成為卡片名稱。</p>
+        <p className="mt-2 text-sm font-medium text-slate-500">支援 PNG、JPG、WEBP。檔名只作為內部來源，不會顯示給孩子看。</p>
         <input name="batch_source_files" type="file" accept="image/*" multiple onChange={onFilesChange} className="mt-4 block w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600" />
       </label>
 
