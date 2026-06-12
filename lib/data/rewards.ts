@@ -1,56 +1,9 @@
 import { supabase } from '@/lib/supabase';
-import type { CardCollectionSummary, ChildCardInventoryItem } from '@/lib/types';
+import type { CardCollectionSummary, ChildCardInventoryItem, RewardDrawResult } from '@/lib/types';
 
-export const demoCollections: CardCollectionSummary[] = [
-  { id: 'cars', name: '小車系列', owned: 5, total: 12 },
-  { id: 'dogs', name: '狗狗系列', owned: 2, total: 8 },
-  { id: 'animals', name: '動物系列', owned: 1, total: 10 }
-];
+export const demoCollections: CardCollectionSummary[] = [];
 
-export const demoInventory: ChildCardInventoryItem[] = [
-  {
-    id: 'demo-inventory-1',
-    quantity: 1,
-    obtained_at: new Date().toISOString(),
-    card: {
-      id: 'demo-red-car',
-      name: '紅色小車',
-      card_no: 'CAR-001',
-      rarity: 'rare',
-      rendered_card_image_url: null,
-      series: { id: 'cars', name: '小車系列' },
-      category: { id: 'cars-main', name: '小車' }
-    }
-  },
-  {
-    id: 'demo-inventory-2',
-    quantity: 1,
-    obtained_at: new Date().toISOString(),
-    card: {
-      id: 'demo-blue-car',
-      name: '藍色小車',
-      card_no: 'CAR-002',
-      rarity: 'common',
-      rendered_card_image_url: null,
-      series: { id: 'cars', name: '小車系列' },
-      category: { id: 'cars-main', name: '小車' }
-    }
-  },
-  {
-    id: 'demo-inventory-3',
-    quantity: 1,
-    obtained_at: new Date().toISOString(),
-    card: {
-      id: 'demo-blue-dog',
-      name: '藍色狗狗',
-      card_no: 'DOG-001',
-      rarity: 'common',
-      rendered_card_image_url: null,
-      series: { id: 'dogs', name: '狗狗系列' },
-      category: { id: 'dogs-main', name: '日常' }
-    }
-  }
-];
+export const demoInventory: ChildCardInventoryItem[] = [];
 
 export async function getDefaultChildId() {
   const client = supabase;
@@ -71,44 +24,42 @@ export async function getCollectionSummary(): Promise<CardCollectionSummary[]> {
   const client = supabase;
   if (!client) return demoCollections;
 
-  const { data: series, error: seriesError } = await client
-    .from('card_series')
-    .select('id, name, cover_image_url')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true });
-
-  if (seriesError || !series?.length) return demoCollections;
-
   const childId = await getDefaultChildId();
+  if (!childId) return demoCollections;
 
-  const summaries = await Promise.all(
-    series.map(async (item) => {
-      const [{ count: total }, { count: owned }] = await Promise.all([
-        client
-          .from('cards')
-          .select('id', { count: 'exact', head: true })
-          .eq('series_id', item.id)
-          .eq('is_active', true),
-        childId
-          ? client
-              .from('child_card_inventory')
-              .select('cards!inner(id)', { count: 'exact', head: true })
-              .eq('child_id', childId)
-              .eq('cards.series_id', item.id)
-          : Promise.resolve({ count: 0 })
-      ]);
+  const { data, error } = await client
+    .from('child_card_inventory')
+    .select(
+      `
+      quantity,
+      card:cards(
+        id,
+        series:card_series(id, name, cover_image_url)
+      )
+    `
+    )
+    .eq('child_id', childId);
 
-      return {
-        id: item.id,
-        name: item.name,
-        cover_image_url: item.cover_image_url,
-        owned: owned ?? 0,
-        total: total ?? 0
-      };
-    })
-  );
+  if (error || !data?.length) return demoCollections;
 
-  return summaries;
+  const map = new Map<string, CardCollectionSummary>();
+
+  for (const item of data as any[]) {
+    const series = item.card?.series;
+    if (!series?.id) continue;
+    const current = map.get(series.id) ?? {
+      id: series.id,
+      name: series.name,
+      cover_image_url: series.cover_image_url,
+      owned: 0,
+      total: 0
+    };
+    current.owned += Number(item.quantity ?? 1);
+    current.total += Number(item.quantity ?? 1);
+    map.set(series.id, current);
+  }
+
+  return Array.from(map.values());
 }
 
 export async function getChildInventory(): Promise<ChildCardInventoryItem[]> {
@@ -141,4 +92,57 @@ export async function getChildInventory(): Promise<ChildCardInventoryItem[]> {
 
   if (error || !data?.length) return demoInventory;
   return data as unknown as ChildCardInventoryItem[];
+}
+
+export async function getTodayDrawnReward(practiceRecordId?: string | null): Promise<RewardDrawResult | null> {
+  const client = supabase;
+  if (!client) return null;
+
+  const childId = await getDefaultChildId();
+  if (!childId) return null;
+
+  let query = client
+    .from('reward_draw_logs')
+    .select(
+      `
+      id,
+      created_at,
+      card_id,
+      practice_record_id,
+      cards:cards(
+        id,
+        name,
+        card_no,
+        rarity,
+        source_image_url,
+        rendered_card_image_url,
+        description,
+        series:card_series(id, name),
+        category:card_categories(id, name)
+      )
+    `
+    )
+    .eq('child_id', childId)
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (practiceRecordId) {
+    query = query.eq('practice_record_id', practiceRecordId);
+  } else {
+    const today = new Date().toISOString().slice(0, 10);
+    query = query.gte('created_at', `${today}T00:00:00.000Z`);
+  }
+
+  const { data, error } = await query.maybeSingle();
+  if (error || !data?.id || !data.cards) return null;
+
+  return {
+    ok: true,
+    message: '這是今天抽到的卡片。按「儲存到收納包」後，就可以在收納包裡隨時查看。',
+    card: data.cards as any,
+    draw_log_id: data.id as string,
+    is_new: true,
+    remaining_stock: null,
+    saved_to_inventory: false
+  };
 }
