@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
+import { getRewardCardDisplayName } from '@/lib/cards/display';
 import { getChildInventory } from '@/lib/data/rewards';
 import type { RewardCard } from '@/lib/types';
 
@@ -25,7 +26,7 @@ function cardImageUrl(card: RewardCard) {
 }
 
 function cardFallbackEmoji(card: RewardCard) {
-  const text = `${card.name} ${card.series?.name ?? ''}`;
+  const text = `${getRewardCardDisplayName(card)} ${card.series?.name ?? ''}`;
   if (text.includes('車')) return '🚗';
   if (text.includes('狗') || text.includes('布麗')) return '🐶';
   if (text.includes('植物') || text.includes('皮克')) return '🌱';
@@ -98,17 +99,18 @@ export default async function CollectionPage() {
                   const card = item.card;
                   if (!card) return null;
                   const imageUrl = cardImageUrl(card);
+                  const displayName = getRewardCardDisplayName(card);
 
                   return (
                     <div key={item.id} className="rounded-[28px] bg-white p-2 shadow-[0_10px_22px_rgba(30,64,175,0.08)] active:scale-[0.99]">
                       <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
                         {imageUrl ? (
-                          <Image src={imageUrl} alt={card.name} fill className="object-cover" sizes="170px" unoptimized />
+                          <Image src={imageUrl} alt={displayName} fill className="object-cover" sizes="170px" unoptimized />
                         ) : (
                           <div className="text-6xl">{cardFallbackEmoji(card)}</div>
                         )}
                       </div>
-                      <h3 className="mt-2 truncate text-base font-black text-[#172033]">{card.name}</h3>
+                      <h3 className="mt-2 truncate text-base font-black text-[#172033]">{displayName}</h3>
                       <p className="mt-0.5 truncate text-xs font-bold text-[#7b8aa3]">{card.series?.name ?? '收藏卡'}</p>
                       <div className="mt-2 flex flex-wrap gap-1">
                         <span className={`rounded-full px-2 py-1 text-[11px] font-black ${rarityStyle[card.rarity] ?? rarityStyle.common}`}>
