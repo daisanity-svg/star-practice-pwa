@@ -303,6 +303,37 @@ export async function createBatchCards(formData: FormData) {
   revalidatePath('/reward');
 }
 
+export async function createScheduledReward(formData: FormData) {
+  if (!supabase) return;
+
+  const cardId = value(formData, 'scheduled_card_id');
+  if (!cardId) return;
+
+  const reason = value(formData, 'scheduled_reason') || '爸爸指定獎勵';
+  const rewardPackId = nullableValue(formData, 'scheduled_reward_pack_id');
+  const startsOn = nullableValue(formData, 'scheduled_starts_on');
+  const expiresOn = nullableValue(formData, 'scheduled_expires_on');
+
+  const { error } = await supabase.from('scheduled_rewards').insert({
+    child_id: null,
+    card_id: cardId,
+    reward_pack_id: rewardPackId,
+    reason,
+    starts_on: startsOn,
+    expires_on: expiresOn,
+    is_claimed: false
+  });
+
+  if (error) {
+    console.error('createScheduledReward error', error.message);
+    return;
+  }
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/parent/dashboard');
+  revalidatePath('/reward');
+}
+
 export async function createRewardPack(formData: FormData) {
   if (!supabase) return;
 
