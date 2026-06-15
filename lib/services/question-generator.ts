@@ -327,7 +327,7 @@ async function fetchRecentQuestionMemory(childId: string) {
   since.setDate(since.getDate() - 3);
   const { data } = await supabase!
     .from('generated_questions')
-    .select('question_text, learning_item_id, learning_items(content), learning_memory_hooks(keyword), daily_learning_plan!inner(date)')
+    .select('question_text, learning_item_id, learning_memory_hooks(keyword), daily_learning_plan!inner(date)')
     .eq('child_id', childId)
     .gte('daily_learning_plan.date', since.toISOString().slice(0, 10))
     .order('created_at', { ascending: false })
@@ -336,68 +336,19 @@ async function fetchRecentQuestionMemory(childId: string) {
   const promptTexts = new Set<string>();
   const keywords: string[] = [];
   const itemIds: string[] = [];
-  const symbols: string[] = [];
   for (const row of (data ?? []) as any[]) {
     if (row.question_text) promptTexts.add(row.question_text);
     const keyword = row.learning_memory_hooks?.keyword;
     if (keyword) keywords.push(keyword);
     if (row.learning_item_id) itemIds.push(row.learning_item_id);
-    if (row.learning_items?.content) symbols.push(row.learning_items.content);
   }
-  return { promptTexts, recentKeywords: keywords, recentItemIds: itemIds, recentSymbols: symbols };
-}
-
-function getTemplatesForItem(mode: SafePracticeMode, item: LearningItemRow) {
-  const templates = [...SAFE_QUESTION_TEMPLATES[mode]];
-  if (isEnglishType(item.type)) {
-    const englishTemplates = templates.filter((template) => !template.includes('注音') && !template.includes('聲音'));
-    return englishTemplates.length ? englishTemplates : templates;
-  }
-
-  const bopomofoTemplates = templates.filter((template) => !template.includes('字母'));
-  return bopomofoTemplates.length ? bopomofoTemplates : templates;
+  return { promptTexts, recentKeywords: keywords, recentItemIds: itemIds };
 }
 
 function pickFreshTemplate(mode: SafePracticeMode, orderIndex: number, usedPrompts: Set<string>, item: LearningItemRow, hookKeyword?: string | null) {
-  const candidateTemplates = getTemplatesForItem(mode, item);
-  const templates = shuffle(candidateTemplates);
-  const fallback = templates[orderIndex % templates.length] ?? pickTemplate(mode, orderIndex);
+  const templates = shuffle([...SAFE_QUESTION_TEMPLATES[mode]]);
+  const fallback = pickTemplate(mode, orderIndex + Math.floor(Math.random() * templates.length));
   return templates.find((template) => !usedPrompts.has(renderTemplate(template, item, hookKeyword))) ?? fallback;
-}
-
-function takeUniqueBySymbol(items: LearningItemRow[], count: number, usedSymbols: Set<string>) {
-  const picked: LearningItemRow[] = [];
-  for (const item of items) {
-    if (picked.length >= count) break;
-    if (usedSymbols.has(item.content)) continue;
-    picked.push(item);
-    usedSymbols.add(item.content);
-  }
-  return picked;
-}
-
-function selectRoundItems(params: {
-  source: Awaited<ReturnType<typeof fetchGenerationSource>>;
-  recentSymbols: Set<string>;
-  requiredQuestions: number;
-}) {
-  const { source, recentSymbols, requiredQuestions } = params;
-  const usedSymbols = new Set<string>();
-  const bopomofoItems = uniqueByContent(source.items.filter((item) => isBopomofoType(item.type)));
-  const englishItems = uniqueByContent(source.items.filter((item) => isEnglishType(item.type)));
-  const weaknessAndReview = uniqueByContent([...source.weaknessItems, ...source.reviewItems]);
-  const selected = [
-    ...takeUniqueBySymbol(weightedShuffleByRecent(bopomofoItems, recentSymbols), 2, usedSymbols),
-    ...takeUniqueBySymbol(weightedShuffleByRecent(englishItems, recentSymbols), 2, usedSymbols)
-  ];
-
-  selected.push(...takeUniqueBySymbol(weightedShuffleByRecent(weaknessAndReview, recentSymbols), 1, usedSymbols));
-
-  if (selected.length < requiredQuestions) {
-    selected.push(...takeUniqueBySymbol(weightedShuffleByRecent(source.items, recentSymbols), requiredQuestions - selected.length, usedSymbols));
-  }
-
-  return selected.slice(0, requiredQuestions);
 }
 
 function buildQuestionRows(params: {
@@ -479,12 +430,24 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
   if (!source.items.length) return [];
 
   const recentMemory = await fetchRecentQuestionMemory(childId);
+  const lastKeyword = recentMemory.recentKeywords[0];
+  const deprioritizeRecent = (items: LearningItemRow[]) => [
+    ...items.filter((item) => !recentMemory.recentItemIds.slice(0, 5).includes(item.id)),
+    ...items.filter((item) => recentMemory.recentItemIds.slice(0, 5).includes(item.id))
+  ];
+
   const requiredQuestions = Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS);
-  const selected = selectRoundItems({
-    source,
-    recentSymbols: new Set(recentMemory.recentSymbols),
-    requiredQuestions
+  const preferredSelected = uniqueById([
+    ...shuffle(deprioritizeRecent(source.weaknessItems)).slice(0, plan.weakness_item_count ?? DEFAULT_COUNTS.weakness_item_count),
+    ...shuffle(deprioritizeRecent(source.reviewItems)).slice(0, plan.review_item_count ?? DEFAULT_COUNTS.review_item_count),
+    ...shuffle(deprioritizeRecent(source.newItems)).slice(0, plan.new_item_count ?? DEFAULT_COUNTS.new_item_count),
+    ...shuffle(deprioritizeRecent(source.fallbackItems)),
+    ...shuffle(deprioritizeRecent(source.items))
+  ]).filter((item) => {
+    const hook = selectHook(item, source.hooks, source.progressByItem.get(item.id)?.mastery_level ?? 0);
+    return !lastKeyword || hook?.keyword !== lastKeyword || source.items.length <= TOTAL_QUESTIONS;
   });
+  const selected = uniqueById([...preferredSelected, ...shuffle(deprioritizeRecent(source.items))]).slice(0, requiredQuestions);
 
   const rows = buildQuestionRows({
     childId,

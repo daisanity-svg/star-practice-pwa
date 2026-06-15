@@ -84,25 +84,24 @@ export const ENGLISH_KEYWORDS: Record<string, string[]> = {
 export const SAFE_QUESTION_TEMPLATES = {
   choice: [
     '「{keyword}」的第一個聲音是哪一個？',
-    '哪個注音會出現在「{keyword}」開頭？',
-    '看到「{keyword}」，第一個聲音是什麼？',
-    '幫「{keyword}」找到開頭聲音。',
+    '看到「{keyword}」，請找出開頭朋友。',
+    '幫「{keyword}」找到正確的聲音朋友。',
+    '小偵探任務：「{keyword}」開頭是哪一個？',
     '{keyword} 開頭是哪個字母？',
-    '{keyword} 的第一個字母是哪一個？',
-    '哪個字母會出現在 {keyword} 開頭？',
-    '幫 {keyword} 找到開頭字母。'
+    '{keyword} 的第一個字母是哪一個？'
   ],
   listening: [
-    '聽到「{keyword}」，請找出開頭的注音。',
-    '耳朵小任務：聽「{keyword}」，選出第一個聲音。',
-    '聽一聽「{keyword}」，哪個聲音先出現？',
-    '聽到 {keyword}，請找出第一個字母。',
-    '仔細聽 {keyword}，開頭是哪個字母？'
+    '聽到「{keyword}」，請找出 {symbol}。',
+    '耳朵小任務：聽「{keyword}」，選出開頭朋友。',
+    '聲音小雷達：「{keyword}」的第一個聲音是哪一個？',
+    '叮咚！請幫「{keyword}」找到正確聲音。',
+    '聽一聽「{keyword}」，哪個朋友先出現？'
   ],
   tracing: [
-    '手指小畫家：描一描「{keyword}」的開頭聲音。',
-    '小手出發：把「{keyword}」的開頭聲音描亮。',
-    '魔法筆任務：一起描出「{keyword}」的開頭。'
+    '手指小畫家：描一描「{keyword}」的開頭朋友。',
+    '星星軌道：跟著線走，寫出 {symbol}。',
+    '小手出發：把「{keyword}」的聲音描亮。',
+    '魔法筆任務：一起把 {symbol} 畫出來。'
   ]
 } as const;
 
@@ -147,10 +146,10 @@ function isSymbolOnlyKeyword(keyword: string, symbol: string) {
 function hasBannedSymbolLoop(text: string) {
   const compact = text.replace(/\s+/g, '');
   return (
-    /([A-Zㄅ-ㄩ])的\1/.test(compact) ||
-    /([A-Zㄅ-ㄩ])要找\1/.test(compact) ||
-    /哪一個是([A-Zㄅ-ㄩ])的\1/.test(compact) ||
-    /星星躲貓貓：?哪一個是([A-Zㄅ-ㄩ])的\1/.test(compact)
+    /([A-Zㄅ-ㄧ])的\1/.test(compact) ||
+    /([A-Zㄅ-ㄧ])要找\1/.test(compact) ||
+    /哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact) ||
+    /星星躲貓貓：?哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact)
   );
 }
 

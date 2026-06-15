@@ -429,15 +429,7 @@ export async function setPracticeMode(formData: FormData) {
     { key: 'practice_mode', value: mode, updated_at: new Date().toISOString() },
     { onConflict: 'key' }
   );
-  if (error) {
-    const isRlsError = error.message.toLowerCase().includes('row-level security') || error.message.toLowerCase().includes('rls');
-    return {
-      ok: false,
-      message: isRlsError
-        ? '切換模式失敗：app_settings 權限不足，請確認 Supabase RLS 或執行 app-settings.sql'
-        : `切換模式失敗：${error.message}`
-    };
-  }
+  if (error) return { ok: false, message: `切換模式失敗：${error.message}` };
 
   revalidatePath('/parent/cards');
   revalidatePath('/parent/dashboard');

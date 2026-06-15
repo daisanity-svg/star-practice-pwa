@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { completePracticeSession } from '@/lib/actions/practice';
@@ -70,19 +70,12 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
   const progressPercent = questions.length > 0 ? Math.round(((currentIndex + (selectedAnswer ? 1 : 0)) / questions.length) * 100) : 0;
 
   useEffect(() => {
-    if (!practiceRecordId || practiceMode !== 'production' || redirectedRef.current) return;
-    redirectedRef.current = true;
-    setIsRedirecting(true);
+    if (!practiceRecordId || practiceMode !== 'production') return;
     const timer = window.setTimeout(() => {
-      router.replace(`/reward?practice_record_id=${practiceRecordId}`);
-    }, 500);
+      router.push(`/reward?practice_record_id=${practiceRecordId}`);
+    }, 1200);
     return () => window.clearTimeout(timer);
   }, [practiceMode, practiceRecordId, router]);
-
-  useEffect(() => {
-    if (!answeredCurrent) return;
-    ctaRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [answeredCurrent]);
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -186,7 +179,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
         <p className="mt-7 rounded-full bg-[#e9f4ff] px-5 py-2 text-base font-black text-[#1766e6]">完成任務</p>
         <h1 className="mt-4 text-[34px] font-black leading-tight text-[#172033]">今天練習完成！</h1>
         <p className="mt-3 text-lg font-bold leading-relaxed text-[#5f6f89]">
-          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，{practiceMode === 'production' ? '練習完成，準備打開小禮物。' : '準備打開驚喜卡包。'}
+          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，{practiceMode === 'production' ? '即將帶你去打開小禮物。' : '準備打開驚喜卡包。'}
         </p>
         {completionMessage ? <p className="mt-4 rounded-[24px] bg-white px-5 py-4 text-base font-bold text-[#5f6f89] shadow-sm">{completionMessage}</p> : null}
         <div className="mt-8 w-full space-y-3">
@@ -204,11 +197,11 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
   }
 
   return (
-    <section className="flex flex-1 flex-col gap-2 pb-[calc(env(safe-area-inset-bottom)+92px)]">
+    <section className="flex flex-1 flex-col gap-3">
       {practiceMode === 'test' ? (
         <div className="rounded-[24px] bg-purple-100 px-4 py-3 text-center text-sm font-black text-purple-700 ring-1 ring-purple-200">測試模式：題目與抽卡可重複測試</div>
       ) : null}
-      <div className="kid-card p-3">
+      <div className="kid-card p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-black text-[#2f8cff]">第 {currentIndex + 1} / {questions.length} 題</p>

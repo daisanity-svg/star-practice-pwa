@@ -103,13 +103,13 @@ export default async function ParentCardsPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-500">Practice Mode</p>
-              <h2 className="mt-1 text-xl font-black text-slate-950">目前模式：{practiceMode === 'test' ? '測試模式' : '正式模式'}</h2>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">目前模式：{practiceMode === 'test' ? '測試模式' : '正式模式'}</h2>
               <p className="mt-2 text-sm font-medium text-slate-500">測試模式可重複產生題目與測抽卡；正式模式會保留今日進度並完成後前往打開小禮物。</p>
             </div>
             <div className="grid gap-2 sm:w-56">
               <AdminActionForm action={setPracticeMode}>
                 <input type="hidden" name="practice_mode" value={practiceMode === 'test' ? 'production' : 'test'} />
-                <button className="w-full rounded-2xl bg-blue-500 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-blue-600 disabled:opacity-60">
+                <button className="w-full rounded-2xl bg-purple-600 px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-base font-black text-white shadow-sm transition hover:bg-purple-700 disabled:opacity-60">
                   {practiceMode === 'test' ? '切換為正式模式' : '切換為測試模式'}
                 </button>
               </AdminActionForm>
@@ -136,7 +136,7 @@ export default async function ParentCardsPage() {
                   <span className={labelClass}>描述</span>
                   <textarea name="pool_description" rows={3} className={inputClass} placeholder="完成練習後可以抽布麗狗卡" />
                 </label>
-                <button className="w-full rounded-full bg-blue-500 px-5 py-3 text-sm min-h-[48px] font-black text-white shadow-sm transition hover:bg-blue-600 active:scale-[0.99] disabled:opacity-60">
+                <button className="w-full rounded-2xl bg-blue-600 px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-base font-black text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-60">
                   建立獎池／提交中會鎖定
                 </button>
               </AdminActionForm>
@@ -248,7 +248,7 @@ export default async function ParentCardsPage() {
                     </div>
                     <AdminActionForm action={deleteRewardPool} confirmMessage="確定要刪除這個獎池嗎？獎池內的卡片關聯也會移除。" className="mt-3">
                       <input type="hidden" name="reward_pack_id" value={pool.packId} />
-                      <button className="w-full rounded-full bg-white px-4 py-3 text-sm font-black text-red-600 ring-1 ring-red-100 transition hover:bg-red-50 disabled:opacity-60">刪除獎池</button>
+                      <button className="w-full rounded-2xl bg-white px-4 py-3 text-sm font-black text-red-600 ring-1 ring-red-100 transition hover:bg-red-50 disabled:opacity-60">刪除獎池</button>
                     </AdminActionForm>
                   </div>
                 ))}
@@ -257,16 +257,16 @@ export default async function ParentCardsPage() {
 
 
             <section className={cardClass}>
-              <h2 className="text-xl font-black text-slate-950">卡片列表</h2>
+              <h2 className="text-2xl font-black text-slate-950">卡片列表</h2>
               <p className="mt-2 text-sm text-slate-500">多餘或測試用卡片可在這裡刪除；刪除會同步移除獎池、收納包、抽卡紀錄與指定獎勵關聯。</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {cards.map((card) => (
-                  <div key={card.id} className="rounded-3xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm">
+                  <div key={card.id} className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-black text-blue-500">{card.card_no || '未編號'}｜{card.rarity}</p>
                     <h3 className="mt-1 line-clamp-2 text-lg font-black text-slate-950">{card.name}</h3>
                     <AdminActionForm action={deleteCard} confirmMessage="確定要刪除這張卡片嗎？收納包與抽卡紀錄中的關聯也會移除。" className="mt-3">
                       <input type="hidden" name="card_id" value={card.id} />
-                      <button className="w-full rounded-full bg-white px-4 py-3 text-sm font-black text-red-600 ring-1 ring-red-100 transition hover:bg-red-50 disabled:opacity-60">刪除卡片</button>
+                      <button className="w-full rounded-2xl bg-white px-4 py-3 text-sm font-black text-red-600 ring-1 ring-red-100 transition hover:bg-red-50 disabled:opacity-60">刪除卡片</button>
                     </AdminActionForm>
                   </div>
                 ))}
@@ -276,7 +276,7 @@ export default async function ParentCardsPage() {
             <section className={cardClass}>
               <AdminActionForm action={createBatchCards} className="pb-[calc(env(safe-area-inset-bottom)+96px)]">
                 <BatchCardUploader pools={uploadablePools} />
-                <button className="mt-5 w-full rounded-full bg-blue-500 px-5 py-3 text-sm min-h-[48px] font-black text-white shadow-sm transition hover:bg-blue-600 active:scale-[0.99] disabled:opacity-60">
+                <button className="mt-5 w-full rounded-2xl bg-blue-600 px-5 py-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] text-base font-black text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] disabled:opacity-60">
                   批次加入獎池／提交中會鎖定
                 </button>
               </AdminActionForm>

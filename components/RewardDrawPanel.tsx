@@ -89,7 +89,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
           {card ? <RewardCardPreview card={card} /> : <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">💤</div>}
-          <p className="mt-3 text-sm font-black leading-relaxed text-[#5f6f89]">{saveResult?.message ?? drawResult?.message}</p>
+          <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">{saveResult?.message ?? drawResult?.message}</p>
         </div>
 
         <div className="relative z-10 mt-4 space-y-3">

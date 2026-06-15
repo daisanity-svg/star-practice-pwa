@@ -38,9 +38,6 @@ export function AdminActionForm({ action, children, successReset, confirmMessage
       <fieldset disabled={isPending} className="contents">
         {children}
       </fieldset>
-      {isPending ? (
-        <p className="mt-3 rounded-2xl bg-blue-50 px-4 py-3 text-sm font-black text-blue-700 ring-1 ring-blue-100">處理中，請稍候…</p>
-      ) : null}
       {state ? (
         <p className={`mt-3 rounded-2xl px-4 py-3 text-sm font-black ${state.ok ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' : 'bg-red-50 text-red-700 ring-1 ring-red-100'}`}>
           {state.message}
