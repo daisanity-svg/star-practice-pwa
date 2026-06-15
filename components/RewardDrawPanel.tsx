@@ -7,20 +7,6 @@ import { drawDailyRewardFromState, saveDrawnRewardFromState } from '@/lib/action
 import { getRewardCardDisplayName } from '@/lib/cards/display';
 import type { RewardDrawResult, RewardCard, SaveRewardResult } from '@/lib/types';
 
-const rarityLabel: Record<string, string> = {
-  common: '普通',
-  rare: '閃亮',
-  super_rare: '超稀有',
-  legendary: '傳說'
-};
-
-const rarityStyle: Record<string, string> = {
-  common: 'bg-slate-100 text-slate-600',
-  rare: 'bg-[#dbeafe] text-blue-700',
-  super_rare: 'bg-[#e0edff] text-[#1766e6]',
-  legendary: 'bg-[#fff0b8] text-amber-900'
-};
-
 type RewardDrawPanelProps = {
   practiceRecordId?: string;
   initialResult?: RewardDrawResult | null;
@@ -43,25 +29,14 @@ function RewardCardPreview({ card }: { card: RewardCard }) {
   const displayName = getRewardCardDisplayName(card);
 
   return (
-    <div className="animate-pack-open relative w-full max-w-[238px] rounded-[28px] bg-white p-2.5 sm:max-w-[286px] sm:rounded-[34px] sm:p-3 shadow-[0_24px_52px_rgba(30,64,175,0.18)]">
-      <div className="absolute -left-3 top-4 z-10 rounded-full bg-[#ffd95a] px-3 py-1 text-xs font-black text-[#193153] shadow-sm">{card.card_no ?? 'NEW'}</div>
-      <div className="absolute -right-3 top-4 z-10 rounded-full bg-[#2f8cff] px-3 py-1 text-xs font-black text-white shadow-sm">今日卡片</div>
-      <div className="relative flex aspect-[3/4] max-h-[320px] items-center justify-center overflow-hidden rounded-[22px] sm:rounded-[26px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
-        {cardImageUrl ? (
-          <Image src={cardImageUrl} alt={displayName} fill className="object-cover" sizes="300px" unoptimized />
-        ) : (
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/70 text-7xl shadow-inner">{getCardFallbackEmoji(card)}</div>
-        )}
-      </div>
-      <div className="mt-2 rounded-[20px] bg-[#f5f9ff] px-3 py-2.5">
-        <p className="text-xs font-black text-[#1766e6]">{card.series?.name ?? '收藏卡'}</p>
-        <h2 className="mt-1 truncate text-xl font-black text-[#172033]">{displayName}</h2>
-        <div className="mt-2 flex items-center justify-center gap-2">
-          <span className={`rounded-full px-3 py-1 text-xs font-black ${rarityStyle[card.rarity] ?? rarityStyle.common}`}>
-            {rarityLabel[card.rarity] ?? card.rarity}
-          </span>
+    <div className="animate-pack-open relative flex w-full justify-center">
+      {cardImageUrl ? (
+        <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[20px] shadow-[0_18px_42px_rgba(30,64,175,0.16)] sm:max-w-[300px]">
+          <Image src={cardImageUrl} alt={displayName} fill className="object-contain" sizes="300px" unoptimized />
         </div>
-      </div>
+      ) : (
+        <div className="flex h-44 w-44 items-center justify-center rounded-[36px] bg-white/70 text-7xl shadow-inner">{getCardFallbackEmoji(card)}</div>
+      )}
     </div>
   );
 }
