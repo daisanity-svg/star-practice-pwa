@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
 import type { RewardDrawResult, RewardCard, SaveRewardResult } from '@/lib/types';
-import { isPracticeTestMode } from '@/lib/config/app-mode';
+import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
 
 const demoCard: RewardCard = {
   id: 'demo-red-car',
@@ -80,11 +80,11 @@ async function getActiveRewardPackIdWithStock() {
     .select(
       `
       id,
-      reward_pack_items!inner(stock)
+      reward_pack_items!inner(id)
     `
     )
     .eq('is_active', true)
-    .gte('reward_pack_items.stock', 1)
+    .eq('reward_pack_items.is_active', true)
     .or(`start_date.is.null,start_date.lte.${today}`)
     .or(`end_date.is.null,end_date.gte.${today}`)
     .order('created_at', { ascending: true })
@@ -222,7 +222,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
       card: demoCard,
       draw_log_id: 'demo-draw-log',
       is_new: true,
-      remaining_stock: 1,
+      remaining_stock: null,
       saved_to_inventory: false,
       demo: true
     };
@@ -247,7 +247,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     rewardPackId = record.reward_pack_id;
   }
 
-  if (!practiceRecordId && !isPracticeTestMode()) {
+  if (!practiceRecordId && !(await isPracticeTestModeAsync())) {
     return { ok: false, message: '請先完成今日練習，再打開卡包。' };
   }
 
@@ -301,7 +301,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     };
   }
 
-  if (!rewardPackId) return { ok: false, message: '目前沒有啟用中且有庫存的卡包，請先到後台建立並啟用卡包。' };
+  if (!rewardPackId) return { ok: false, message: '目前沒有啟用中的卡包，請先到後台建立並啟用卡包。' };
 
   const { data: packItems, error: packItemsError } = await client
     .from('reward_pack_items')
@@ -326,20 +326,15 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     `
     )
     .eq('reward_pack_id', rewardPackId)
-    .eq('is_active', true)
-    .gt('stock', 0);
+    .eq('is_active', true);
 
   if (packItemsError) return { ok: false, message: `讀取卡包失敗：${packItemsError.message}` };
 
   const availableItems = (packItems ?? []) as unknown as PackItemRow[];
-  if (!availableItems.length) return { ok: false, message: '這個卡包目前沒有可抽的卡片，請到後台補庫存或換卡包。' };
+  if (!availableItems.length) return { ok: false, message: '這個卡包目前沒有啟用中的卡片，請到後台加入卡片或換卡包。' };
 
   const picked = pickWeightedItem(availableItems);
   if (!picked?.cards) return { ok: false, message: '抽到的卡片資料不完整，請檢查卡片是否仍存在。' };
-
-  const nextStock = Math.max(0, Number(picked.stock ?? 0) - 1);
-  const { error: stockError } = await client.from('reward_pack_items').update({ stock: nextStock }).eq('id', picked.id);
-  if (stockError) return { ok: false, message: `更新卡包庫存失敗：${stockError.message}` };
 
   let drawLogId: string;
   try {
@@ -362,7 +357,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     card: picked.cards,
     draw_log_id: drawLogId,
     is_new: true,
-    remaining_stock: nextStock,
+    remaining_stock: null,
     saved_to_inventory: false
   };
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
 import type { PracticeCompletionResult, SubmittedPracticeAnswer } from '@/lib/types';
+import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
 
 const allowedPracticeModes = new Set(['intro', 'choice', 'listening', 'tracing', 'recall', 'sorting']);
 
@@ -144,6 +145,7 @@ export async function completePracticeSession(
     return { ok: false, message: '題目資料不完整，無法寫入練習紀錄。' };
   }
 
+  const testMode = await isPracticeTestModeAsync();
   const correctCount = validAnswers.filter((answer) => answer.is_correct).length;
   const wrongCount = validAnswers.length - correctCount;
   const { dailyLearningPlanId, rewardPackId } = await resolvePlanAndPack(validAnswers);
@@ -184,7 +186,9 @@ export async function completePracticeSession(
     await supabase.from('generated_questions').update({ status: 'completed' }).in('id', questionIds);
   }
 
-  await markDailyPlanComplete(dailyLearningPlanId);
+  if (!testMode) {
+    await markDailyPlanComplete(dailyLearningPlanId);
+  }
 
   revalidatePath('/');
   revalidatePath('/practice');

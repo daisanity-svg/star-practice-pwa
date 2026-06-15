@@ -16,7 +16,7 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
   const todayDraw = await getTodayDrawnReward(practiceRecordId);
 
   return (
-    <PhoneFrame>
+    <PhoneFrame className="pt-[calc(env(safe-area-inset-top)+20px)] pb-[calc(env(safe-area-inset-bottom)+160px)]">
       <KidTopBar title="今日獎勵" backHref="/practice" backLabel="練習" rightLabel="🎁" />
       <RewardDrawPanel practiceRecordId={practiceRecordId} initialResult={todayDraw} />
       <KidBottomNav />
