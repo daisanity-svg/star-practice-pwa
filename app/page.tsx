@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { getActiveEvent } from '@/lib/data/events';
 import { getCollectionSummary } from '@/lib/data/rewards';
 
 function CollectionIcon({ name }: { name: string }) {
@@ -13,9 +12,7 @@ function CollectionIcon({ name }: { name: string }) {
 }
 
 export default async function HomePage() {
-  const [collections, activeEvent] = await Promise.all([getCollectionSummary(), getActiveEvent()]);
-  const eventPackName = activeEvent?.reward_pack?.name ?? '布麗狗驚喜卡包';
-  const eventName = activeEvent?.name ?? '藍色星星任務';
+  const collections = await getCollectionSummary();
   const ownedTotal = collections.reduce((sum, item) => sum + item.owned, 0);
   const cardTotal = collections.reduce((sum, item) => sum + item.total, 0) || 30;
   const topCollections = collections.slice(0, 3);
