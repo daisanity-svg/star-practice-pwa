@@ -369,7 +369,7 @@ function buildQuestionRows(params: {
       const template = pickFreshTemplate(practiceMode, orderIndex, params.recentPromptTexts, item, hook?.keyword);
       const questionText = renderTemplate(template, item, hook?.keyword);
       params.recentPromptTexts.add(questionText);
-      const options = practiceMode === 'tracing' ? [item.content] : buildSafeDistractors(item.content, item.type, params.allItems);
+      const options = buildSafeDistractors(item.content, item.type, params.allItems);
 
       const question: GeneratedQuestion = {
         id: `pending-${item.id}-${index}`,
