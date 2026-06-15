@@ -68,7 +68,7 @@ export default async function HomePage() {
             <h2 className="mt-2 text-[24px] font-black leading-tight text-[#172033]">完成後打開卡包</h2>
           </div>
         </div>
-        <Link href="/reward" className="mt-4 flex min-h-[58px] items-center justify-center rounded-[24px] bg-[#fff7d0] text-lg font-black text-[#193153] shadow-sm active:scale-[0.99]">
+        <Link href="/reward" aria-label="先看看今天的卡包" className="mt-4 flex min-h-[58px] items-center justify-center rounded-[24px] bg-[#fff7d0] text-lg font-black text-[#193153] shadow-sm active:scale-[0.99]">
           先看看今天的卡包 ✨
         </Link>
       </section>

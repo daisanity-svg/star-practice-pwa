@@ -322,7 +322,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
       ) : null}
 
       {answeredCurrent ? (
-        <div className="pb-[calc(env(safe-area-inset-bottom)+18px)] pt-1">
+        <div className="scroll-mb-[calc(env(safe-area-inset-bottom)+120px)] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-1">
           <button
             ref={ctaRef}
             type="button"
