@@ -69,7 +69,6 @@ export default async function HomePage() {
           <div className="min-w-0">
             <p className="rounded-full bg-[#e9f4ff] px-3 py-1 text-xs font-black text-[#1766e6]">今天獎勵</p>
             <h2 className="mt-2 text-[24px] font-black leading-tight text-[#172033]">完成後打開卡包</h2>
-            <p className="mt-2 text-sm font-bold leading-relaxed text-[#5f6f89]">{eventName}：可以抽 <span className="text-[#1766e6]">{eventPackName}</span></p>
           </div>
         </div>
         <Link href="/reward" className="mt-4 flex min-h-[58px] items-center justify-center rounded-[24px] bg-[#fff7d0] text-lg font-black text-[#193153] shadow-sm active:scale-[0.99]">
