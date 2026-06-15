@@ -51,7 +51,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<SubmittedPracticeAnswer[]>([]);
-  const [questionStartedAt, setQuestionStartedAt] = useState(Date.now());
+  const [questionStartedAt, setQuestionStartedAt] = useState(() => Date.now());
   const [completionMessage, setCompletionMessage] = useState<string | null>(null);
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null);
   const [practiceRecordId, setPracticeRecordId] = useState<string | null>(null);
