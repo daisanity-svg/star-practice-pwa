@@ -20,7 +20,7 @@ export default async function ParentEventsPage() {
   const [activeEvent, packs] = await Promise.all([getActiveEvent(), getRewardPackSummaries()]);
 
   return (
-    <PhoneFrame>
+    <PhoneFrame variant="admin">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台

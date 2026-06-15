@@ -43,10 +43,10 @@ function RewardCardPreview({ card }: { card: RewardCard }) {
   const displayName = getRewardCardDisplayName(card);
 
   return (
-    <div className="animate-pack-open relative w-full max-w-[286px] rounded-[34px] bg-white p-3 shadow-[0_24px_52px_rgba(30,64,175,0.18)]">
+    <div className="animate-pack-open relative w-full max-w-[286px] rounded-[36px] border border-white/80 bg-white p-3 shadow-[0_26px_56px_rgba(30,64,175,0.20)]">
       <div className="absolute -left-3 top-4 z-10 rounded-full bg-[#ffd95a] px-3 py-1 text-xs font-black text-[#193153] shadow-sm">{card.card_no ?? 'NEW'}</div>
       <div className="absolute -right-3 top-4 z-10 rounded-full bg-[#2f8cff] px-3 py-1 text-xs font-black text-white shadow-sm">今日卡片</div>
-      <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[26px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
+      <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[28px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
         {cardImageUrl ? (
           <Image src={cardImageUrl} alt={displayName} fill className="object-cover" sizes="300px" unoptimized />
         ) : (
@@ -76,7 +76,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
 
   if (drawResult || saveResult) {
     return (
-      <section className="kid-card-strong relative flex min-h-[570px] flex-col overflow-hidden p-5 text-center">
+      <section className="kid-card-strong relative flex min-h-[570px] flex-col overflow-hidden p-5 pb-[calc(env(safe-area-inset-bottom)+36px)] text-center">
         <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto h-80 w-80 rounded-full bg-[#dbeafe] opacity-70 blur-3xl" />
         <div className="pointer-events-none absolute left-8 top-24 text-3xl confetti-sparkle">✨</div>
         <div className="pointer-events-none absolute right-8 top-36 text-3xl confetti-sparkle">🎉</div>
@@ -102,23 +102,23 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
               <button
                 type="submit"
                 disabled={isSaving}
-                className="kid-blue-button flex min-h-[58px] w-full items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99] disabled:opacity-60"
+                className="kid-blue-button flex min-h-[60px] w-full items-center justify-center rounded-[26px] text-lg font-black ring-1 ring-white/70 active:scale-[0.99] disabled:opacity-60"
               >
                 {isSaving ? '儲存中...' : '🎒 儲存到收納包'}
               </button>
             </form>
           ) : null}
-          <Link href="/collection" className="flex min-h-[58px] items-center justify-center rounded-[24px] border border-[#d8eaff] bg-white text-lg font-black text-[#172033] active:scale-[0.99]">
+          <Link href="/collection" className="flex min-h-[58px] items-center justify-center rounded-[26px] border border-[#d8eaff] bg-white text-lg font-black text-[#172033] shadow-sm active:scale-[0.99]">
             {saved ? '查看收納包' : '先不儲存，回收納包'}
           </Link>
-          <Link href="/" className="flex min-h-[58px] items-center justify-center rounded-[24px] bg-[#f5f9ff] text-lg font-black text-[#172033] active:scale-[0.99]">回首頁</Link>
+          <Link href="/" className="flex min-h-[58px] items-center justify-center rounded-[26px] bg-[#f5f9ff] text-lg font-black text-[#172033] shadow-sm active:scale-[0.99]">回首頁</Link>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="kid-card-strong relative flex min-h-[570px] flex-col items-center justify-center overflow-hidden p-5 text-center">
+    <section className="kid-card-strong relative flex min-h-[570px] flex-col items-center justify-center overflow-hidden p-5 pb-[calc(env(safe-area-inset-bottom)+36px)] text-center">
       <div className="pointer-events-none absolute inset-x-0 top-20 mx-auto h-72 w-72 rounded-full bg-[#dbeafe] opacity-80 blur-3xl" />
       <div className="pointer-events-none absolute left-8 top-20 text-3xl confetti-sparkle">✨</div>
       <div className="pointer-events-none absolute right-8 top-28 text-3xl confetti-sparkle">⭐</div>
@@ -141,11 +141,11 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
         <button
           type="submit"
           disabled={isDrawing}
-          className="kid-blue-button flex min-h-[64px] w-full touch-manipulation select-none items-center justify-center rounded-[26px] text-xl font-black active:scale-[0.99] disabled:opacity-60"
+          className="kid-blue-button flex min-h-[64px] w-full touch-manipulation select-none items-center justify-center rounded-[28px] text-xl font-black ring-1 ring-white/70 active:scale-[0.99] disabled:opacity-60"
         >
           {isDrawing ? '打開中...' : '🎁 打開小禮物'}
         </button>
-        <Link href="/collection" className="flex min-h-[58px] items-center justify-center rounded-[24px] border border-[#d8eaff] bg-white text-lg font-black text-[#172033] active:scale-[0.99]">🎒 看收納包</Link>
+        <Link href="/collection" className="flex min-h-[58px] items-center justify-center rounded-[26px] border border-[#d8eaff] bg-white text-lg font-black text-[#172033] shadow-sm active:scale-[0.99]">🎒 看收納包</Link>
       </form>
     </section>
   );

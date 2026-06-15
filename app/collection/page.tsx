@@ -7,20 +7,6 @@ import { getRewardCardDisplayName } from '@/lib/cards/display';
 import { getChildInventory } from '@/lib/data/rewards';
 import type { RewardCard } from '@/lib/types';
 
-const rarityLabel: Record<string, string> = {
-  common: '普通',
-  rare: '閃亮',
-  super_rare: '超稀有',
-  legendary: '傳說'
-};
-
-const rarityStyle: Record<string, string> = {
-  common: 'bg-slate-100 text-slate-500',
-  rare: 'bg-[#dbeafe] text-blue-700',
-  super_rare: 'bg-[#e0edff] text-[#1766e6]',
-  legendary: 'bg-[#fff0b8] text-amber-900'
-};
-
 function cardImageUrl(card: RewardCard) {
   return card.rendered_card_image_url || card.source_image_url || null;
 }
@@ -83,7 +69,7 @@ export default async function CollectionPage() {
       </section>
 
       {inventory.length ? (
-        <section className="space-y-4">
+        <section className="space-y-4 pb-[calc(env(safe-area-inset-bottom)+120px)]">
           {groups.map((group) => (
             <div key={group.id} className="kid-card p-4">
               <div className="mb-4 flex items-center justify-between gap-3">
@@ -94,30 +80,29 @@ export default async function CollectionPage() {
                 <div className="rounded-full bg-[#e9f4ff] px-3 py-2 text-sm font-black text-[#1766e6]">{group.items.length} 種</div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5">
                 {group.items.map((item) => {
                   const card = item.card;
                   if (!card) return null;
                   const imageUrl = cardImageUrl(card);
                   const displayName = getRewardCardDisplayName(card);
+                  const quantity = Number(item.quantity ?? 1);
 
                   return (
-                    <div key={item.id} className="rounded-[28px] bg-white p-2 shadow-[0_10px_22px_rgba(30,64,175,0.08)] active:scale-[0.99]">
-                      <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
+                    <div key={item.id} className="group relative overflow-hidden rounded-[22px] bg-white/40 shadow-[0_8px_18px_rgba(30,64,175,0.10)] ring-1 ring-[#d8eaff]/70 active:scale-[0.99]">
+                      <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[22px] bg-[#f5f9ff]">
                         {imageUrl ? (
-                          <Image src={imageUrl} alt={displayName} fill className="object-cover" sizes="170px" unoptimized />
+                          <Image src={imageUrl} alt={displayName} fill className="object-contain" sizes="(max-width: 430px) 45vw, 180px" unoptimized />
                         ) : (
-                          <div className="text-6xl">{cardFallbackEmoji(card)}</div>
+                          <div className="text-6xl" aria-label={displayName}>{cardFallbackEmoji(card)}</div>
                         )}
                       </div>
-                      <h3 className="mt-2 truncate text-base font-black text-[#172033]">{displayName}</h3>
-                      <p className="mt-0.5 truncate text-xs font-bold text-[#7b8aa3]">{card.series?.name ?? '收藏卡'}</p>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        <span className={`rounded-full px-2 py-1 text-[11px] font-black ${rarityStyle[card.rarity] ?? rarityStyle.common}`}>
-                          {rarityLabel[card.rarity] ?? card.rarity}
+
+                      {quantity > 1 ? (
+                        <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
+                          x{quantity}
                         </span>
-                        <span className="rounded-full bg-[#fff0b8] px-2 py-1 text-[11px] font-black text-amber-900">x{item.quantity}</span>
-                      </div>
+                      ) : null}
                     </div>
                   );
                 })}

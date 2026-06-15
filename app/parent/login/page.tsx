@@ -4,7 +4,7 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 
 export default function ParentLoginPage() {
   return (
-    <PhoneFrame>
+    <PhoneFrame variant="admin">
       <section className="kid-card flex flex-1 flex-col p-6">
         <Link href="/" className="mb-6 w-fit rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 回小孩端

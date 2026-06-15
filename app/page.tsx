@@ -22,11 +22,12 @@ export default async function HomePage() {
 
   return (
     <PhoneFrame>
-      <section className="kid-hero-blue relative overflow-hidden rounded-[38px] p-5 text-white">
+      <section className="kid-hero-blue relative overflow-hidden rounded-[40px] p-5 text-white">
         <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/25 blur-2xl" />
         <div className="pointer-events-none absolute bottom-2 right-0 text-8xl opacity-20">☁️</div>
         <div className="pointer-events-none absolute left-6 top-7 text-2xl opacity-80 confetti-sparkle">⭐</div>
         <div className="pointer-events-none absolute right-10 top-20 text-xl opacity-80 confetti-sparkle">✨</div>
+        <div className="pointer-events-none absolute -bottom-3 left-6 rotate-[-10deg] text-5xl opacity-25">🌈</div>
 
         <header className="relative z-10 flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -41,7 +42,7 @@ export default async function HomePage() {
           </Link>
         </header>
 
-        <div className="relative z-10 mt-5 rounded-[32px] bg-white/96 p-4 text-[#172033] shadow-[0_16px_32px_rgba(30,64,175,0.14)]">
+        <div className="relative z-10 mt-5 rounded-[34px] border border-white/80 bg-white/96 p-4 text-[#172033] shadow-[0_18px_36px_rgba(30,64,175,0.16)]">
           <div className="flex items-start gap-3">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[22px] bg-[#e9f4ff] text-3xl">🧭</div>
             <div className="min-w-0 flex-1">
@@ -57,33 +58,33 @@ export default async function HomePage() {
               </div>
             </div>
           </div>
-          <Link href="/practice" className="kid-blue-button mt-5 flex min-h-[64px] items-center justify-center rounded-[26px] text-xl font-black active:scale-[0.99]">
+          <Link href="/practice" className="kid-blue-button mt-5 flex min-h-[66px] items-center justify-center rounded-[28px] text-xl font-black ring-1 ring-white/70 active:scale-[0.99]">
             🚀 開始今天練習
           </Link>
         </div>
       </section>
 
-      <section className="kid-card-strong overflow-hidden p-5">
+      <section className="kid-card-strong relative overflow-hidden p-5">
+        <div className="pointer-events-none absolute -right-7 -top-7 h-28 w-28 rounded-full bg-[#ffd66b]/30 blur-2xl" />
         <div className="flex items-center gap-4">
           <div className="reward-pack-glow flex h-24 w-24 shrink-0 items-center justify-center rounded-[34px] text-5xl shadow-sm animate-bounce-soft">🎁</div>
           <div className="min-w-0">
             <p className="rounded-full bg-[#e9f4ff] px-3 py-1 text-xs font-black text-[#1766e6]">今天獎勵</p>
             <h2 className="mt-2 text-[24px] font-black leading-tight text-[#172033]">完成後打開卡包</h2>
-            <p className="mt-2 text-sm font-bold leading-relaxed text-[#5f6f89]">{eventName}：可以抽 <span className="text-[#1766e6]">{eventPackName}</span></p>
           </div>
         </div>
-        <Link href="/reward" className="mt-4 flex min-h-[58px] items-center justify-center rounded-[24px] bg-[#fff7d0] text-lg font-black text-[#193153] shadow-sm active:scale-[0.99]">
+        <Link href="/reward" className="mt-4 flex min-h-[60px] items-center justify-center rounded-[26px] bg-gradient-to-r from-[#ffd66b] to-[#fff4b8] text-lg font-black text-[#193153] shadow-[0_12px_24px_rgba(245,158,11,0.14)] active:scale-[0.99]">
           先看看今天的卡包 ✨
         </Link>
       </section>
 
       <section className="grid grid-cols-3 gap-3">
-        <div className="kid-card p-3 text-center">
+        <div className="kid-card p-3 text-center active:scale-[0.99]">
           <div className="text-3xl">⭐</div>
           <p className="mt-2 text-xs font-black text-[#7b8aa3]">星星</p>
           <p className="text-xl font-black text-[#172033]">{ownedTotal + 8}</p>
         </div>
-        <div className="kid-card p-3 text-center">
+        <div className="kid-card p-3 text-center active:scale-[0.99]">
           <div className="text-3xl">🔥</div>
           <p className="mt-2 text-xs font-black text-[#7b8aa3]">連續</p>
           <p className="text-xl font-black text-[#172033]">3 天</p>
@@ -110,7 +111,7 @@ export default async function HomePage() {
           {topCollections.map((collection) => {
             const percent = collection.total > 0 ? Math.round((collection.owned / collection.total) * 100) : 0;
             return (
-              <Link key={collection.id} href="/collection" className="block rounded-[24px] bg-[#f8fbff] p-3 shadow-[0_8px_18px_rgba(30,64,175,0.06)] active:scale-[0.99]">
+              <Link key={collection.id} href="/collection" className="block rounded-[26px] border border-[#e8f3ff] bg-[#f8fbff] p-3 shadow-[0_10px_20px_rgba(30,64,175,0.07)] active:scale-[0.99]">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[20px] bg-white text-2xl shadow-sm">

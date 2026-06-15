@@ -22,19 +22,19 @@ export function KidBottomNav() {
 
   return (
     <nav className="kid-bottom-nav">
-      <div className="rounded-[32px] border border-[#d8eaff] bg-white/95 p-1.5 shadow-[0_18px_42px_rgba(30,64,175,0.16)] backdrop-blur-xl">
+      <div className="rounded-[34px] border border-white/80 bg-white/92 p-1.5 shadow-[0_20px_46px_rgba(51,65,85,0.16)] ring-1 ring-[#f1e7d0]/70 backdrop-blur-xl">
         <div className="grid grid-cols-4 gap-1">
           {items.map((item) => {
             const active = pathname === item.href;
             const itemClass = active
-              ? 'bg-gradient-to-br from-[#2f8cff] to-[#1766e6] text-white shadow-[0_10px_22px_rgba(37,99,235,0.30)]'
-              : 'text-[#5f6f89] hover:bg-[#f0f7ff] active:bg-[#e5f1ff]';
+              ? 'bg-gradient-to-br from-[#5bb8ff] to-[#2387f7] text-white shadow-[0_10px_22px_rgba(35,135,247,0.30)]'
+              : 'text-[#64748b] hover:bg-[#fff8e8] active:bg-[#eaf6ff]';
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={'flex min-h-[58px] touch-manipulation select-none flex-col items-center justify-center rounded-[24px] text-[12px] font-black transition active:scale-[0.98] ' + itemClass}
+                className={'flex min-h-[58px] touch-manipulation select-none flex-col items-center justify-center rounded-[25px] text-[12px] font-black transition active:scale-[0.98] ' + itemClass}
               >
                 <span className="text-[22px] leading-none">{item.icon}</span>
                 <span className="mt-1 leading-none">{item.label}</span>

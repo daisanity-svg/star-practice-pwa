@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import type { Route } from 'next';
 import { completePracticeSession } from '@/lib/actions/practice';
 import type { GeneratedQuestion, SubmittedPracticeAnswer } from '@/lib/types';
@@ -26,7 +26,7 @@ function isAnswerCorrect(question: GeneratedQuestion, selected: string) {
 
 function questionEmoji(question: GeneratedQuestion) {
   if (question.practice_mode === 'listening') return '👂';
-  if (question.practice_mode === 'tracing') return '✍️';
+  if (question.practice_mode === 'tracing') return '👋';
   if (question.practice_mode === 'intro') return '👋';
   if (question.learning_item?.type?.includes('english')) return '🔤';
   return 'ㄅ';
@@ -34,9 +34,16 @@ function questionEmoji(question: GeneratedQuestion) {
 
 function shortModeLabel(question: GeneratedQuestion) {
   if (question.practice_mode === 'listening') return '聽聲音找朋友';
-  if (question.practice_mode === 'tracing') return '用手指描一描';
+  if (question.practice_mode === 'tracing') return '認識新朋友';
   if (question.practice_mode === 'intro') return '認識新朋友';
   return '找出正確朋友';
+}
+
+function displayQuestionText(question: GeneratedQuestion) {
+  if (!isTracingQuestion(question)) return question.question_text;
+
+  const friend = question.memory_hook?.keyword ?? question.learning_item?.display_text ?? question.learning_item?.content ?? question.correct_answer[0] ?? '這個朋友';
+  return `認識這個朋友：${friend}`;
 }
 
 function encouragement(question: GeneratedQuestion) {
@@ -54,15 +61,21 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null);
   const [practiceRecordId, setPracticeRecordId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const ctaRef = useRef<HTMLButtonElement | null>(null);
 
   const current = questions[currentIndex];
   const answeredCurrent = selectedAnswer !== null;
   const currentIsCorrect = current && selectedAnswer ? isAnswerCorrect(current, selectedAnswer) : false;
   const progressPercent = questions.length > 0 ? Math.round(((currentIndex + (selectedAnswer ? 1 : 0)) / questions.length) * 100) : 0;
 
+  useEffect(() => {
+    if (!answeredCurrent) return;
+    ctaRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [answeredCurrent]);
+
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(current.question_text);
+    const utterance = new SpeechSynthesisUtterance(displayQuestionText(current));
     utterance.lang = current.learning_item?.type?.includes('english') ? 'en-US' : 'zh-TW';
     utterance.rate = 0.78;
     utterance.pitch = 1.08;
@@ -105,9 +118,9 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
     const answer = buildAnswer(selectedAnswer, isTracingQuestion(current) ? true : undefined);
     const nextAnswers = [...answers, answer];
     setAnswers(nextAnswers);
-    setSelectedAnswer(null);
 
     if (currentIndex < questions.length - 1) {
+      setSelectedAnswer(null);
       setCurrentIndex((value) => value + 1);
       setQuestionStartedAt(Date.now());
       return;
@@ -174,7 +187,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
             <p className="text-sm font-black text-[#2f8cff]">第 {currentIndex + 1} / {questions.length} 題</p>
             <h2 className="mt-1 text-xl font-black text-[#172033]">{shortModeLabel(current)}</h2>
           </div>
-          <div className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-[#fff0b8] text-2xl">⭐</div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-[22px] bg-[#fff0b8] text-2xl shadow-sm">⭐</div>
         </div>
         <div className="mt-4 grid grid-cols-5 gap-1.5">
           {Array.from({ length: questions.length }).map((_, index) => (
@@ -189,19 +202,20 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
         </div>
       </div>
 
-      <div className="kid-card-strong overflow-hidden p-5 text-center">
+      <div className="kid-card-strong relative overflow-hidden p-5 text-center">
+        <div className="pointer-events-none absolute -right-10 top-5 h-28 w-28 rounded-full bg-[#cdb7ff]/20 blur-2xl" />
         <div className="learning-orb mx-auto flex h-[108px] w-[108px] items-center justify-center rounded-[36px] text-[48px] font-black text-[#1766e6] shadow-sm">
           {questionEmoji(current)}
         </div>
         <p className="mt-4 text-sm font-black text-[#2f8cff]">今天的字母朋友</p>
-        <h1 className="mt-2 text-[34px] font-black leading-tight tracking-[-0.04em] text-[#172033]">{current.question_text}</h1>
+        <h1 className="mt-2 text-[34px] font-black leading-tight tracking-[-0.04em] text-[#172033]">{displayQuestionText(current)}</h1>
         <p className="mt-3 rounded-[24px] bg-[#f5f9ff] px-4 py-3 text-base font-bold leading-relaxed text-[#5f6f89]">
           {current.memory_hook?.sentence ?? '聽一聽，再找出正確的朋友'}
         </p>
         <button
           type="button"
           onClick={speakQuestion}
-          className="mx-auto mt-4 flex min-h-[52px] touch-manipulation select-none items-center justify-center rounded-full bg-[#e9f4ff] px-6 text-base font-black text-[#1766e6] shadow-sm active:scale-[0.98]"
+          className="mx-auto mt-4 flex min-h-[52px] touch-manipulation select-none items-center justify-center rounded-full bg-[#e9f4ff] px-6 text-base font-black text-[#1766e6] shadow-sm ring-1 ring-white/80 active:scale-[0.98]"
           aria-label="播放題目聲音"
         >
           🔊 重聽一次
@@ -209,10 +223,12 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
       </div>
 
       {isTracingQuestion(current) ? (
-        <div className="rounded-[32px] bg-[#fff8dd] p-4 text-center shadow-inner">
-          <div className="relative flex min-h-[230px] items-center justify-center overflow-hidden rounded-[28px] border-4 border-dashed border-[#b9dcff] bg-white/88 text-[120px] font-black text-blue-100">
-            <span className="absolute left-4 top-4 rounded-full bg-[#e9f4ff] px-3 py-1.5 text-sm font-black text-[#1766e6]">用手指描</span>
-            {current.learning_item?.content ?? current.correct_answer[0]}
+        <div className="rounded-[34px] border border-[#fff1b8] bg-[#fff8dd] p-4 text-center shadow-inner">
+          <div className="rounded-[28px] bg-white/88 px-5 py-6 shadow-sm">
+            <p className="rounded-full bg-[#e9f4ff] px-4 py-2 text-base font-black text-[#1766e6]">認識這個朋友</p>
+            <div className="mt-4 text-[76px] font-black leading-none text-[#1766e6]">
+              {current.learning_item?.content ?? current.correct_answer[0]}
+            </div>
           </div>
           <button
             type="button"
@@ -227,7 +243,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
             onClick={handleTracingDone}
             className={`mt-4 h-16 w-full touch-manipulation select-none rounded-[26px] text-xl font-black shadow-sm active:scale-[0.98] ${answeredCurrent ? 'bg-[#dff8ef] text-emerald-900 answer-pop' : 'kid-blue-button'}`}
           >
-            {answeredCurrent ? '完成了！' : current.practice_mode === 'intro' ? '我認識了' : '我描好了'}
+            {answeredCurrent ? '完成了！' : '我認識了'}
           </button>
         </div>
       ) : (
@@ -250,7 +266,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
                   handleSelect(option);
                 }}
                 onClick={() => handleSelect(option)}
-                className={`flex min-h-[96px] touch-manipulation select-none items-center justify-center rounded-[30px] border-2 text-[44px] font-black shadow-[0_10px_20px_rgba(30,64,175,0.08)] transition active:scale-[0.98] ${
+                className={`flex min-h-[96px] touch-manipulation select-none items-center justify-center rounded-[32px] border-2 text-[44px] font-black shadow-[0_12px_22px_rgba(30,64,175,0.09)] transition active:scale-[0.98] ${
                   showState && correct
                     ? 'answer-pop border-emerald-200 bg-[#dff8ef] text-emerald-900'
                     : showState && isSelected
@@ -266,7 +282,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
       )}
 
       {answeredCurrent ? (
-        <div className={`answer-pop rounded-[28px] p-4 text-center shadow-sm ${isTracingQuestion(current) || currentIsCorrect ? 'bg-[#dff8ef]' : 'bg-[#fff2b7]'}`}>
+        <div className={`answer-pop rounded-[30px] border border-white/70 p-4 text-center shadow-sm ${isTracingQuestion(current) || currentIsCorrect ? 'bg-[#dff8ef]' : 'bg-[#fff2b7]'}`}>
           <p className="text-2xl font-black text-[#172033]">{isTracingQuestion(current) || currentIsCorrect ? '太棒了！找到朋友了 ⭐' : '差一點點，我們再記一次'}</p>
           <p className="mt-2 text-base font-bold leading-relaxed text-[#5f6f89]">
             {isTracingQuestion(current) || currentIsCorrect ? encouragement(current) : `${encouragement(current)}，下次一定更快！`}
@@ -274,14 +290,19 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={goNext}
-        disabled={!selectedAnswer || isPending}
-        className="mt-auto min-h-[68px] touch-manipulation select-none rounded-[30px] bg-gradient-to-r from-[#2f8cff] to-[#1766e6] text-xl font-black text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] transition active:scale-[0.98] disabled:from-[#e5edf7] disabled:to-[#e5edf7] disabled:text-[#aab4c2] disabled:shadow-none"
-      >
-        {isPending ? '儲存中...' : currentIndex === questions.length - 1 ? '完成練習 ⭐' : '下一題 →'}
-      </button>
+      {answeredCurrent ? (
+        <div className="scroll-mb-[calc(env(safe-area-inset-bottom)+120px)] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-1">
+          <button
+            ref={ctaRef}
+            type="button"
+            onClick={goNext}
+            disabled={!selectedAnswer || isPending}
+            className="min-h-[56px] w-full touch-manipulation select-none rounded-[28px] bg-gradient-to-r from-[#2f8cff] to-[#1766e6] text-xl font-black text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] transition active:scale-[0.98] disabled:from-[#e5edf7] disabled:to-[#e5edf7] disabled:text-[#aab4c2] disabled:shadow-none"
+          >
+            {isPending ? '儲存中...' : currentIndex === questions.length - 1 ? '完成練習，去拿獎勵' : '下一題 →'}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
