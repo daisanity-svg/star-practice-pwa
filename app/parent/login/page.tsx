@@ -1,10 +1,9 @@
 import Link from 'next/link';
 import { KidButton } from '@/components/KidButton';
-import { PhoneFrame } from '@/components/PhoneFrame';
 
 export default function ParentLoginPage() {
   return (
-    <PhoneFrame>
+    <main className="admin-shell safe-screen">
       <section className="kid-card flex flex-1 flex-col p-6">
         <Link href="/" className="mb-6 w-fit rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 回小孩端
@@ -34,6 +33,6 @@ export default function ParentLoginPage() {
           <p className="text-center text-sm font-semibold text-slate-500">目前為前端原型，尚未啟用真實登入。</p>
         </div>
       </section>
-    </PhoneFrame>
+    </main>
   );
 }

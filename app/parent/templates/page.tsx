@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { PhoneFrame } from '@/components/PhoneFrame';
 import { createQuestionTemplate } from '@/lib/actions/learning';
 import { getQuestionTemplates } from '@/lib/data/templates';
 
@@ -19,7 +18,7 @@ export default async function ParentTemplatesPage() {
   const templates = await getQuestionTemplates();
 
   return (
-    <PhoneFrame>
+    <main className="admin-shell safe-screen">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台
@@ -109,6 +108,6 @@ export default async function ParentTemplatesPage() {
           </div>
         ))}
       </section>
-    </PhoneFrame>
+    </main>
   );
 }
