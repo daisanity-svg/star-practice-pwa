@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
 import type { PracticeCompletionResult, SubmittedPracticeAnswer } from '@/lib/types';
+import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
 
 const allowedPracticeModes = new Set(['intro', 'choice', 'listening', 'tracing', 'recall', 'sorting']);
 
@@ -144,6 +145,7 @@ export async function completePracticeSession(
     return { ok: false, message: '題目資料不完整，無法寫入練習紀錄。' };
   }
 
+  const testMode = await isPracticeTestModeAsync();
   const correctCount = validAnswers.filter((answer) => answer.is_correct).length;
   const wrongCount = validAnswers.length - correctCount;
   const { dailyLearningPlanId, rewardPackId } = await resolvePlanAndPack(validAnswers);
@@ -161,30 +163,50 @@ export async function completePracticeSession(
     return { ok: false, message: `建立練習總紀錄失敗：${recordError?.message ?? '未知錯誤'}` };
   }
 
-  const attempts = validAnswers.map((answer) => ({
-    child_id: childId,
-    learning_item_id: answer.learning_item_id,
-    memory_hook_id: answer.memory_hook_id || null,
-    practice_record_id: record.id,
-    generated_question_id: answer.generated_question_id || null,
-    practice_mode: normalizePracticeMode(answer.practice_mode),
-    is_correct: answer.is_correct,
-    score: answer.score ?? (answer.is_correct ? 100 : 0),
-    time_spent_seconds: Math.max(0, Math.round(answer.time_spent_seconds ?? 0)),
-    mistake_type: answer.is_correct ? null : answer.mistake_type || 'wrong_choice'
-  }));
+  const questionIds = validAnswers.map((answer) => answer.generated_question_id).filter(Boolean) as string[];
+  const existingQuestionIds = new Set<string>();
+  if (questionIds.length) {
+    const { data: existingQuestions } = await supabase
+      .from('generated_questions')
+      .select('id')
+      .in('id', questionIds);
+
+    existingQuestions?.forEach((question) => {
+      if (question.id) existingQuestionIds.add(question.id as string);
+    });
+  }
+
+  const attempts = validAnswers.map((answer) => {
+    const generatedQuestionId = answer.generated_question_id && existingQuestionIds.has(answer.generated_question_id)
+      ? answer.generated_question_id
+      : null;
+
+    return {
+      child_id: childId,
+      learning_item_id: answer.learning_item_id,
+      memory_hook_id: answer.memory_hook_id || null,
+      practice_record_id: record.id,
+      generated_question_id: generatedQuestionId,
+      practice_mode: normalizePracticeMode(answer.practice_mode),
+      is_correct: answer.is_correct,
+      score: answer.score ?? (answer.is_correct ? 100 : 0),
+      time_spent_seconds: Math.max(0, Math.round(answer.time_spent_seconds ?? 0)),
+      mistake_type: answer.is_correct ? null : answer.mistake_type || 'wrong_choice'
+    };
+  });
 
   const { error: attemptsError } = await supabase.from('practice_attempts').insert(attempts);
   if (attemptsError) {
     return { ok: false, message: `寫入作答紀錄失敗：${attemptsError.message}` };
   }
 
-  const questionIds = validAnswers.map((answer) => answer.generated_question_id).filter(Boolean) as string[];
-  if (questionIds.length) {
-    await supabase.from('generated_questions').update({ status: 'completed' }).in('id', questionIds);
+  if (existingQuestionIds.size) {
+    await supabase.from('generated_questions').update({ status: 'completed' }).in('id', Array.from(existingQuestionIds));
   }
 
-  await markDailyPlanComplete(dailyLearningPlanId);
+  if (!testMode) {
+    await markDailyPlanComplete(dailyLearningPlanId);
+  }
 
   revalidatePath('/');
   revalidatePath('/practice');

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { getActiveEvent } from '@/lib/data/events';
 import { getCollectionSummary } from '@/lib/data/rewards';
 
 function CollectionIcon({ name }: { name: string }) {
@@ -13,9 +12,7 @@ function CollectionIcon({ name }: { name: string }) {
 }
 
 export default async function HomePage() {
-  const [collections, activeEvent] = await Promise.all([getCollectionSummary(), getActiveEvent()]);
-  const eventPackName = activeEvent?.reward_pack?.name ?? '布麗狗驚喜卡包';
-  const eventName = activeEvent?.name ?? '藍色星星任務';
+  const collections = await getCollectionSummary();
   const ownedTotal = collections.reduce((sum, item) => sum + item.owned, 0);
   const cardTotal = collections.reduce((sum, item) => sum + item.total, 0) || 30;
   const topCollections = collections.slice(0, 3);
@@ -69,7 +66,6 @@ export default async function HomePage() {
           <div className="min-w-0">
             <p className="rounded-full bg-[#e9f4ff] px-3 py-1 text-xs font-black text-[#1766e6]">今天獎勵</p>
             <h2 className="mt-2 text-[24px] font-black leading-tight text-[#172033]">完成後打開卡包</h2>
-            <p className="mt-2 text-sm font-bold leading-relaxed text-[#5f6f89]">{eventName}：可以抽 <span className="text-[#1766e6]">{eventPackName}</span></p>
           </div>
         </div>
         <Link href="/reward" className="mt-4 flex min-h-[58px] items-center justify-center rounded-[24px] bg-[#fff7d0] text-lg font-black text-[#193153] shadow-sm active:scale-[0.99]">
