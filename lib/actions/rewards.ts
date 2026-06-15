@@ -255,6 +255,9 @@ export async function createBatchCards(formData: FormData) {
     const cardNo = cardNos[index] || null;
     const name = names[index] || fallbackCardName(formData, index, cardNo);
     const sourceImageUrl = await uploadFileToStorage(file, 'source');
+    if (!sourceImageUrl) {
+      return { ok: false, message: `第 ${index + 1} 張原圖上傳失敗，請檢查 Supabase Storage 或重新上傳。` };
+    }
     const renderedCardImageUrl = await uploadDataUrlToStorage(
       renderedDataUrls[index] || null,
       'rendered',

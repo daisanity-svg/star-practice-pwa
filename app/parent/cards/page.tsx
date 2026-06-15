@@ -5,9 +5,9 @@ import { getAdminRewardData } from '@/lib/data/admin-rewards';
 import { getPracticeMode } from '@/lib/config/app-mode';
 import { AdminActionForm } from '@/components/AdminActionForm';
 
-const inputClass = 'mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100';
-const labelClass = 'text-sm font-bold text-slate-600';
-const cardClass = 'rounded-3xl border border-slate-200 bg-white p-5 shadow-sm';
+const inputClass = 'mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-inner outline-none transition placeholder:text-slate-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 sm:text-base';
+const labelClass = 'text-sm font-black text-slate-600';
+const cardClass = 'rounded-3xl border border-blue-100 bg-white p-4 shadow-[0_16px_40px_rgba(37,99,235,0.08)] sm:p-5';
 
 type AdminData = Awaited<ReturnType<typeof getAdminRewardData>>;
 
@@ -69,16 +69,16 @@ export default async function ParentCardsPage() {
   const emptyPoolCount = pools.filter((pool) => pool.stock <= 0).length;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-slate-50 to-white px-4 pb-[calc(env(safe-area-inset-bottom)+112px)] pt-[calc(env(safe-area-inset-top)+20px)] text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-5">
-        <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <header className="flex flex-col gap-4 rounded-3xl border border-blue-100 bg-white p-4 shadow-[0_16px_40px_rgba(37,99,235,0.08)] sm:p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Link href="/parent/dashboard" className="inline-flex items-center rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200">
               ← 回後台
             </Link>
             <p className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-blue-500">Reward Pool Admin</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">獎池管理</h1>
-            <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-600">
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">獎池管理</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 sm:text-base">
               這裡只管理「獎池」。想到新的主題時直接新增一個獎池；獎池快空了，就點選該獎池批次上傳卡片補進去。
             </p>
           </div>
@@ -186,12 +186,12 @@ export default async function ParentCardsPage() {
                     <input type="date" name="scheduled_expires_on" className={inputClass} defaultValue={today} />
                   </label>
                 </div>
-                <button className="w-full rounded-2xl bg-amber-400 px-5 py-4 text-base font-black text-slate-950 shadow-sm transition hover:bg-amber-300 active:scale-[0.99]">
+                <button className="w-full rounded-full bg-blue-500 px-5 py-3 text-sm min-h-[48px] text-white font-black shadow-sm transition hover:bg-blue-600 active:scale-[0.99]">
                   指定下一次獎勵
                 </button>
               </AdminActionForm>
 
-              <div className="mt-5 rounded-2xl bg-slate-50 p-4">
+              <div className="mt-5 rounded-2xl bg-blue-50/60 p-4">
                 <p className="text-sm font-black text-slate-700">目前待領</p>
                 {scheduledRewards.length === 0 ? (
                   <p className="mt-2 text-sm text-slate-500">目前沒有指定獎勵卡。</p>
@@ -214,7 +214,7 @@ export default async function ParentCardsPage() {
             <section className={cardClass}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-950">獎池列表</h2>
+                  <h2 className="text-xl font-black text-slate-950">獎池列表</h2>
                   <p className="mt-2 text-sm leading-relaxed text-slate-500">紅色代表已經沒有可抽卡片。看到空了，就到下方批次補卡。</p>
                 </div>
                 <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-600">共 {pools.length} 個獎池</span>
@@ -227,7 +227,7 @@ export default async function ParentCardsPage() {
                     <p className="mt-2 text-sm text-slate-500">先在左側新增一個獎池。</p>
                   </div>
                 ) : pools.map((pool) => (
-                  <div key={pool.packId} className={`rounded-3xl border p-4 ${pool.stock <= 0 ? 'border-red-200 bg-red-50' : 'border-blue-100 bg-blue-50/60'}`}>
+                  <div key={pool.packId} className={`rounded-3xl border p-4 shadow-sm ${pool.stock <= 0 ? 'border-red-200 bg-red-50' : 'border-blue-100 bg-blue-50/60'}`}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className={`text-xs font-black ${pool.stock <= 0 ? 'text-red-500' : 'text-blue-500'}`}>{pool.stock <= 0 ? '需要補卡' : '可抽卡'}</p>

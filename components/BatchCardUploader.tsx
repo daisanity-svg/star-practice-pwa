@@ -208,7 +208,7 @@ export function BatchCardUploader({ pools }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-3xl border border-blue-100 bg-blue-50/70 p-4">
+      <div className="rounded-3xl border border-blue-100 bg-blue-50/70 p-4 shadow-sm">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-500">Batch Upload</p>
@@ -231,7 +231,7 @@ export function BatchCardUploader({ pools }: Props) {
             setSelectedPoolId(event.target.value);
             setPreviews([]);
           }}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-base font-bold text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+          className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold shadow-inner text-slate-900 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
         >
           {pools.map((item) => (
             <option key={item.packId} value={item.packId}>
@@ -246,22 +246,22 @@ export function BatchCardUploader({ pools }: Props) {
       <input type="hidden" name="batch_prefix" value={autoPrefix} />
       <input type="hidden" name="batch_start_number" value={String(startNumber)} />
 
-      <details className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <details className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
         <summary className="cursor-pointer text-sm font-black text-slate-700">進階設定：稀有度、庫存、抽中權重</summary>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <label className="block">
             <span className="text-sm font-bold text-slate-600">稀有度</span>
-            <select name="batch_rarity" value={rarity} onChange={(event) => setRarity(event.target.value)} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-900">
+            <select name="batch_rarity" value={rarity} onChange={(event) => setRarity(event.target.value)} className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold shadow-inner text-slate-900">
               {rarityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
             </select>
           </label>
           <label className="block">
             <span className="text-sm font-bold text-slate-600">每張庫存</span>
-            <input name="batch_stock" type="number" min="0" value={stock} onChange={(event) => setStock(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-900" />
+            <input name="batch_stock" type="number" min="0" value={stock} onChange={(event) => setStock(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold shadow-inner text-slate-900" />
           </label>
           <label className="block">
             <span className="text-sm font-bold text-slate-600">抽中權重</span>
-            <input name="batch_weight" type="number" min="0" value={weight} onChange={(event) => setWeight(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-900" />
+            <input name="batch_weight" type="number" min="0" value={weight} onChange={(event) => setWeight(Number(event.target.value || 0))} className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-bold shadow-inner text-slate-900" />
           </label>
         </div>
       </details>
@@ -270,8 +270,8 @@ export function BatchCardUploader({ pools }: Props) {
         系統會自動產生卡號：{autoPrefix}-{pad(startNumber)}、{autoPrefix}-{pad(startNumber + 1)}、{autoPrefix}-{pad(startNumber + 2)}...；卡名會顯示為「{createCardName(selectedPool?.name || '卡片', startNumber)}」這種兒童可讀名稱。
       </div>
 
-      <label className="block rounded-3xl border-2 border-dashed border-blue-200 bg-white p-6 text-center transition hover:bg-blue-50/40">
-        <span className="text-lg font-black text-blue-700">選擇多張圖片</span>
+      <label className="block rounded-3xl border-2 border-dashed border-blue-200 bg-white p-5 shadow-sm text-center transition hover:bg-blue-50/40">
+        <span className="text-base font-black text-blue-700">選擇多張圖片</span>
         <p className="mt-2 text-sm font-medium text-slate-500">支援 PNG、JPG、WEBP。檔名只作為內部來源，不會顯示給孩子看。</p>
         <input name="batch_source_files" type="file" accept="image/*" multiple onChange={onFilesChange} className="mt-4 block w-full rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600" />
       </label>

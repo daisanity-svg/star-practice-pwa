@@ -2,6 +2,10 @@ import { supabase } from '@/lib/supabase';
 import type { GeneratedQuestion, LearningItem } from '@/lib/types';
 import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
 import {
+  BOPOMOFO_KEYWORDS,
+  BOPOMOFO_POOL,
+  ENGLISH_KEYWORDS,
+  ENGLISH_POOL,
   SAFE_QUESTION_TEMPLATES,
   buildSafeDistractors,
   pickTemplate,
@@ -41,6 +45,23 @@ type ProgressRow = {
   next_review_at: string | null;
 };
 
+const CORE_BOPOMOFO_ITEMS = BOPOMOFO_POOL.map((symbol) => ({
+  type: 'bopomofo_initial',
+  content: symbol,
+  display_text: BOPOMOFO_KEYWORDS[symbol]?.[0] ?? symbol,
+  difficulty: 1,
+  is_active: true
+}));
+
+const CORE_ENGLISH_ITEMS = ENGLISH_POOL.map((symbol) => ({
+  type: 'english_uppercase',
+  content: symbol,
+  display_text: ENGLISH_KEYWORDS[symbol]?.[0] ?? symbol,
+  difficulty: 1,
+  is_active: true
+}));
+
+
 function todayKey() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -56,6 +77,25 @@ function uniqueById<T extends { id: string }>(items: T[]) {
     seen.add(item.id);
     return true;
   });
+}
+
+function uniqueByContent<T extends { content: string }>(items: T[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.content)) return false;
+    seen.add(item.content);
+    return true;
+  });
+}
+
+function weightedShuffleByRecent(items: LearningItemRow[], recentSymbols: Set<string>) {
+  return [...items]
+    .map((item) => ({
+      item,
+      score: Math.random() * (recentSymbols.has(item.content) ? 0.35 : 1)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .map(({ item }) => item);
 }
 
 function isEnglishType(type: string) {
@@ -229,6 +269,21 @@ async function getPendingQuestions(planId: string): Promise<GeneratedQuestion[]>
   }));
 }
 
+async function ensureCoreLearningItems() {
+  const { data } = await supabase!
+    .from('learning_items')
+    .select('content, type')
+    .in('content', [...BOPOMOFO_POOL, ...ENGLISH_POOL]);
+
+  const existing = new Set((data ?? []).map((item: any) => `${item.type}:${item.content}`));
+  const missingRows = [...CORE_BOPOMOFO_ITEMS, ...CORE_ENGLISH_ITEMS]
+    .filter((item) => !existing.has(`${item.type}:${item.content}`));
+
+  if (missingRows.length > 0) {
+    await supabase!.from('learning_items').upsert(missingRows, { onConflict: 'type,content', ignoreDuplicates: true });
+  }
+}
+
 async function fetchGenerationSource(childId: string) {
   const now = new Date().toISOString();
   const [itemsResult, hooksResult, progressResult] = await Promise.all([
@@ -370,6 +425,7 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
     await supabase!.from('generated_questions').delete().eq('daily_learning_plan_id', plan.id).eq('status', 'pending');
   }
 
+  await ensureCoreLearningItems();
   const source = await fetchGenerationSource(childId);
   if (!source.items.length) return [];
 
