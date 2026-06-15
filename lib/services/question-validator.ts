@@ -10,55 +10,110 @@ export type ValidationResult = {
   errors: ValidationError[];
 };
 
+export const BOPOMOFO_POOL = [
+  'ㄅ', 'ㄆ', 'ㄇ', 'ㄈ',
+  'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ',
+  'ㄍ', 'ㄎ', 'ㄏ',
+  'ㄐ', 'ㄑ', 'ㄒ',
+  'ㄓ', 'ㄔ', 'ㄕ', 'ㄖ',
+  'ㄗ', 'ㄘ', 'ㄙ',
+  'ㄧ', 'ㄨ', 'ㄩ'
+];
+
+export const ENGLISH_POOL = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+  'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+];
+
+export const BOPOMOFO_KEYWORDS: Record<string, string[]> = {
+  ㄅ: ['爸爸', '杯子', '布丁'],
+  ㄆ: ['泡泡', '蘋果', '皮球'],
+  ㄇ: ['媽媽', '貓咪', '木馬'],
+  ㄈ: ['飛機', '風車', '飯糰'],
+  ㄉ: ['弟弟', '蛋糕', '大象'],
+  ㄊ: ['兔子', '太陽', '糖果'],
+  ㄋ: ['牛奶', '鳥巢', '南瓜'],
+  ㄌ: ['老虎', '禮物', '蘿蔔'],
+  ㄍ: ['哥哥', '狗狗', '鼓'],
+  ㄎ: ['卡車', '恐龍', '口罩'],
+  ㄏ: ['河馬', '花朵', '火車'],
+  ㄐ: ['積木', '雞蛋', '橘子'],
+  ㄑ: ['氣球', '鉛筆', '青蛙'],
+  ㄒ: ['星星', '小熊', '西瓜'],
+  ㄓ: ['蜘蛛', '紙張', '竹子'],
+  ㄔ: ['車子', '橙子', '尺'],
+  ㄕ: ['獅子', '書包', '石頭'],
+  ㄖ: ['日出', '熱狗', '榕樹'],
+  ㄗ: ['嘴巴', '紫色', '桌子'],
+  ㄘ: ['刺蝟', '草莓', '彩虹'],
+  ㄙ: ['松鼠', '傘', '三明治'],
+  ㄧ: ['衣服', '椅子', '一隻魚'],
+  ㄨ: ['烏龜', '屋子', '巫婆'],
+  ㄩ: ['雨傘', '魚兒', '玉米']
+};
+
+export const ENGLISH_KEYWORDS: Record<string, string[]> = {
+  A: ['Apple', 'Ant', 'Airplane'],
+  B: ['Baby', 'Ball', 'Bear'],
+  C: ['Cat', 'Car', 'Cake'],
+  D: ['Dog', 'Duck', 'Door'],
+  E: ['Egg', 'Elephant', 'Eye'],
+  F: ['Fish', 'Flower', 'Fox'],
+  G: ['Goat', 'Grape', 'Girl'],
+  H: ['Hat', 'House', 'Horse'],
+  I: ['Ice', 'Igloo', 'Insect'],
+  J: ['Juice', 'Jam', 'Jet'],
+  K: ['King', 'Kite', 'Koala'],
+  L: ['Lion', 'Lemon', 'Leaf'],
+  M: ['Monkey', 'Milk', 'Moon'],
+  N: ['Nest', 'Nose', 'Net'],
+  O: ['Orange', 'Owl', 'Octopus'],
+  P: ['Pig', 'Pencil', 'Pizza'],
+  Q: ['Queen', 'Quilt', 'Question'],
+  R: ['Rabbit', 'Robot', 'Rainbow'],
+  S: ['Sun', 'Star', 'Snake'],
+  T: ['Tiger', 'Train', 'Tree'],
+  U: ['Umbrella', 'Unicorn', 'Up'],
+  V: ['Van', 'Violin', 'Vegetable'],
+  W: ['Wolf', 'Water', 'Window'],
+  X: ['X-ray', 'Xylophone', 'Xerus'],
+  Y: ['Yo-yo', 'Yellow', 'Yacht'],
+  Z: ['Zebra', 'Zoo', 'Zero']
+};
+
 export const SAFE_QUESTION_TEMPLATES = {
   choice: [
     '「{keyword}」的第一個聲音是哪一個？',
-    '幫「{keyword}」找到它的朋友 {symbol}。',
-    '小偵探任務：看到「{keyword}」，請找出 {symbol}。',
-    '星星任務：哪一個是「{keyword}」的開頭朋友？'
+    '看到「{keyword}」，請找出開頭朋友。',
+    '幫「{keyword}」找到正確的聲音朋友。',
+    '小偵探任務：「{keyword}」開頭是哪一個？',
+    '{keyword} 開頭是哪個字母？',
+    '{keyword} 的第一個字母是哪一個？'
   ],
   listening: [
-    '聽一聽，請找出「{keyword}」的 {symbol}。',
-    '耳朵小任務：聽到「{keyword}」，找到 {symbol}。',
-    '聲音小雷達：「{keyword}」的開頭朋友是哪一個？',
-    '叮咚！請幫「{keyword}」找到正確聲音。'
+    '聽到「{keyword}」，請找出 {symbol}。',
+    '耳朵小任務：聽「{keyword}」，選出開頭朋友。',
+    '聲音小雷達：「{keyword}」的第一個聲音是哪一個？',
+    '叮咚！請幫「{keyword}」找到正確聲音。',
+    '聽一聽「{keyword}」，哪個朋友先出現？'
   ],
   tracing: [
-    '手指小畫家：描一描「{keyword}」的 {symbol}。',
+    '手指小畫家：描一描「{keyword}」的開頭朋友。',
     '星星軌道：跟著線走，寫出 {symbol}。',
-    '小手出發：把「{keyword}」的 {symbol} 描亮。',
+    '小手出發：把「{keyword}」的聲音描亮。',
     '魔法筆任務：一起把 {symbol} 畫出來。'
   ]
 } as const;
 
 export const FIXED_DISTRACTOR_POOLS = {
-  bopomofo: ['ㄅ', 'ㄆ', 'ㄇ', 'ㄈ', 'ㄉ', 'ㄊ', 'ㄋ', 'ㄌ', 'ㄍ', 'ㄎ', 'ㄏ'],
-  english: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+  bopomofo: BOPOMOFO_POOL,
+  english: ENGLISH_POOL
 };
 
-const DEFAULT_KEYWORDS: Record<string, string> = {
-  ㄅ: '爸爸',
-  ㄆ: '泡泡',
-  ㄇ: '媽媽',
-  ㄈ: '飛機',
-  ㄉ: '弟弟',
-  ㄊ: '兔子',
-  ㄋ: '牛奶',
-  ㄌ: '藍天',
-  ㄍ: '哥哥',
-  ㄎ: '恐龍',
-  ㄏ: '河馬',
-  A: 'Apple',
-  B: 'Baby',
-  C: 'Cat',
-  D: 'Dog',
-  E: 'Egg',
-  F: 'Fish',
-  G: 'Gift',
-  H: 'Hat',
-  I: 'Ice',
-  J: 'Juice'
-};
+const DEFAULT_KEYWORDS: Record<string, string> = Object.fromEntries([
+  ...Object.entries(BOPOMOFO_KEYWORDS).map(([symbol, keywords]) => [symbol, keywords[0]]),
+  ...Object.entries(ENGLISH_KEYWORDS).map(([symbol, keywords]) => [symbol, keywords[0]])
+]);
 
 function isBopomofoType(type: string | undefined | null): boolean {
   return type?.includes('bopomofo') ?? false;
@@ -93,22 +148,34 @@ function hasBannedSymbolLoop(text: string) {
   return (
     /([A-Zㄅ-ㄧ])的\1/.test(compact) ||
     /([A-Zㄅ-ㄧ])要找\1/.test(compact) ||
-    /哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact)
+    /哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact) ||
+    /星星躲貓貓：?哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact)
   );
 }
 
-export function getChildSafeKeyword(item: Pick<LearningItem, 'content' | 'display_text' | 'type'>, keyword?: string | null) {
+function shuffleLocal<T>(items: T[]) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+export function getKeywordOptions(item: Pick<LearningItem, 'content' | 'display_text' | 'type'>, keyword?: string | null) {
   const symbol = normalize(item.content);
-  const candidates = [keyword, item.display_text, DEFAULT_KEYWORDS[symbol]].map((value) => normalize(value));
-  const safe = candidates.find((candidate) => candidate && !isSymbolOnlyKeyword(candidate, symbol));
-  return safe || DEFAULT_KEYWORDS[symbol] || '聲音朋友';
+  const keywordMap = isEnglishType(item.type) ? ENGLISH_KEYWORDS : BOPOMOFO_KEYWORDS;
+  const candidates = [keyword, item.display_text, ...(keywordMap[symbol] ?? []), DEFAULT_KEYWORDS[symbol]]
+    .map((value) => normalize(value))
+    .filter((candidate) => candidate && !isSymbolOnlyKeyword(candidate, symbol));
+  return Array.from(new Set(candidates));
+}
+
+export function getChildSafeKeyword(item: Pick<LearningItem, 'content' | 'display_text' | 'type'>, keyword?: string | null) {
+  const candidates = getKeywordOptions(item, keyword);
+  return shuffleLocal(candidates)[0] || '生活詞';
 }
 
 export function validateQuestion(question: GeneratedQuestion): ValidationResult {
   const errors: ValidationError[] = [];
   const mode = inferMode(question);
   const symbol = normalize(question.correct_answer?.[0] ?? question.learning_item?.content);
-  const keyword = getChildSafeKeyword(
+  const keywordOptions = getKeywordOptions(
     question.learning_item ?? { content: symbol, display_text: symbol, type: '' },
     question.memory_hook?.keyword
   );
@@ -121,8 +188,11 @@ export function validateQuestion(question: GeneratedQuestion): ValidationResult 
     errors.push({ field: 'question_text', message: '題目不可是符號互找題' });
   }
 
-  if (symbol && question.question_text && !question.question_text.includes(keyword) && !question.question_text.includes('聽一聽')) {
-    errors.push({ field: 'question_text', message: '題目必須使用兒童可理解的 keyword' });
+  if (symbol && question.question_text && keywordOptions.length > 0) {
+    const hasChildKeyword = keywordOptions.some((keyword) => question.question_text.includes(keyword));
+    if (!hasChildKeyword) {
+      errors.push({ field: 'question_text', message: '題目必須使用兒童可理解的 keyword' });
+    }
   }
 
   if (!question.learning_item || !question.learning_item.id) {
@@ -195,7 +265,7 @@ export function buildSafeDistractors(
     .filter((content) => content !== normalizedAnswer)
     .forEach((content) => candidates.push(content));
 
-  const uniqueDistractors = Array.from(new Set(candidates)).slice(0, 3);
+  const uniqueDistractors = shuffleLocal(Array.from(new Set(candidates))).slice(0, 3);
   const options = [normalizedAnswer, ...uniqueDistractors];
 
   while (options.length < 4) {
