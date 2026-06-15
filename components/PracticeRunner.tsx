@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import type { Route } from 'next';
 import { completePracticeSession } from '@/lib/actions/practice';
 import type { GeneratedQuestion, SubmittedPracticeAnswer } from '@/lib/types';
@@ -54,11 +54,17 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null);
   const [practiceRecordId, setPracticeRecordId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const ctaRef = useRef<HTMLButtonElement | null>(null);
 
   const current = questions[currentIndex];
   const answeredCurrent = selectedAnswer !== null;
   const currentIsCorrect = current && selectedAnswer ? isAnswerCorrect(current, selectedAnswer) : false;
   const progressPercent = questions.length > 0 ? Math.round(((currentIndex + (selectedAnswer ? 1 : 0)) / questions.length) * 100) : 0;
+
+  useEffect(() => {
+    if (!answeredCurrent) return;
+    ctaRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [answeredCurrent]);
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -105,9 +111,9 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
     const answer = buildAnswer(selectedAnswer, isTracingQuestion(current) ? true : undefined);
     const nextAnswers = [...answers, answer];
     setAnswers(nextAnswers);
-    setSelectedAnswer(null);
 
     if (currentIndex < questions.length - 1) {
+      setSelectedAnswer(null);
       setCurrentIndex((value) => value + 1);
       setQuestionStartedAt(Date.now());
       return;
@@ -274,14 +280,19 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={goNext}
-        disabled={!selectedAnswer || isPending}
-        className="mt-auto min-h-[68px] touch-manipulation select-none rounded-[30px] bg-gradient-to-r from-[#2f8cff] to-[#1766e6] text-xl font-black text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] transition active:scale-[0.98] disabled:from-[#e5edf7] disabled:to-[#e5edf7] disabled:text-[#aab4c2] disabled:shadow-none"
-      >
-        {isPending ? '儲存中...' : currentIndex === questions.length - 1 ? '完成練習 ⭐' : '下一題 →'}
-      </button>
+      {answeredCurrent ? (
+        <div className="scroll-mb-[calc(env(safe-area-inset-bottom)+120px)] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-1">
+          <button
+            ref={ctaRef}
+            type="button"
+            onClick={goNext}
+            disabled={!selectedAnswer || isPending}
+            className="min-h-[56px] w-full touch-manipulation select-none rounded-[28px] bg-gradient-to-r from-[#2f8cff] to-[#1766e6] text-xl font-black text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] transition active:scale-[0.98] disabled:from-[#e5edf7] disabled:to-[#e5edf7] disabled:text-[#aab4c2] disabled:shadow-none"
+          >
+            {isPending ? '儲存中...' : currentIndex === questions.length - 1 ? '完成練習，去拿獎勵' : '下一題 →'}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
