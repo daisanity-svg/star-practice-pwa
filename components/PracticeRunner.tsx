@@ -28,7 +28,7 @@ function isAnswerCorrect(question: GeneratedQuestion, selected: string) {
 
 function questionEmoji(question: GeneratedQuestion) {
   if (question.practice_mode === 'listening') return '👂';
-  if (question.practice_mode === 'tracing') return '✍️';
+  if (question.practice_mode === 'tracing') return '👋';
   if (question.practice_mode === 'intro') return '👋';
   if (question.learning_item?.type?.includes('english')) return '🔤';
   return 'ㄅ';
@@ -36,9 +36,16 @@ function questionEmoji(question: GeneratedQuestion) {
 
 function shortModeLabel(question: GeneratedQuestion) {
   if (question.practice_mode === 'listening') return '聽聲音找朋友';
-  if (question.practice_mode === 'tracing') return '用手指描一描';
+  if (question.practice_mode === 'tracing') return '認識新朋友';
   if (question.practice_mode === 'intro') return '認識新朋友';
   return '找出正確朋友';
+}
+
+function displayQuestionText(question: GeneratedQuestion) {
+  if (!isTracingQuestion(question)) return question.question_text;
+
+  const friend = question.memory_hook?.keyword ?? question.learning_item?.display_text ?? question.learning_item?.content ?? question.correct_answer[0] ?? '這個朋友';
+  return `認識這個朋友：${friend}`;
 }
 
 function encouragement(question: GeneratedQuestion) {
@@ -86,7 +93,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(current.question_text);
+    const utterance = new SpeechSynthesisUtterance(displayQuestionText(current));
     utterance.lang = current.learning_item?.type?.includes('english') ? 'en-US' : 'zh-TW';
     utterance.rate = 0.78;
     utterance.pitch = 1.08;
@@ -267,7 +274,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
             onClick={handleTracingDone}
             className={`mt-3 h-12 w-full touch-manipulation select-none rounded-[26px] text-xl font-black shadow-sm active:scale-[0.98] ${answeredCurrent ? 'bg-[#dff8ef] text-emerald-900 answer-pop' : 'kid-blue-button'}`}
           >
-            {answeredCurrent ? '完成了！' : current.practice_mode === 'intro' ? '我認識了' : '我描好了'}
+            {answeredCurrent ? '完成了！' : '我認識了'}
           </button>
         </div>
       ) : (

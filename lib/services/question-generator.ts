@@ -21,7 +21,7 @@ const DEFAULT_COUNTS = {
   weakness_item_count: 1
 };
 
-type SafePracticeMode = keyof typeof SAFE_QUESTION_TEMPLATES;
+type SafePracticeMode = 'choice' | 'listening';
 
 type LearningItemRow = LearningItem & {
   difficulty: number | null;
@@ -106,15 +106,14 @@ function isBopomofoType(type: string) {
   return type.includes('bopomofo');
 }
 
-function inferModeFromText(questionText: string): SafePracticeMode {
-  if (questionText.includes('描') || questionText.includes('畫')) return 'tracing';
+function inferModeFromText(questionText: string): GeneratedQuestion['practice_mode'] {
+  if (questionText.includes('描') || questionText.includes('畫')) return 'intro';
   if (questionText.includes('聽') || questionText.includes('耳朵') || questionText.includes('聲音')) return 'listening';
   return 'choice';
 }
 
 function selectPracticeMode(index: number, masteryLevel: number): SafePracticeMode {
   if (index === 0 || masteryLevel <= 1) return 'choice';
-  if (index % 5 === 4) return 'tracing';
   if (index % 3 === 1) return 'listening';
   return 'choice';
 }
@@ -370,7 +369,7 @@ function buildQuestionRows(params: {
       const template = pickFreshTemplate(practiceMode, orderIndex, params.recentPromptTexts, item, hook?.keyword);
       const questionText = renderTemplate(template, item, hook?.keyword);
       params.recentPromptTexts.add(questionText);
-      const options = practiceMode === 'tracing' ? [item.content] : buildSafeDistractors(item.content, item.type, params.allItems);
+      const options = buildSafeDistractors(item.content, item.type, params.allItems);
 
       const question: GeneratedQuestion = {
         id: `pending-${item.id}-${index}`,
