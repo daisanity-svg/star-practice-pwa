@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { completePracticeSession } from '@/lib/actions/practice';
@@ -70,12 +70,19 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
   const progressPercent = questions.length > 0 ? Math.round(((currentIndex + (selectedAnswer ? 1 : 0)) / questions.length) * 100) : 0;
 
   useEffect(() => {
-    if (!practiceRecordId || practiceMode !== 'production') return;
+    if (!practiceRecordId || practiceMode !== 'production' || redirectedRef.current) return;
+    redirectedRef.current = true;
+    setIsRedirecting(true);
     const timer = window.setTimeout(() => {
-      router.push(`/reward?practice_record_id=${practiceRecordId}`);
-    }, 1200);
+      router.replace(`/reward?practice_record_id=${practiceRecordId}`);
+    }, 500);
     return () => window.clearTimeout(timer);
   }, [practiceMode, practiceRecordId, router]);
+
+  useEffect(() => {
+    if (!selectedAnswer) return;
+    ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [selectedAnswer]);
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
