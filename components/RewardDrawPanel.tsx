@@ -90,9 +90,6 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
         <div className="relative z-10 mt-6 flex flex-1 flex-col items-center justify-center">
           {card ? <RewardCardPreview card={card} /> : <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">💤</div>}
           <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">{saveResult?.message ?? drawResult?.message}</p>
-          {drawResult?.ok && typeof drawResult.remaining_stock === 'number' ? (
-            <p className="mt-2 rounded-full bg-white px-4 py-2 text-sm font-bold text-[#7b8aa3]">卡包剩餘 {drawResult.remaining_stock} 張</p>
-          ) : null}
         </div>
 
         <div className="relative z-10 mt-6 space-y-3">

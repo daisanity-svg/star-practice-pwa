@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { GeneratedQuestion, LearningItem } from '@/lib/types';
-import { isPracticeTestMode } from '@/lib/config/app-mode';
+import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
 import {
   SAFE_QUESTION_TEMPLATES,
   buildSafeDistractors,
@@ -127,8 +127,7 @@ async function getActiveRewardPackIdWithStock() {
       .from('reward_pack_items')
       .select('id', { count: 'exact', head: true })
       .eq('reward_pack_id', pack.id)
-      .eq('is_active', true)
-      .gt('stock', 0);
+      .eq('is_active', true);
 
     if ((count ?? 0) > 0) return pack.id as string;
   }
@@ -136,7 +135,7 @@ async function getActiveRewardPackIdWithStock() {
   return null;
 }
 
-async function getOrCreateTodayPlan(childId: string) {
+async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
   const today = todayKey();
   const { data: existing } = await supabase!
     .from('daily_learning_plan')
@@ -150,7 +149,7 @@ async function getOrCreateTodayPlan(childId: string) {
   if (existing?.id) {
     const updatePayload: Record<string, unknown> = {};
 
-    if (isPracticeTestMode() && existing.is_completed) {
+    if (testMode && existing.is_completed) {
       updatePayload.is_completed = false;
       updatePayload.completed_at = null;
     }
@@ -268,6 +267,35 @@ async function getNextOrderIndex(planId: string) {
   return Number(data?.order_index ?? 0) + 1;
 }
 
+async function fetchRecentQuestionMemory(childId: string) {
+  const since = new Date();
+  since.setDate(since.getDate() - 3);
+  const { data } = await supabase!
+    .from('generated_questions')
+    .select('question_text, learning_item_id, learning_memory_hooks(keyword), daily_learning_plan!inner(date)')
+    .eq('child_id', childId)
+    .gte('daily_learning_plan.date', since.toISOString().slice(0, 10))
+    .order('created_at', { ascending: false })
+    .limit(80);
+
+  const promptTexts = new Set<string>();
+  const keywords: string[] = [];
+  const itemIds: string[] = [];
+  for (const row of (data ?? []) as any[]) {
+    if (row.question_text) promptTexts.add(row.question_text);
+    const keyword = row.learning_memory_hooks?.keyword;
+    if (keyword) keywords.push(keyword);
+    if (row.learning_item_id) itemIds.push(row.learning_item_id);
+  }
+  return { promptTexts, recentKeywords: keywords, recentItemIds: itemIds };
+}
+
+function pickFreshTemplate(mode: SafePracticeMode, orderIndex: number, usedPrompts: Set<string>, item: LearningItemRow, hookKeyword?: string | null) {
+  const templates = shuffle([...SAFE_QUESTION_TEMPLATES[mode]]);
+  const fallback = pickTemplate(mode, orderIndex + Math.floor(Math.random() * templates.length));
+  return templates.find((template) => !usedPrompts.has(renderTemplate(template, item, hookKeyword))) ?? fallback;
+}
+
 function buildQuestionRows(params: {
   childId: string;
   planId: string;
@@ -276,6 +304,7 @@ function buildQuestionRows(params: {
   allItems: LearningItemRow[];
   progressByItem: Map<string, ProgressRow>;
   firstOrderIndex: number;
+  recentPromptTexts: Set<string>;
 }) {
   return params.selectedItems
     .map((item, index) => {
@@ -283,8 +312,9 @@ function buildQuestionRows(params: {
       const hook = selectHook(item, params.hooks, masteryLevel);
       const practiceMode = selectPracticeMode(index, masteryLevel);
       const orderIndex = params.firstOrderIndex + index;
-      const template = pickTemplate(practiceMode, orderIndex);
+      const template = pickFreshTemplate(practiceMode, orderIndex, params.recentPromptTexts, item, hook?.keyword);
       const questionText = renderTemplate(template, item, hook?.keyword);
+      params.recentPromptTexts.add(questionText);
       const options = practiceMode === 'tracing' ? [item.content] : buildSafeDistractors(item.content, item.type, params.allItems);
 
       const question: GeneratedQuestion = {
@@ -326,29 +356,42 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
   if (!supabase) return [];
 
   const childId = await ensureDefaultChild();
-  const plan = await getOrCreateTodayPlan(childId);
+  const testMode = await isPracticeTestModeAsync();
+  const plan = await getOrCreateTodayPlan(childId, testMode);
 
-  if (plan.is_completed && !isPracticeTestMode()) return [];
+  if (plan.is_completed && !testMode) return [];
 
-  if (!isPracticeTestMode()) {
+  if (!testMode) {
     const existingQuestions = await getPendingQuestions(plan.id);
     if (existingQuestions.length) return existingQuestions.slice(0, Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS));
   }
 
-  if (isPracticeTestMode()) {
+  if (testMode) {
     await supabase!.from('generated_questions').delete().eq('daily_learning_plan_id', plan.id).eq('status', 'pending');
   }
 
   const source = await fetchGenerationSource(childId);
   if (!source.items.length) return [];
 
-  const selected = uniqueById([
-    ...shuffle(source.weaknessItems).slice(0, plan.weakness_item_count ?? DEFAULT_COUNTS.weakness_item_count),
-    ...shuffle(source.reviewItems).slice(0, plan.review_item_count ?? DEFAULT_COUNTS.review_item_count),
-    ...shuffle(source.newItems).slice(0, plan.new_item_count ?? DEFAULT_COUNTS.new_item_count),
-    ...shuffle(source.fallbackItems),
-    ...shuffle(source.items)
-  ]).slice(0, Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS));
+  const recentMemory = await fetchRecentQuestionMemory(childId);
+  const lastKeyword = recentMemory.recentKeywords[0];
+  const deprioritizeRecent = (items: LearningItemRow[]) => [
+    ...items.filter((item) => !recentMemory.recentItemIds.slice(0, 5).includes(item.id)),
+    ...items.filter((item) => recentMemory.recentItemIds.slice(0, 5).includes(item.id))
+  ];
+
+  const requiredQuestions = Math.min(plan.total_required_questions ?? TOTAL_QUESTIONS, TOTAL_QUESTIONS);
+  const preferredSelected = uniqueById([
+    ...shuffle(deprioritizeRecent(source.weaknessItems)).slice(0, plan.weakness_item_count ?? DEFAULT_COUNTS.weakness_item_count),
+    ...shuffle(deprioritizeRecent(source.reviewItems)).slice(0, plan.review_item_count ?? DEFAULT_COUNTS.review_item_count),
+    ...shuffle(deprioritizeRecent(source.newItems)).slice(0, plan.new_item_count ?? DEFAULT_COUNTS.new_item_count),
+    ...shuffle(deprioritizeRecent(source.fallbackItems)),
+    ...shuffle(deprioritizeRecent(source.items))
+  ]).filter((item) => {
+    const hook = selectHook(item, source.hooks, source.progressByItem.get(item.id)?.mastery_level ?? 0);
+    return !lastKeyword || hook?.keyword !== lastKeyword || source.items.length <= TOTAL_QUESTIONS;
+  });
+  const selected = uniqueById([...preferredSelected, ...shuffle(deprioritizeRecent(source.items))]).slice(0, requiredQuestions);
 
   const rows = buildQuestionRows({
     childId,
@@ -357,7 +400,8 @@ export async function ensureTodayQuestions(): Promise<GeneratedQuestion[]> {
     hooks: source.hooks,
     allItems: source.items,
     progressByItem: source.progressByItem,
-    firstOrderIndex: await getNextOrderIndex(plan.id)
+    firstOrderIndex: await getNextOrderIndex(plan.id),
+    recentPromptTexts: recentMemory.promptTexts
   });
 
   if (!rows.length) return [];
