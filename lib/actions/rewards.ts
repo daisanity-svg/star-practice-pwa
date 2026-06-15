@@ -122,10 +122,10 @@ async function uploadDataUrlToStorage(dataUrl: string | null, folder: string, na
 }
 
 export async function createRewardPool(formData: FormData) {
-  if (!supabase) return;
+  if (!supabase) return { ok: false, message: 'Supabase 尚未連線。' };
 
   const name = value(formData, 'pool_name');
-  if (!name) return;
+  if (!name) return { ok: false, message: '請輸入獎池名稱。' };
 
   const description = nullableValue(formData, 'pool_description');
 
@@ -141,8 +141,7 @@ export async function createRewardPool(formData: FormData) {
     .single();
 
   if (seriesError) {
-    console.error('createRewardPool series error', seriesError.message);
-    return;
+    return { ok: false, message: `建立卡片系列失敗：${seriesError.message}` };
   }
 
   const { error: packError } = await supabase.from('reward_packs').insert({
@@ -153,14 +152,14 @@ export async function createRewardPool(formData: FormData) {
   });
 
   if (packError) {
-    console.error('createRewardPool pack error', packError.message);
-    return;
+    return { ok: false, message: `建立獎池失敗：${packError.message}` };
   }
 
   revalidatePath('/parent/cards');
   revalidatePath('/parent/dashboard');
   revalidatePath('/collection');
   revalidatePath('/');
+  return { ok: true, message: '獎池新增完成' };
 }
 
 export async function createCardSeries(formData: FormData) {
@@ -232,13 +231,13 @@ export async function createCard(formData: FormData) {
 }
 
 export async function createBatchCards(formData: FormData) {
-  if (!supabase) return;
+  if (!supabase) return { ok: false, message: 'Supabase 尚未連線。' };
 
   const seriesId = value(formData, 'batch_series_id');
-  if (!seriesId) return;
+  if (!seriesId) return { ok: false, message: '請先選擇可補卡的獎池。' };
 
   const files = formData.getAll('batch_source_files').filter((item): item is File => item instanceof File && item.size > 0);
-  if (files.length === 0) return;
+  if (files.length === 0) return { ok: false, message: '請選擇至少一張圖片。' };
 
   const names = parseJsonArray(formData, 'batch_card_names');
   const cardNos = parseJsonArray(formData, 'batch_card_nos');
@@ -281,8 +280,7 @@ export async function createBatchCards(formData: FormData) {
     .select('id');
 
   if (error) {
-    console.error('createBatchCards insert error', error.message);
-    return;
+    return { ok: false, message: `新增卡片失敗：${error.message}` };
   }
 
   if (rewardPackId && insertedCards && insertedCards.length > 0) {
@@ -301,6 +299,7 @@ export async function createBatchCards(formData: FormData) {
   revalidatePath('/parent/cards');
   revalidatePath('/collection');
   revalidatePath('/reward');
+  return { ok: true, message: `已成功新增 ${insertedCards?.length ?? files.length} 張卡片` };
 }
 
 export async function createScheduledReward(formData: FormData) {
@@ -373,4 +372,65 @@ export async function addCardToPack(formData: FormData) {
 
   revalidatePath('/parent/cards');
   revalidatePath('/reward');
+}
+
+export async function deleteRewardPool(formData: FormData) {
+  if (!supabase) return { ok: false, message: 'Supabase 尚未連線。' };
+  const packId = value(formData, 'reward_pack_id');
+  if (!packId) return { ok: false, message: '找不到要刪除的獎池。' };
+
+  const { error: itemsError } = await supabase.from('reward_pack_items').delete().eq('reward_pack_id', packId);
+  if (itemsError) return { ok: false, message: `刪除獎池卡片關聯失敗：${itemsError.message}` };
+
+  const { error: packError } = await supabase.from('reward_packs').delete().eq('id', packId);
+  if (packError) return { ok: false, message: `刪除獎池失敗：${packError.message}` };
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/reward');
+  revalidatePath('/collection');
+  revalidatePath('/parent/dashboard');
+  return { ok: true, message: '獎池已刪除' };
+}
+
+export async function deleteCard(formData: FormData) {
+  if (!supabase) return { ok: false, message: 'Supabase 尚未連線。' };
+  const cardId = value(formData, 'card_id');
+  if (!cardId) return { ok: false, message: '找不到要刪除的卡片。' };
+
+  const steps = [
+    () => supabase!.from('reward_pack_items').delete().eq('card_id', cardId),
+    () => supabase!.from('child_card_inventory').delete().eq('card_id', cardId),
+    () => supabase!.from('reward_draw_logs').delete().eq('card_id', cardId),
+    () => supabase!.from('scheduled_rewards').delete().eq('card_id', cardId),
+    () => supabase!.from('cards').delete().eq('id', cardId)
+  ];
+
+  for (const step of steps) {
+    const { error } = await step();
+    if (error) return { ok: false, message: `刪除卡片失敗：${error.message}` };
+  }
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/reward');
+  revalidatePath('/collection');
+  revalidatePath('/parent/dashboard');
+  return { ok: true, message: '卡片已刪除' };
+}
+
+export async function setPracticeMode(formData: FormData) {
+  if (!supabase) return { ok: false, message: 'Supabase 尚未連線。' };
+  const mode = value(formData, 'practice_mode');
+  if (mode !== 'test' && mode !== 'production') return { ok: false, message: '模式值不正確。' };
+
+  const { error } = await supabase.from('app_settings').upsert(
+    { key: 'practice_mode', value: mode, updated_at: new Date().toISOString() },
+    { onConflict: 'key' }
+  );
+  if (error) return { ok: false, message: `切換模式失敗：${error.message}` };
+
+  revalidatePath('/parent/cards');
+  revalidatePath('/parent/dashboard');
+  revalidatePath('/practice');
+  revalidatePath('/reward');
+  return { ok: true, message: mode === 'test' ? '已切換為測試模式' : '已切換為正式模式' };
 }

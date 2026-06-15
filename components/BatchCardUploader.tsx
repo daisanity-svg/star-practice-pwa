@@ -235,7 +235,7 @@ export function BatchCardUploader({ pools }: Props) {
         >
           {pools.map((item) => (
             <option key={item.packId} value={item.packId}>
-              {item.name}｜剩餘 {item.stock} 張
+              {item.name}｜目前 {item.stock} 張關聯卡
             </option>
           ))}
         </select>

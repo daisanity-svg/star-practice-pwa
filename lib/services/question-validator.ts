@@ -13,20 +13,23 @@ export type ValidationResult = {
 export const SAFE_QUESTION_TEMPLATES = {
   choice: [
     '「{keyword}」的第一個聲音是哪一個？',
-    '幫「{keyword}」找到它的朋友 {symbol}。',
-    '小偵探任務：看到「{keyword}」，請找出 {symbol}。',
-    '星星任務：哪一個是「{keyword}」的開頭朋友？'
+    '看到「{keyword}」，請找出開頭朋友。',
+    '幫「{keyword}」找到正確的聲音朋友。',
+    '小偵探任務：「{keyword}」開頭是哪一個？',
+    '{keyword} 開頭是哪個字母？',
+    '{keyword} 的第一個字母是哪一個？'
   ],
   listening: [
-    '聽一聽，請找出「{keyword}」的 {symbol}。',
-    '耳朵小任務：聽到「{keyword}」，找到 {symbol}。',
-    '聲音小雷達：「{keyword}」的開頭朋友是哪一個？',
-    '叮咚！請幫「{keyword}」找到正確聲音。'
+    '聽到「{keyword}」，請找出 {symbol}。',
+    '耳朵小任務：聽「{keyword}」，選出開頭朋友。',
+    '聲音小雷達：「{keyword}」的第一個聲音是哪一個？',
+    '叮咚！請幫「{keyword}」找到正確聲音。',
+    '聽一聽「{keyword}」，哪個朋友先出現？'
   ],
   tracing: [
-    '手指小畫家：描一描「{keyword}」的 {symbol}。',
+    '手指小畫家：描一描「{keyword}」的開頭朋友。',
     '星星軌道：跟著線走，寫出 {symbol}。',
-    '小手出發：把「{keyword}」的 {symbol} 描亮。',
+    '小手出發：把「{keyword}」的聲音描亮。',
     '魔法筆任務：一起把 {symbol} 畫出來。'
   ]
 } as const;
@@ -93,7 +96,8 @@ function hasBannedSymbolLoop(text: string) {
   return (
     /([A-Zㄅ-ㄧ])的\1/.test(compact) ||
     /([A-Zㄅ-ㄧ])要找\1/.test(compact) ||
-    /哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact)
+    /哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact) ||
+    /星星躲貓貓：?哪一個是([A-Zㄅ-ㄧ])的\1/.test(compact)
   );
 }
 

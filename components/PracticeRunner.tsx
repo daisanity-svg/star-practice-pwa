@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { completePracticeSession } from '@/lib/actions/practice';
 import type { GeneratedQuestion, SubmittedPracticeAnswer } from '@/lib/types';
@@ -8,6 +9,7 @@ import { KidButton } from '@/components/KidButton';
 
 type PracticeRunnerProps = {
   questions: GeneratedQuestion[];
+  practiceMode?: 'test' | 'production';
 };
 
 type CompletionStats = {
@@ -45,7 +47,7 @@ function encouragement(question: GeneratedQuestion) {
   return `${keyword} 的朋友是 ${target}`;
 }
 
-export function PracticeRunner({ questions }: PracticeRunnerProps) {
+export function PracticeRunner({ questions, practiceMode = 'production' }: PracticeRunnerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<SubmittedPracticeAnswer[]>([]);
@@ -54,11 +56,20 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
   const [completionStats, setCompletionStats] = useState<CompletionStats | null>(null);
   const [practiceRecordId, setPracticeRecordId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
 
   const current = questions[currentIndex];
   const answeredCurrent = selectedAnswer !== null;
   const currentIsCorrect = current && selectedAnswer ? isAnswerCorrect(current, selectedAnswer) : false;
   const progressPercent = questions.length > 0 ? Math.round(((currentIndex + (selectedAnswer ? 1 : 0)) / questions.length) * 100) : 0;
+
+  useEffect(() => {
+    if (!practiceRecordId || practiceMode !== 'production') return;
+    const timer = window.setTimeout(() => {
+      router.push(`/reward?practice_record_id=${practiceRecordId}`);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [practiceMode, practiceRecordId, router]);
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -155,7 +166,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
         <p className="mt-7 rounded-full bg-[#e9f4ff] px-5 py-2 text-base font-black text-[#1766e6]">完成任務</p>
         <h1 className="mt-4 text-[34px] font-black leading-tight text-[#172033]">今天練習完成！</h1>
         <p className="mt-3 text-lg font-bold leading-relaxed text-[#5f6f89]">
-          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，準備打開驚喜卡包。
+          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，{practiceMode === 'production' ? '即將帶你去打開小禮物。' : '準備打開驚喜卡包。'}
         </p>
         {completionMessage ? <p className="mt-4 rounded-[24px] bg-white px-5 py-4 text-base font-bold text-[#5f6f89] shadow-sm">{completionMessage}</p> : null}
         <div className="mt-8 w-full space-y-3">
@@ -168,6 +179,9 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
   return (
     <section className="flex flex-1 flex-col gap-3">
+      {practiceMode === 'test' ? (
+        <div className="rounded-[24px] bg-purple-100 px-4 py-3 text-center text-sm font-black text-purple-700 ring-1 ring-purple-200">測試模式：題目與抽卡可重複測試</div>
+      ) : null}
       <div className="kid-card p-4">
         <div className="flex items-center justify-between gap-3">
           <div>
