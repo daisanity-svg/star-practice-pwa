@@ -129,9 +129,9 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
     const answer = buildAnswer(selectedAnswer, isTracingQuestion(current) ? true : undefined);
     const nextAnswers = [...answers, answer];
     setAnswers(nextAnswers);
-    setSelectedAnswer(null);
 
     if (currentIndex < questions.length - 1) {
+      setSelectedAnswer(null);
       setCurrentIndex((value) => value + 1);
       setQuestionStartedAt(Date.now());
       return;
@@ -321,15 +321,19 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
         </div>
       ) : null}
 
-      <button
-        ref={ctaRef}
-        type="button"
-        onClick={goNext}
-        disabled={!selectedAnswer || isPending || isCompleting || isRedirecting}
-        className="sticky z-30 mt-2 min-h-[56px] touch-manipulation select-none rounded-[28px] bg-gradient-to-r from-[#2f8cff] to-[#1766e6] text-xl font-black text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] transition active:scale-[0.98] disabled:from-[#e5edf7] disabled:to-[#e5edf7] disabled:text-[#aab4c2] disabled:shadow-none bottom-[calc(env(safe-area-inset-bottom)+88px)]"
-      >
-        {isCompleting || isPending ? '練習完成，準備打開小禮物...' : currentIndex === questions.length - 1 ? '完成練習，去拿獎勵' : '下一題 →'}
-      </button>
+     {answeredCurrent ? (
+  <div className="scroll-mb-[calc(env(safe-area-inset-bottom)+120px)] pb-[calc(env(safe-area-inset-bottom)+18px)] pt-1">
+    <button
+      ref={ctaRef}
+      type="button"
+      onClick={goNext}
+      disabled={!selectedAnswer || isPending || isCompleting || isRedirecting}
+      className="min-h-[56px] w-full touch-manipulation select-none rounded-[28px] bg-gradient-to-r from-[#2f8cff] to-[#1766e6] text-xl font-black text-white shadow-[0_14px_30px_rgba(37,99,235,0.22)] transition active:scale-[0.98] disabled:from-[#e5edf7] disabled:to-[#e5edf7] disabled:text-[#aab4c2] disabled:shadow-none"
+    >
+      {isCompleting || isPending ? '練習完成，準備打開小禮物...' : currentIndex === questions.length - 1 ? '完成練習，去拿獎勵' : '下一題 →'}
+    </button>
+  </div>
+) : null}
     </section>
   );
 }
