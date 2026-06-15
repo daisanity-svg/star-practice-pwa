@@ -66,8 +66,8 @@ export default async function ParentCardsPage() {
   const emptyPoolCount = pools.filter((pool) => pool.stock <= 0).length;
 
   return (
-    <main className="min-h-screen bg-[#f8fbff] px-4 py-5 pb-[calc(env(safe-area-inset-bottom)+32px)] text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
+    <main className="admin-shell safe-screen">
+      <div className="space-y-5">
         <header className="flex flex-col gap-4 rounded-3xl border border-blue-100 bg-white p-5 shadow-[0_16px_42px_rgba(18,48,79,0.08)] sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Link href="/parent/dashboard" className="inline-flex items-center rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100">
