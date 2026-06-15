@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import type { Route } from 'next';
-import { PhoneFrame } from '@/components/PhoneFrame';
 import { dashboardStats } from '@/lib/demo-data';
 import { getActiveEvent, getRewardPackSummaries } from '@/lib/data/events';
 
@@ -26,7 +25,7 @@ export default async function ParentDashboardPage() {
   const remainingStock = packs.reduce((sum, pack) => sum + pack.remaining_stock, 0);
 
   return (
-    <PhoneFrame>
+    <main className="admin-shell safe-screen">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 小孩端
@@ -82,6 +81,6 @@ export default async function ParentDashboardPage() {
           </Link>
         ))}
       </section>
-    </PhoneFrame>
+    </main>
   );
 }

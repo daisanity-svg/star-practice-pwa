@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { PhoneFrame } from '@/components/PhoneFrame';
 import { createLearningItem, createMemoryHook } from '@/lib/actions/learning';
 import { getLearningItems, getMemoryHooks } from '@/lib/data/learning';
 
@@ -28,7 +27,7 @@ export default async function ParentLearningPage() {
   const [items, hooks] = await Promise.all([getLearningItems(), getMemoryHooks()]);
 
   return (
-    <PhoneFrame>
+    <main className="admin-shell safe-screen">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台
@@ -167,6 +166,6 @@ export default async function ParentLearningPage() {
           );
         })}
       </section>
-    </PhoneFrame>
+    </main>
   );
 }

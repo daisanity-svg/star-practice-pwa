@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { PhoneFrame } from '@/components/PhoneFrame';
 import { getLearningProgress } from '@/lib/data/learning';
 
 function masteryText(level: number) {
@@ -15,7 +14,7 @@ export default async function ParentProgressPage() {
   const progress = await getLearningProgress();
 
   return (
-    <PhoneFrame>
+    <main className="admin-shell safe-screen">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台
@@ -71,6 +70,6 @@ export default async function ParentProgressPage() {
           );
         })}
       </section>
-    </PhoneFrame>
+    </main>
   );
 }

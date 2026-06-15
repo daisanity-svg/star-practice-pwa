@@ -5,9 +5,9 @@ import { getAdminRewardData } from '@/lib/data/admin-rewards';
 import { getPracticeMode } from '@/lib/config/app-mode';
 import { AdminActionForm } from '@/components/AdminActionForm';
 
-const inputClass = 'mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-inner outline-none transition placeholder:text-slate-300 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 sm:text-base';
-const labelClass = 'text-sm font-black text-slate-600';
-const cardClass = 'rounded-3xl border border-blue-100 bg-white p-4 shadow-[0_16px_40px_rgba(37,99,235,0.08)] sm:p-5';
+const inputClass = 'mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100';
+const labelClass = 'text-sm font-bold text-slate-600';
+const cardClass = 'rounded-3xl border border-blue-100 bg-white p-5 shadow-[0_16px_42px_rgba(18,48,79,0.08)]';
 
 type AdminData = Awaited<ReturnType<typeof getAdminRewardData>>;
 
@@ -69,11 +69,11 @@ export default async function ParentCardsPage() {
   const emptyPoolCount = pools.filter((pool) => pool.stock <= 0).length;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 via-slate-50 to-white px-4 pb-[calc(env(safe-area-inset-bottom)+112px)] pt-[calc(env(safe-area-inset-top)+20px)] text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        <header className="flex flex-col gap-4 rounded-3xl border border-blue-100 bg-white p-4 shadow-[0_16px_40px_rgba(37,99,235,0.08)] sm:p-5 sm:flex-row sm:items-center sm:justify-between">
+    <main className="admin-shell safe-screen">
+      <div className="space-y-5">
+        <header className="flex flex-col gap-4 rounded-3xl border border-blue-100 bg-white p-5 shadow-[0_16px_42px_rgba(18,48,79,0.08)] sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <Link href="/parent/dashboard" className="inline-flex items-center rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-200">
+            <Link href="/parent/dashboard" className="inline-flex items-center rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100">
               ← 回後台
             </Link>
             <p className="mt-5 text-sm font-black uppercase tracking-[0.18em] text-blue-500">Reward Pool Admin</p>

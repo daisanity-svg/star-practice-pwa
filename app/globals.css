@@ -12,6 +12,11 @@
   --yellow: #ffd95a;
   --mint: #dff8ef;
   --panel: rgba(255, 255, 255, 0.92);
+  --admin-bg: #f8fbff;
+  --admin-surface: #ffffff;
+  --admin-border: #dbeafe;
+  --admin-text: #12304f;
+  --admin-muted: #64748b;
 }
 
 * {
@@ -181,6 +186,43 @@ a[aria-disabled='true'] {
     radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.95), transparent 28%),
     radial-gradient(circle at 50% 50%, rgba(255, 217, 90, 0.55), transparent 46%),
     linear-gradient(145deg, #dbeafe 0%, #f6fbff 55%, #fff2b7 100%);
+}
+
+.admin-shell {
+  width: min(100% - 24px, 1040px);
+  min-height: 100dvh;
+  margin: 0 auto;
+  overflow-x: hidden;
+  padding: max(22px, calc(env(safe-area-inset-top) + 12px)) 0 max(48px, calc(env(safe-area-inset-bottom) + 34px));
+  color: var(--admin-text);
+}
+
+.admin-shell .kid-card,
+.admin-shell .kid-card-strong {
+  border: 1px solid var(--admin-border);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 16px 42px rgba(18, 48, 79, 0.08);
+}
+
+.admin-shell .kid-hero-blue {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(255, 255, 255, 0.52), transparent 10rem),
+    linear-gradient(135deg, #f8fbff 0%, #eaf6ff 54%, #dbeafe 100%);
+  color: var(--admin-text);
+  box-shadow: 0 16px 42px rgba(18, 48, 79, 0.08);
+}
+
+.admin-shell input,
+.admin-shell textarea,
+.admin-shell select {
+  max-width: 100%;
+}
+
+.admin-shell input:focus,
+.admin-shell textarea:focus,
+.admin-shell select:focus {
+  box-shadow: 0 0 0 4px rgba(47, 140, 255, 0.14);
 }
 
 .answer-pop {

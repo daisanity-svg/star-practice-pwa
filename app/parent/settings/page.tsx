@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { PhoneFrame } from '@/components/PhoneFrame';
 import { getPracticeSettings } from '@/lib/data/settings';
 
 const rowClass = 'rounded-[28px] bg-white/75 p-4 shadow-sm';
@@ -8,7 +7,7 @@ export default async function ParentSettingsPage() {
   const settings = await getPracticeSettings();
 
   return (
-    <PhoneFrame>
+    <main className="admin-shell safe-screen">
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台
@@ -44,6 +43,6 @@ export default async function ParentSettingsPage() {
           <p className="mt-2 text-xl font-black text-ink">正確率 {settings.min_correct_rate_for_bonus}% 或弱點答對 {settings.weakness_bonus_required} 題</p>
         </div>
       </section>
-    </PhoneFrame>
+    </main>
   );
 }
