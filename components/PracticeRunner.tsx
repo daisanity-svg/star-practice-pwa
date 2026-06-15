@@ -26,7 +26,7 @@ function isAnswerCorrect(question: GeneratedQuestion, selected: string) {
 
 function questionEmoji(question: GeneratedQuestion) {
   if (question.practice_mode === 'listening') return '👂';
-  if (question.practice_mode === 'tracing') return '✍️';
+  if (question.practice_mode === 'tracing') return '👋';
   if (question.practice_mode === 'intro') return '👋';
   if (question.learning_item?.type?.includes('english')) return '🔤';
   return 'ㄅ';
@@ -34,9 +34,16 @@ function questionEmoji(question: GeneratedQuestion) {
 
 function shortModeLabel(question: GeneratedQuestion) {
   if (question.practice_mode === 'listening') return '聽聲音找朋友';
-  if (question.practice_mode === 'tracing') return '用手指描一描';
+  if (question.practice_mode === 'tracing') return '認識新朋友';
   if (question.practice_mode === 'intro') return '認識新朋友';
   return '找出正確朋友';
+}
+
+function displayQuestionText(question: GeneratedQuestion) {
+  if (!isTracingQuestion(question)) return question.question_text;
+
+  const friend = question.memory_hook?.keyword ?? question.learning_item?.display_text ?? question.learning_item?.content ?? question.correct_answer[0] ?? '這個朋友';
+  return `認識這個朋友：${friend}`;
 }
 
 function encouragement(question: GeneratedQuestion) {
@@ -68,7 +75,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    const utterance = new SpeechSynthesisUtterance(current.question_text);
+    const utterance = new SpeechSynthesisUtterance(displayQuestionText(current));
     utterance.lang = current.learning_item?.type?.includes('english') ? 'en-US' : 'zh-TW';
     utterance.rate = 0.78;
     utterance.pitch = 1.08;
@@ -200,7 +207,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
           {questionEmoji(current)}
         </div>
         <p className="mt-4 text-sm font-black text-[#2f8cff]">今天的字母朋友</p>
-        <h1 className="mt-2 text-[34px] font-black leading-tight tracking-[-0.04em] text-[#172033]">{current.question_text}</h1>
+        <h1 className="mt-2 text-[34px] font-black leading-tight tracking-[-0.04em] text-[#172033]">{displayQuestionText(current)}</h1>
         <p className="mt-3 rounded-[24px] bg-[#f5f9ff] px-4 py-3 text-base font-bold leading-relaxed text-[#5f6f89]">
           {current.memory_hook?.sentence ?? '聽一聽，再找出正確的朋友'}
         </p>
@@ -216,9 +223,11 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
 
       {isTracingQuestion(current) ? (
         <div className="rounded-[32px] bg-[#fff8dd] p-4 text-center shadow-inner">
-          <div className="relative flex min-h-[230px] items-center justify-center overflow-hidden rounded-[28px] border-4 border-dashed border-[#b9dcff] bg-white/88 text-[120px] font-black text-blue-100">
-            <span className="absolute left-4 top-4 rounded-full bg-[#e9f4ff] px-3 py-1.5 text-sm font-black text-[#1766e6]">用手指描</span>
-            {current.learning_item?.content ?? current.correct_answer[0]}
+          <div className="rounded-[28px] bg-white/88 px-5 py-6 shadow-sm">
+            <p className="rounded-full bg-[#e9f4ff] px-4 py-2 text-base font-black text-[#1766e6]">認識這個朋友</p>
+            <div className="mt-4 text-[76px] font-black leading-none text-[#1766e6]">
+              {current.learning_item?.content ?? current.correct_answer[0]}
+            </div>
           </div>
           <button
             type="button"
@@ -233,7 +242,7 @@ export function PracticeRunner({ questions }: PracticeRunnerProps) {
             onClick={handleTracingDone}
             className={`mt-4 h-16 w-full touch-manipulation select-none rounded-[26px] text-xl font-black shadow-sm active:scale-[0.98] ${answeredCurrent ? 'bg-[#dff8ef] text-emerald-900 answer-pop' : 'kid-blue-button'}`}
           >
-            {answeredCurrent ? '完成了！' : current.practice_mode === 'intro' ? '我認識了' : '我描好了'}
+            {answeredCurrent ? '完成了！' : '我認識了'}
           </button>
         </div>
       ) : (
