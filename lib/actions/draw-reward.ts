@@ -358,6 +358,16 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
 
   if (!picked?.cards) return { ok: false, message: '抽到的卡片資料不完整，請檢查卡片是否仍存在。' };
 
+  const nextStock = Math.max(0, Number(picked.stock ?? 1) - 1);
+  const { error: stockError } = await client
+    .from('reward_pack_items')
+    .update({ stock: nextStock })
+    .eq('id', picked.id);
+
+  if (stockError) {
+    return { ok: false, message: `扣庫存失敗：${stockError.message}` };
+  }
+
   let drawLogId: string;
   try {
     drawLogId = (await insertDrawLog({ childId, rewardPackId, cardId: picked.card_id, practiceRecordId })) as string;
@@ -379,7 +389,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     card: picked.cards,
     draw_log_id: drawLogId,
     is_new: true,
-    remaining_stock: Math.max(0, Number(picked.stock ?? 1) - 1),
+    remaining_stock: nextStock,
     saved_to_inventory: false
   };
 }
