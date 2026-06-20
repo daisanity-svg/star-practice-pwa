@@ -19,5 +19,36 @@ export const demoPracticeSettings: PracticeSettings = {
 };
 
 export async function getPracticeSettings(): Promise<PracticeSettings> {
-  return demoPracticeSettings;
+  const { supabase } = await import('@/lib/supabase');
+  const client = supabase;
+  if (!client) return demoPracticeSettings;
+
+  const { data, error } = await client
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'practice_settings')
+    .maybeSingle();
+
+  if (error || !data?.value) return demoPracticeSettings;
+
+  try {
+    const parsed = JSON.parse(data.value as string);
+    return { ...demoPracticeSettings, ...parsed } as PracticeSettings;
+  } catch {
+    return demoPracticeSettings;
+  }
+}
+
+export async function updatePracticeSettings(settings: PracticeSettings): Promise<void> {
+  const { supabase } = await import('@/lib/supabase');
+  const client = supabase;
+  if (!client) return;
+
+  await client
+    .from('app_settings')
+    .upsert({
+      key: 'practice_settings',
+      value: JSON.stringify(settings),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
 }

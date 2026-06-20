@@ -336,25 +336,6 @@ export async function createScheduledReward(formData: FormData) {
   revalidatePath('/reward');
 }
 
-export async function createRewardPack(formData: FormData) {
-  if (!supabase) return;
-
-  const name = value(formData, 'name');
-  if (!name) return;
-
-  await supabase.from('reward_packs').insert({
-    name,
-    description: nullableValue(formData, 'description'),
-    draw_type: value(formData, 'draw_type') || 'daily',
-    start_date: nullableValue(formData, 'start_date'),
-    end_date: nullableValue(formData, 'end_date'),
-    is_active: true
-  });
-
-  revalidatePath('/parent/cards');
-  revalidatePath('/parent/dashboard');
-}
-
 export async function addCardToPack(formData: FormData) {
   if (!supabase) return;
 

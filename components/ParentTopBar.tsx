@@ -2,8 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { Route } from 'next';
 
-const tabs: { href: string; label: string }[] = [
+type Tab = {
+  href: Route;
+  label: string;
+};
+
+const tabs: Tab[] = [
   { href: '/parent/dashboard', label: '首頁' },
   { href: '/parent/learning', label: '學習' },
   { href: '/parent/cards', label: '卡牌' },
