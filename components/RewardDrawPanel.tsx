@@ -64,6 +64,9 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
           {card ? <RewardCardPreview card={card} /> : <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">?</div>}
+          {typeof drawResult?.remaining_stock === 'number' ? (
+            <p className="mt-4 rounded-full bg-[#fff7e0] px-4 py-2 text-sm font-black text-[#b45309]">這包還剩：{drawResult.remaining_stock} 張</p>
+          ) : null}
           <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">{saveResult?.message ?? drawResult?.message}</p>
         </div>
 
