@@ -1230,6 +1230,37 @@ a[aria-disabled='true'] {
   min-height: 520px;
 }
 
+.kid-parent-entry {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.kid-parent-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #546e8a;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 22px rgba(31, 60, 120, 0.08);
+  text-decoration: none;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.kid-parent-btn:hover {
+  transform: translateY(1px);
+  box-shadow: 0 10px 18px rgba(31, 60, 120, 0.1);
+}
+
+.kid-parent-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 8px 14px rgba(31, 60, 120, 0.1);
+}
+
 @media (max-width: 374px) {
   .practice-mission-title {
     font-size: 17px;

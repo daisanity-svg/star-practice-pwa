@@ -101,6 +101,11 @@ export default async function HomePage() {
               <span className="kid-collect-percent">{progressPercent}%</span>
             </div>
             <p className="kid-collect-sub">已找到 {ownedTotal} 位朋友</p>
+            <div className="kid-parent-entry">
+              <Link href="/parent/login" className="kid-parent-btn">
+                家長後台
+              </Link>
+            </div>
           </section>
         </div>
 
