@@ -24,3 +24,12 @@ export async function getPracticeMode(): Promise<PracticeModeSetting> {
 export async function isPracticeTestModeAsync(): Promise<boolean> {
   return (await getPracticeMode()) === 'test';
 }
+
+export async function updateAppSetting(key: string, value: string): Promise<void> {
+  const client = supabase;
+  if (!client) return;
+
+  await client
+    .from('app_settings')
+    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+}

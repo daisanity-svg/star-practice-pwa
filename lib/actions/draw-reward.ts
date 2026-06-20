@@ -333,7 +333,29 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   const availableItems = (packItems ?? []) as unknown as PackItemRow[];
   if (!availableItems.length) return { ok: false, message: '這個卡包目前沒有啟用中的卡片，請到後台加入卡片或換卡包。' };
 
-  const picked = pickWeightedItem(availableItems);
+  let picked: PackItemRow | null = null;
+
+  if (!(await isPracticeTestModeAsync())) {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: todayLogs } = await client
+      .from('reward_draw_logs')
+      .select('card_id')
+      .eq('child_id', childId)
+      .eq('reward_pack_id', rewardPackId)
+      .gte('created_at', `${today}T00:00:00.000Z`);
+
+    const drawnCardIds = new Set((todayLogs ?? []).map((row: { card_id: string }) => row.card_id));
+    const candidates = availableItems.filter((item) => !drawnCardIds.has(item.card_id));
+
+    if (!candidates.length) {
+      return { ok: false, message: '這個卡包今天的卡片都已經抽完了，明天再來吧！' };
+    }
+
+    picked = pickWeightedItem(candidates);
+  } else {
+    picked = pickWeightedItem(availableItems);
+  }
+
   if (!picked?.cards) return { ok: false, message: '抽到的卡片資料不完整，請檢查卡片是否仍存在。' };
 
   let drawLogId: string;
@@ -357,7 +379,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     card: picked.cards,
     draw_log_id: drawLogId,
     is_new: true,
-    remaining_stock: null,
+    remaining_stock: Math.max(0, Number(picked.stock ?? 1) - 1),
     saved_to_inventory: false
   };
 }
