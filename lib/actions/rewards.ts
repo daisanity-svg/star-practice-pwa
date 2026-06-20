@@ -381,17 +381,61 @@ export async function deleteCard(formData: FormData) {
   const cardId = value(formData, 'card_id');
   if (!cardId) return { ok: false, message: '找不到要刪除的卡片。' };
 
-  const steps = [
-    () => supabase!.from('reward_pack_items').delete().eq('card_id', cardId),
-    () => supabase!.from('child_card_inventory').delete().eq('card_id', cardId),
-    () => supabase!.from('reward_draw_logs').delete().eq('card_id', cardId),
-    () => supabase!.from('scheduled_rewards').delete().eq('card_id', cardId),
-    () => supabase!.from('cards').delete().eq('id', cardId)
-  ];
+  const { data: cardExists } = await supabase.from('cards').select('id').eq('id', cardId).maybeSingle();
+  if (!cardExists?.id) return { ok: false, message: '找不到要刪除的卡片。' };
 
-  for (const step of steps) {
-    const { error } = await step();
-    if (error) return { ok: false, message: `刪除卡片失敗：${error.message}` };
+  const timestamp = new Date().toISOString();
+  const backupId = `backup-${cardId}-${Date.now()}`;
+
+  const { error: backupError } = await supabase.from('deleted_cards_backup').insert({
+    id: backupId,
+    original_card_id: cardId,
+    payload: { cardId, timestamp },
+  });
+  if (backupError) {
+    return { ok: false, message: `建立備份失敗，無法安全刪除：${backupError.message}` };
+  }
+
+  const { error: packError } = await supabase
+    .from('reward_pack_items')
+    .delete()
+    .eq('card_id', cardId);
+  if (packError) {
+    await supabase.from('deleted_cards_backup').delete().eq('id', backupId);
+    return { ok: false, message: `刪除獎池關聯失敗：${packError.message}` };
+  }
+
+  const { error: invError } = await supabase
+    .from('child_card_inventory')
+    .delete()
+    .eq('card_id', cardId);
+  if (invError) {
+    await supabase.from('deleted_cards_backup').delete().eq('id', backupId);
+    return { ok: false, message: `刪除收納包失敗：${invError.message}` };
+  }
+
+  const { error: logError } = await supabase
+    .from('reward_draw_logs')
+    .delete()
+    .eq('card_id', cardId);
+  if (logError) {
+    await supabase.from('deleted_cards_backup').delete().eq('id', backupId);
+    return { ok: false, message: `刪除抽卡紀錄失敗：${logError.message}` };
+  }
+
+  const { error: schedError } = await supabase
+    .from('scheduled_rewards')
+    .delete()
+    .eq('card_id', cardId);
+  if (schedError) {
+    await supabase.from('deleted_cards_backup').delete().eq('id', backupId);
+    return { ok: false, message: `刪除指定獎勵失敗：${schedError.message}` };
+  }
+
+  const { error: cardError } = await supabase.from('cards').delete().eq('id', cardId);
+  if (cardError) {
+    await supabase.from('deleted_cards_backup').delete().eq('id', backupId);
+    return { ok: false, message: `刪除卡片失敗：${cardError.message}` };
   }
 
   revalidatePath('/parent/cards');
