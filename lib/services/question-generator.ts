@@ -188,6 +188,12 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
   if (existing?.id) {
     const updatePayload: Record<string, unknown> = {};
 
+    const completedDay = existing.completed_at ? new Date(existing.completed_at).toISOString().slice(0, 10) : '';
+    if (completedDay && completedDay !== today) {
+      updatePayload.is_completed = false;
+      updatePayload.completed_at = null;
+    }
+
     if (testMode && existing.is_completed) {
       updatePayload.is_completed = false;
       updatePayload.completed_at = null;

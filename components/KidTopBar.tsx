@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import type { Route } from 'next';
 
@@ -8,18 +10,18 @@ type KidTopBarProps = {
   rightLabel?: string;
 };
 
-export function KidTopBar({ title, backHref = '/', backLabel = '首頁', rightLabel }: KidTopBarProps) {
+export function KidTopBar({ title, backHref = '/', backLabel = '地圖', rightLabel }: KidTopBarProps) {
   return (
-    <div className="kid-topbar">
-      <Link
-        href={backHref}
-        className="flex h-10 shrink-0 touch-manipulation items-center justify-center rounded-[20px] bg-[#eef6ff] px-3 text-[13px] font-black text-[#1766e6] active:scale-[0.98]"
-      >
-        ‹ {backLabel}
+    <div className="kid-game-topbar">
+      <Link href={backHref} className="kid-topbar-back" aria-label="回到地圖">
+        <span className="kid-topbar-back-icon" aria-hidden="true" />
+        <span className="kid-topbar-back-text">{backLabel}</span>
       </Link>
-      <div className="min-w-0 flex-1 truncate text-center text-[17px] font-black tracking-[-0.03em] text-[#172033]">{title}</div>
-      <div className="flex h-10 min-w-11 shrink-0 items-center justify-center rounded-[20px] bg-gradient-to-br from-[#dbeafe] to-[#fff1b8] px-3 text-base font-black text-[#1d4ed8]">
-        {rightLabel ?? '⭐'}
+      <div className="kid-topbar-center">
+        <span className="kid-topbar-title">{title}</span>
+      </div>
+      <div className="kid-topbar-right">
+        <span className="kid-topbar-badge">{rightLabel}</span>
       </div>
     </div>
   );

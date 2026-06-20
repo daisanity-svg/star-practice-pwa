@@ -25,6 +25,7 @@
     "autoprefixer": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "playwright-core": "^1.61.0",
     "postcss": "latest",
     "tailwindcss": "latest",
     "typescript": "latest"

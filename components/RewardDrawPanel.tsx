@@ -16,12 +16,12 @@ function getCardImageUrl(card: RewardCard) {
   return card.rendered_card_image_url || card.source_image_url || null;
 }
 
-function getCardFallbackEmoji(card: RewardCard) {
-  const text = `${getRewardCardDisplayName(card)} ${card.series?.name ?? ''}`;
-  if (text.includes('車')) return '🚗';
-  if (text.includes('狗') || text.includes('布麗')) return '🐶';
-  if (text.includes('植物') || text.includes('皮克')) return '🌱';
-  return '⭐';
+function buildCardPlaceholder(name: string) {
+  return (
+    <span className="kid-reward-placeholder" aria-label={name}>
+      <span className="kid-reward-placeholder-bg" aria-hidden="true" />
+    </span>
+  );
 }
 
 function RewardCardPreview({ card }: { card: RewardCard }) {
@@ -35,7 +35,7 @@ function RewardCardPreview({ card }: { card: RewardCard }) {
           <Image src={cardImageUrl} alt={displayName} fill className="object-contain" sizes="300px" unoptimized />
         </div>
       ) : (
-        <div className="flex h-44 w-44 items-center justify-center rounded-[36px] bg-white/70 text-7xl shadow-inner">{getCardFallbackEmoji(card)}</div>
+        <div className="kid-reward-placeholder-frame">{buildCardPlaceholder(displayName)}</div>
       )}
     </div>
   );
@@ -51,11 +51,11 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
 
   if (drawResult || saveResult) {
     return (
-      <section className="kid-card-strong relative flex min-h-[auto] flex-col overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
-        <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto h-80 w-80 rounded-full bg-[#dbeafe] opacity-70 blur-3xl" />
-        <div className="pointer-events-none absolute left-8 top-24 text-3xl confetti-sparkle">✨</div>
-        <div className="pointer-events-none absolute right-8 top-36 text-3xl confetti-sparkle">🎉</div>
-        <div className="pointer-events-none absolute left-10 bottom-32 text-3xl confetti-sparkle">⭐</div>
+      <section className="kid-reward-stage relative flex min-h-[auto] flex-col overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
+        <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto h-80 w-80 rounded-full bg-[#dbeafe] opacity-70 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute left-8 top-24 text-3xl confetti-sparkle" aria-hidden="true" />
+        <div className="pointer-events-none absolute right-8 top-36 text-3xl confetti-sparkle" aria-hidden="true" />
+        <div className="pointer-events-none absolute left-10 bottom-32 text-3xl confetti-sparkle" aria-hidden="true" />
 
         <p className="relative z-10 self-center rounded-full bg-[#e9f4ff] px-4 py-2 text-sm font-black text-[#1766e6]">今日獎勵</p>
         <h1 className="relative z-10 mt-3 text-[28px] font-black leading-tight text-[#172033]">
@@ -63,7 +63,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
         </h1>
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
-          {card ? <RewardCardPreview card={card} /> : <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">💤</div>}
+          {card ? <RewardCardPreview card={card} /> : <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">?</div>}
           <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">{saveResult?.message ?? drawResult?.message}</p>
         </div>
 
@@ -76,29 +76,30 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
                 disabled={isSaving}
                 className="kid-blue-button flex min-h-[56px] w-full items-center justify-center rounded-[24px] text-base font-black active:scale-[0.99] disabled:opacity-60"
               >
-                {isSaving ? '儲存中...' : '🎒 儲存到收納包'}
+                {isSaving ? '儲存中...' : '收到，放進行動箱'}
               </button>
             </form>
           ) : null}
-          <Link href="/collection" className="flex min-h-[54px] items-center justify-center rounded-[24px] border border-[#d8eaff] bg-white text-lg font-black text-[#172033] active:scale-[0.99]">
-            {saved ? '查看收納包' : '先不儲存，回收納包'}
+          <Link href="/collection" className="kid-yellow-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+            去收納包看看
           </Link>
-          <Link href="/" className="flex min-h-[54px] items-center justify-center rounded-[24px] bg-[#f5f9ff] text-base font-black text-[#172033] active:scale-[0.99]">回首頁</Link>
+          <Link href="/" className="kid-ghost-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+            回首頁地圖
+          </Link>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="kid-card-strong relative flex min-h-[auto] flex-col items-center justify-center overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
-      <div className="pointer-events-none absolute inset-x-0 top-20 mx-auto h-72 w-72 rounded-full bg-[#dbeafe] opacity-80 blur-3xl" />
-      <div className="pointer-events-none absolute left-8 top-20 text-3xl confetti-sparkle">✨</div>
-      <div className="pointer-events-none absolute right-8 top-28 text-3xl confetti-sparkle">⭐</div>
-      <div className="pointer-events-none absolute bottom-36 left-10 text-3xl confetti-sparkle">🎉</div>
+    <section className="kid-reward-stage relative flex min-h-[auto] flex-col items-center justify-center overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
+      <div className="pointer-events-none absolute inset-x-0 top-20 mx-auto h-72 w-72 rounded-full bg-[#dbeafe] opacity-80 blur-3xl" aria-hidden="true" />
+      <div className="pointer-events-none absolute left-8 top-20 text-3xl confetti-sparkle" aria-hidden="true" />
+      <div className="pointer-events-none absolute right-8 top-28 text-3xl confetti-sparkle" aria-hidden="true" />
+      <div className="pointer-events-none absolute bottom-36 left-10 text-3xl confetti-sparkle" aria-hidden="true" />
 
       <div className="reward-pack-glow relative z-10 flex h-32 w-32 items-center justify-center rounded-[42px] text-7xl shadow-[0_24px_48px_rgba(37,99,235,0.16)] animate-bounce-soft">
-        🎁
-        <span className="absolute -right-2 bottom-10 text-3xl">✨</span>
+        <span className="kid-reward-glyph" aria-hidden="true" />
       </div>
       <p className="relative z-10 mt-5 rounded-full bg-[#e9f4ff] px-4 py-2 text-sm font-black text-[#1766e6]">恭喜完成今天練習</p>
       <h1 className="relative z-10 mt-3 text-[30px] font-black leading-tight text-[#172033]">打開小禮物</h1>
@@ -115,9 +116,11 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
           disabled={isDrawing}
           className="kid-blue-button flex min-h-[58px] w-full touch-manipulation select-none items-center justify-center rounded-[26px] text-xl font-black active:scale-[0.99] disabled:opacity-60"
         >
-          {isDrawing ? '打開中...' : '🎁 打開小禮物'}
+          {isDrawing ? '打開中...' : '打開小禮物'}
         </button>
-        <Link href="/collection" className="flex min-h-[54px] items-center justify-center rounded-[24px] border border-[#d8eaff] bg-white text-lg font-black text-[#172033] active:scale-[0.99]">🎒 看收納包</Link>
+        <Link href="/collection" className="kid-yellow-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+          看收納包
+        </Link>
       </form>
     </section>
   );
