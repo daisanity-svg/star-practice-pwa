@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { BatchCardUploader } from '@/components/BatchCardUploader';
 import { createBatchCards, createRewardPool, createScheduledReward, deleteCard, deleteRewardPool, setPracticeMode } from '@/lib/actions/rewards';
 import { getAdminRewardData } from '@/lib/data/admin-rewards';
+import { getDefaultChildId } from '@/lib/data/rewards';
 import { getPracticeMode } from '@/lib/config/app-mode';
 import { AdminActionForm } from '@/components/AdminActionForm';
 
@@ -43,7 +44,12 @@ function todayString() {
 }
 
 export default async function ParentCardsPage() {
-  const { series, cards, packs, packItems, scheduledRewards } = await getAdminRewardData();
+  const { series: seriesRaw, cards: cardsRaw, packs: packsRaw, packItems: packItemsRaw, scheduledRewards: scheduledRewardsRaw } = await getAdminRewardData();
+  const series: AdminData['series'] = Array.isArray(seriesRaw) ? (seriesRaw as AdminData['series']) : [];
+  const cards: AdminData['cards'] = Array.isArray(cardsRaw) ? (cardsRaw as AdminData['cards']) : [];
+  const packs: AdminData['packs'] = Array.isArray(packsRaw) ? (packsRaw as AdminData['packs']) : [];
+  const packItems: AdminData['packItems'] = Array.isArray(packItemsRaw) ? (packItemsRaw as AdminData['packItems']) : [];
+  const scheduledRewards: AdminData['scheduledRewards'] = Array.isArray(scheduledRewardsRaw) ? (scheduledRewardsRaw as AdminData['scheduledRewards']) : [];
   const practiceMode = await getPracticeMode();
   const today = todayString();
 
