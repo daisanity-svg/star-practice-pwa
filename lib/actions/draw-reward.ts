@@ -56,7 +56,10 @@ function pickWeightedItem(items: PackItemRow[]) {
 
 async function getDefaultChildId() {
   const client = supabase;
-  if (!client) return null;
+  if (!client) {
+    console.error('[drawDailyReward] supabase client 尚未初始化');
+    return null;
+  }
 
   const { data, error } = await client
     .from('children')
@@ -65,7 +68,10 @@ async function getDefaultChildId() {
     .limit(1)
     .maybeSingle();
 
-  if (error || !data?.id) return null;
+  if (error || !data?.id) {
+    console.error('[drawDailyReward] 找不到 child:', error);
+    return null;
+  }
   return data.id as string;
 }
 
@@ -218,12 +224,13 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   if (!client) {
     return {
       ok: true,
-      message: '你抽到一張測試卡！按下儲存後會放進收納包。',
+      message: '你找到一張測試卡！已放進你的圖鑑。',
       card: demoCard,
       draw_log_id: 'demo-draw-log',
       is_new: true,
       remaining_stock: null,
-      saved_to_inventory: false,
+      saved_to_inventory: true,
+      drawn_now: true,
       demo: true
     };
   }
@@ -252,14 +259,17 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   }
 
   childId = childId || (await getDefaultChildId());
-  if (!childId) return { ok: false, message: '尚未建立孩子資料，請先到 Supabase seed 或後台新增孩子。' };
+  if (!childId) return { ok: false, message: '尚未建立孩子資料，請稍後再試。' };
 
   if (!rewardPackId) rewardPackId = await getActiveRewardPackIdWithStock();
 
   const scheduledReward = await getScheduledReward(childId);
   if (scheduledReward?.cards) {
     const finalRewardPackId = scheduledReward.reward_pack_id || rewardPackId;
-    if (!finalRewardPackId) return { ok: false, message: '已找到指定卡，但目前沒有可記錄的卡包。請先建立一個啟用中的獎池。' };
+    if (!finalRewardPackId) {
+      console.error('[drawDailyReward] 找不到可記錄的卡包', { scheduledReward });
+      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+    }
 
     let drawLogId: string;
     try {
@@ -270,8 +280,16 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
         practiceRecordId
       })) as string;
     } catch (error) {
-      return { ok: false, message: `寫入抽卡紀錄失敗：${error instanceof Error ? error.message : '未知錯誤'}` };
+      console.error('[drawDailyReward] 寫入抽卡紀錄失敗', { childId, finalRewardPackId, cardId: scheduledReward.card_id, error });
+      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
     }
+
+    const inventoryResult = await addCardToInventory({
+      childId,
+      cardId: scheduledReward.card_id,
+      rewardPackId: finalRewardPackId,
+      practiceRecordId
+    });
 
     await client
       .from('scheduled_rewards')
@@ -289,19 +307,24 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     revalidatePath('/reward');
     revalidatePath('/parent/dashboard');
     revalidatePath('/parent/cards');
+    revalidatePath('/collection');
 
     return {
       ok: true,
-      message: scheduledReward.reason ? `這是爸爸指定獎勵：${scheduledReward.reason}` : '你抽到爸爸指定的新卡！',
+      message: inventoryResult.ok ? '你找到新朋友了！已放進你的圖鑑。' : `你抽到爸爸指定的新卡！儲存到圖鑑失敗：${inventoryResult.message}`,
       card: scheduledReward.cards,
       draw_log_id: drawLogId,
       is_new: true,
       remaining_stock: null,
-      saved_to_inventory: false
+      saved_to_inventory: Boolean(inventoryResult.ok),
+      drawn_now: true
     };
   }
 
-  if (!rewardPackId) return { ok: false, message: '目前沒有啟用中的卡包，請先到後台建立並啟用卡包。' };
+  if (!rewardPackId) {
+    console.error('[drawDailyReward] 找不到可用的 rewardPackId');
+    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+  }
 
   const { data: packItems, error: packItemsError } = await client
     .from('reward_pack_items')
@@ -328,10 +351,16 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     .eq('reward_pack_id', rewardPackId)
     .eq('is_active', true);
 
-  if (packItemsError) return { ok: false, message: `讀取卡包失敗：${packItemsError.message}` };
+  if (packItemsError) {
+    console.error('[drawDailyReward] 讀取卡包失敗', { rewardPackId, packItemsError });
+    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+  }
 
   const availableItems = (packItems ?? []) as unknown as PackItemRow[];
-  if (!availableItems.length) return { ok: false, message: '這個卡包目前沒有啟用中的卡片，請到後台加入卡片或換卡包。' };
+  if (!availableItems.length) {
+    console.error('[drawDailyReward] reward pack 沒有啟用中的卡片', { rewardPackId });
+    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+  }
 
   let picked: PackItemRow | null = null;
 
@@ -356,7 +385,10 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     picked = pickWeightedItem(availableItems);
   }
 
-  if (!picked?.cards) return { ok: false, message: '抽到的卡片資料不完整，請檢查卡片是否仍存在。' };
+  if (!picked?.cards) {
+    console.error('[drawDailyReward] 抽到的卡片資料不完整', { picked });
+    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+  }
 
   const nextStock = Math.max(0, Number(picked.stock ?? 1) - 1);
   const { error: stockError } = await client
@@ -365,15 +397,24 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     .eq('id', picked.id);
 
   if (stockError) {
-    return { ok: false, message: `扣庫存失敗：${stockError.message}` };
+    console.error('[drawDailyReward] 扣庫存失敗', { picked, stockError });
+    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
   }
 
   let drawLogId: string;
   try {
     drawLogId = (await insertDrawLog({ childId, rewardPackId, cardId: picked.card_id, practiceRecordId })) as string;
   } catch (error) {
-    return { ok: false, message: `寫入抽卡紀錄失敗：${error instanceof Error ? error.message : '未知錯誤'}` };
+    console.error('[drawDailyReward] 寫入抽卡紀錄失敗', { childId, rewardPackId, cardId: picked.card_id, error });
+    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
   }
+
+  const inventoryResult = await addCardToInventory({
+    childId,
+    cardId: picked.card_id,
+    rewardPackId,
+    practiceRecordId
+  });
 
   if (practiceRecordId) {
     await client.from('practice_records').update({ reward_claimed: true }).eq('id', practiceRecordId);
@@ -382,15 +423,17 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   revalidatePath('/reward');
   revalidatePath('/parent/dashboard');
   revalidatePath('/parent/cards');
+  revalidatePath('/collection');
 
   return {
     ok: true,
-    message: '你抽到一張新卡！按下儲存就會放進收納包。',
+    message: inventoryResult.ok ? '你找到新朋友了！已放進你的圖鑑。' : '你抽到一張新卡！圖鑑暫時儲存失敗，請再試一次。',
     card: picked.cards,
     draw_log_id: drawLogId,
     is_new: true,
     remaining_stock: nextStock,
-    saved_to_inventory: false
+    saved_to_inventory: Boolean(inventoryResult.ok),
+    drawn_now: true
   };
 }
 
@@ -438,7 +481,10 @@ export async function saveDrawnRewardToInventory(formData?: FormData): Promise<S
     practiceRecordId: row.practice_record_id
   });
 
-  if (!inventoryResult.ok) return { ok: false, message: inventoryResult.message };
+  if (!inventoryResult.ok) {
+    console.error('[saveDrawnRewardToInventory] 儲存到收膩包失敗', { drawLogId, inventoryResult });
+    return { ok: false, message: '儲存到圖鑑失敗，請再試一次。' };
+  }
 
   revalidatePath('/');
   revalidatePath('/collection');
