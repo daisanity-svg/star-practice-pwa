@@ -1,6 +1,7 @@
 'use server';
 
-import { drawDailyReward, saveDrawnRewardToInventory } from '@/lib/actions/draw-reward';
+import { drawDailyReward } from '@/lib/actions/draw-reward';
+import { saveDrawnRewardToInventory } from '@/lib/actions/save-drawn-reward';
 import type { RewardDrawResult, SaveRewardResult } from '@/lib/types';
 
 export async function drawDailyRewardFromState(

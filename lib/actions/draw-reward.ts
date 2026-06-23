@@ -304,10 +304,9 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
       await client.from('practice_records').update({ reward_claimed: true }).eq('id', practiceRecordId);
     }
 
-    revalidatePath('/reward');
-    revalidatePath('/parent/dashboard');
-    revalidatePath('/parent/cards');
-    revalidatePath('/collection');
+    try { revalidatePath('/parent/dashboard'); } catch (e) { console.error('[drawDailyReward] revalidatePath /parent/dashboard failed', e); }
+    try { revalidatePath('/parent/cards'); } catch (e) { console.error('[drawDailyReward] revalidatePath /parent/cards failed', e); }
+    try { revalidatePath('/collection'); } catch (e) { console.error('[drawDailyReward] revalidatePath /collection failed', e); }
 
     return {
       ok: true,
@@ -420,10 +419,9 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     await client.from('practice_records').update({ reward_claimed: true }).eq('id', practiceRecordId);
   }
 
-  revalidatePath('/reward');
-  revalidatePath('/parent/dashboard');
-  revalidatePath('/parent/cards');
-  revalidatePath('/collection');
+  try { revalidatePath('/parent/dashboard'); } catch (e) { console.error('[drawDailyReward] revalidatePath /parent/dashboard failed', e); }
+  try { revalidatePath('/parent/cards'); } catch (e) { console.error('[drawDailyReward] revalidatePath /parent/cards failed', e); }
+  try { revalidatePath('/collection'); } catch (e) { console.error('[drawDailyReward] revalidatePath /collection failed', e); }
 
   return {
     ok: true,
@@ -437,65 +435,3 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   };
 }
 
-export async function saveDrawnRewardToInventory(formData?: FormData): Promise<SaveRewardResult> {
-  const client = supabase;
-  if (!client) {
-    return { ok: true, message: '測試卡已儲存到收納包。', card: demoCard, is_new: true, saved_to_inventory: true, demo: true };
-  }
-
-  const drawLogId = formData?.get('draw_log_id')?.toString() || null;
-  if (!drawLogId) return { ok: false, message: '找不到抽卡紀錄，請重新打開卡包。' };
-
-  const { data, error } = await client
-    .from('reward_draw_logs')
-    .select(
-      `
-      id,
-      child_id,
-      reward_pack_id,
-      card_id,
-      practice_record_id,
-      cards:cards(
-        id,
-        name,
-        card_no,
-        rarity,
-        source_image_url,
-        rendered_card_image_url,
-        description,
-        series:card_series(id, name),
-        category:card_categories(id, name)
-      )
-    `
-    )
-    .eq('id', drawLogId)
-    .maybeSingle();
-
-  if (error || !data?.id) return { ok: false, message: '找不到這次抽到的卡，請重新抽一次。' };
-
-  const row = data as unknown as DrawLogRow;
-  const inventoryResult = await addCardToInventory({
-    childId: row.child_id,
-    cardId: row.card_id,
-    rewardPackId: row.reward_pack_id,
-    practiceRecordId: row.practice_record_id
-  });
-
-  if (!inventoryResult.ok) {
-    console.error('[saveDrawnRewardToInventory] 儲存到收膩包失敗', { drawLogId, inventoryResult });
-    return { ok: false, message: '儲存到圖鑑失敗，請再試一次。' };
-  }
-
-  revalidatePath('/');
-  revalidatePath('/collection');
-  revalidatePath('/reward');
-  revalidatePath('/parent/dashboard');
-
-  return {
-    ok: true,
-    message: inventoryResult.isNew ? '已儲存到收納包！之後可以隨時回來看。' : '收納包裡又多了一張同款卡！',
-    card: row.cards ?? undefined,
-    is_new: inventoryResult.isNew,
-    saved_to_inventory: true
-  };
-}
