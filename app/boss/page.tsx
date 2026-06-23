@@ -246,7 +246,33 @@ function BossContent() {
       <CompanionBar dialogue="守護者出現了，一起挑戰" />
       <KidTopBar title={boss?.bossName ?? 'Boss'} backHref="/adventure" backLabel="冒險" />
       <div className="kid-game-content">
-        {phase === 'idle' && (
+        {phase === 'idle' && game && (
+          <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
+            <div className="kid-boss-companion-hint">
+              <span className="kid-pet-antenna" style={{ position: 'relative', top: 0, left: 0, width: 3, height: 10, background: '#ffb800', borderRadius: 999 }} />
+              小光獸：一起保護森林。
+            </div>
+            <BossVisual name={boss?.bossName ?? '???'} />
+            <div className="kid-boss-title" style={{ marginTop: 14 }}>{boss?.bossName ?? '未知的守護者'}</div>
+            <div className="kid-boss-sub">這個守護者等著你的挑戰</div>
+            <div style={{ marginTop: 12, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <span className="kid-resource-chip">Boss HP 100</span>
+              <span className="kid-resource-chip">玩家能量 100</span>
+            </div>
+            <div className="kid-quest-next" style={{ marginTop: 12 }}>
+              答對 {questions.length} 題就能獲勝，準備好了嗎？
+            </div>
+            <button
+              type="button"
+              className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
+              onClick={startBattle}
+              style={{ marginTop: 14 }}
+            >
+              開始戰鬥
+            </button>
+          </section>
+        )}
+        {phase === 'idle' && !game && (
           <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
             <div className="kid-boss-companion-hint">
               <span className="kid-pet-antenna" style={{ position: 'relative', top: 0, left: 0, width: 3, height: 10, background: '#ffb800', borderRadius: 999 }} />
