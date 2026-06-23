@@ -155,6 +155,10 @@ export default async function HomePage() {
         </div>
 
         <KidBottomNav />
+
+        <div style={{ textAlign: 'center', fontSize: '10px', opacity: 0.5, padding: '8px 0' }}>
+          V5 RC · 27c2bfa 救援
+        </div>
       </div>
     </PhoneFrame>
   );
