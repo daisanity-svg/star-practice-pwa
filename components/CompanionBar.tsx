@@ -102,6 +102,7 @@ export function CompanionBar({ dialogue }: { dialogue: string }) {
         <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
           <span className="kid-resource-chip">星星幣 {game.stars}</span>
           <span className="kid-resource-chip">能量 {game.energy}</span>
+          <span className="kid-resource-chip">親密度 Lv.{game.intimacyLevel}</span>
         </div>
       </div>
       <div className="companion-bar-dialogue">{dialogue}</div>

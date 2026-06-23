@@ -221,7 +221,7 @@ function BossContent() {
       refresh();
       const rewardParts = ['勝利！'];
       if (fastCount > 0) {
-        rewardParts.push(`速度獎勵 +${fastCount} 星星幣、+${fastCount} 能量`);
+        rewardParts.push(`超快反應獎勵 +${fastCount} 星星幣、+${fastCount} 能量`);
       }
       rewardParts.push('獲得 2 星星幣與能量！');
       setMessage(rewardParts.join(' '));

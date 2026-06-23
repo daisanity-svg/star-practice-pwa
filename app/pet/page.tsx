@@ -36,54 +36,58 @@ const MOOD_COLORS: Record<PetMood, string> = {
   excited: '#ef4444',
 };
 
-function PetVisual({ mood, growthLevel }: { mood: PetMood; growthLevel: number }) {
-  const moodColor = MOOD_COLORS[mood];
+function PetAvatar({ growthLevel }: { growthLevel: number }) {
   const tier = growthLevel <= 1 ? 'egg' : growthLevel <= 3 ? 'young' : 'guardian';
   return (
-    <div className="kid-pet-visual">
-      {tier === 'egg' ? (
-        <div
-          className="kid-pet-body"
-          style={{
-            width: 100,
-            height: 110,
-            borderRadius: 48,
-            background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 40%), linear-gradient(180deg, #ffd95a 0%, ${moodColor} 100%)`,
-          }}
-        />
-      ) : tier === 'young' ? (
-        <div
-          className="kid-pet-body"
-          style={{
-            width: 110,
-            height: 100,
-            borderRadius: 36,
-            background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 40%), linear-gradient(180deg, #ffd95a 0%, ${moodColor} 100%)`,
-          }}
-        >
-          <div className="kid-pet-wing-left" />
-          <div className="kid-pet-wing-right" />
-        </div>
-      ) : (
-        <div
-          className="kid-pet-body"
-          style={{
-            width: 120,
-            height: 110,
-            borderRadius: 32,
-            background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 40%), linear-gradient(180deg, #ffd95a 0%, ${moodColor} 100%)`,
-          }}
-        >
-          <div className="kid-pet-wing-left" />
-          <div className="kid-pet-wing-right" />
-          <div className="kid-pet-horn-left" />
-          <div className="kid-pet-horn-right" />
-        </div>
-      )}
-      <div className="kid-pet-eye left" />
-      <div className="kid-pet-eye right" />
-      <div className="kid-pet-antenna left" />
-      <div className="kid-pet-antenna right" />
+    <div className="companion-bar-avatar" aria-hidden="true">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {tier === 'egg' ? (
+          <>
+            <ellipse cx="18" cy="20" rx="12" ry="14" fill="url(#eggGrad)" />
+            <circle cx="14" cy="17" r="2" fill="#1f5ef6" />
+            <circle cx="24" cy="17" r="2" fill="#1f5ef6" />
+            <path d="M15 24 Q18 28 21 24" stroke="#ffb800" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <defs>
+              <linearGradient id="eggGrad" x1="0" y1="0" x2="36" y2="36">
+                <stop offset="0%" stopColor="#ffd95a" />
+                <stop offset="100%" stopColor="#ffb800" />
+              </linearGradient>
+            </defs>
+          </>
+        ) : tier === 'young' ? (
+          <>
+            <circle cx="18" cy="18" r="14" fill="url(#youngGrad)" />
+            <circle cx="12" cy="16" r="2.5" fill="#1f5ef6" />
+            <circle cx="24" cy="16" r="2.5" fill="#1f5ef6" />
+            <path d="M14 24 Q18 28 22 24" stroke="#ffb800" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+            <path d="M6 12 L2 8" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
+            <path d="M30 12 L34 8" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
+            <defs>
+              <linearGradient id="youngGrad" x1="0" y1="0" x2="36" y2="36">
+                <stop offset="0%" stopColor="#ffd95a" />
+                <stop offset="100%" stopColor="#ffb800" />
+              </linearGradient>
+            </defs>
+          </>
+        ) : (
+          <>
+            <circle cx="18" cy="18" r="16" fill="url(#guardGrad)" />
+            <circle cx="12" cy="16" r="3" fill="#1f5ef6" />
+            <circle cx="24" cy="16" r="3" fill="#1f5ef6" />
+            <path d="M13 25 Q18 30 23 25" stroke="#ffb800" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <path d="M4 10 L0 4" stroke="#ffd95a" strokeWidth="3" strokeLinecap="round" />
+            <path d="M32 10 L36 4" stroke="#ffd95a" strokeWidth="3" strokeLinecap="round" />
+            <path d="M10 6 L8 2" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
+            <path d="M26 6 L28 2" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
+            <defs>
+              <linearGradient id="guardGrad" x1="0" y1="0" x2="36" y2="36">
+                <stop offset="0%" stopColor="#ffd95a" />
+                <stop offset="100%" stopColor="#ffb800" />
+              </linearGradient>
+            </defs>
+          </>
+        )}
+      </svg>
     </div>
   );
 }
@@ -108,6 +112,7 @@ export default function PetPage() {
       return;
     }
     setBusy(true);
+    const before = game.stars;
     addStars(-5);
     addIntimacyPoints(5);
     setPetMood('happy');
@@ -192,7 +197,17 @@ export default function PetPage() {
         <div className="pet-companion-sticky">
           <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
             <div style={{ position: 'relative', zIndex: 1 }}>
-              <PetVisual mood={game.petMood} growthLevel={game.growthLevel} />
+              <div className="kid-pet-visual">
+                <div
+                  className="kid-pet-body"
+                  style={{
+                    width: 100,
+                    height: 110,
+                    borderRadius: 48,
+                    background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 40%), linear-gradient(180deg, #ffd95a 0%, ${MOOD_COLORS[game.petMood]} 100%)`,
+                  }}
+                />
+              </div>
               <div className="kid-pet-name" style={{ marginTop: 14 }}>
                 小光獸 Lv.{game.growthLevel}（{tierName}）
               </div>
@@ -236,7 +251,7 @@ export default function PetPage() {
               disabled={busy || game.stars < 5}
               aria-busy={busy}
             >
-              餵食（消耗 5 星星幣）
+              餵食（消耗 5 星星幣，親密度 +5）
             </button>
             <button
               type="button"
@@ -245,7 +260,7 @@ export default function PetPage() {
               disabled={busy || game.energy < 1}
               aria-busy={busy}
             >
-              玩耍（消耗 1 能量）
+              玩耍（消耗 1 能量，親密度 +3）
             </button>
             <button
               type="button"
@@ -257,19 +272,9 @@ export default function PetPage() {
               使用能量成長（需要 {growthNeed}）
             </button>
           </div>
-        </section>
-
-        <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
-          <div className="kid-map-header" style={{ padding: '0 2px' }}>
-            <h2 className="kid-map-title">資源說明</h2>
-            <p className="kid-map-sub">星星幣與能量怎麼取得？</p>
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#2f3a4d', lineHeight: 1.7 }}>
+          <div style={{ marginTop: 12, fontSize: 12, fontWeight: 800, color: '#5f6f89', lineHeight: 1.6 }}>
             <p>星星幣：完成練習一輪 +2；完成冒險任務 +2；Boss 勝利 +2。</p>
             <p>能量：每答對一題 +1（練習、冒險、Boss 都會累積）。</p>
-            <p>餵食：消耗 5 星星幣，親密度 +5。</p>
-            <p>玩耍：消耗 1 能量，親密度 +3。</p>
-            <p>成長：消耗能量提升成長等級，等級越高需要越多能量。</p>
           </div>
         </section>
 

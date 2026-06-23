@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
@@ -29,12 +30,26 @@ function groupInventoryBySeries(inventory: Awaited<ReturnType<typeof getChildInv
   return Array.from(map.values());
 }
 
+function getTodayPracticeCount(): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = window.localStorage.getItem('star-game-v5-state');
+    if (!raw) return 0;
+    const state = JSON.parse(raw) as { todayPracticeCount?: number; lastPracticeDate?: string | null };
+    const today = new Date().toISOString().slice(0, 10);
+    if (state.lastPracticeDate !== today) return 0;
+    return Number(state.todayPracticeCount ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
 export default async function HomePage() {
   const inventory = await getChildInventory();
   const collections = groupInventoryBySeries(inventory);
   const ownedTotal = inventory.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
   const cardTotal = collections.reduce((sum, item) => sum + item.items.length, 0) || 1;
-  const progressPercent = Math.round((ownedTotal / Math.max(1, cardTotal)) * 100);
+  const progressPercent = Math.min(100, Math.round((ownedTotal / Math.max(1, cardTotal)) * 100));
   const game = typeof window !== 'undefined' ? loadGameState() : null;
 
   const quests = [
@@ -44,6 +59,25 @@ export default async function HomePage() {
     { id: 4, label: '植物', status: 'locked' },
     { id: 5, label: '星星章', status: 'locked' },
   ];
+
+  const todayCount = typeof window !== 'undefined' ? getTodayPracticeCount() : 0;
+  const hasPracticedToday = todayCount > 0;
+  const hasAdventureToday = false;
+  const hasBossToday = false;
+  const canDrawToday = game ? (game.lastDrawDate !== new Date().toISOString().slice(0, 10)) : true;
+
+  let primaryHref: Route = '/practice';
+  let primaryLabel = '開始練習';
+  if (hasPracticedToday && !hasAdventureToday) {
+    primaryHref = '/adventure';
+    primaryLabel = '開始冒險';
+  } else if (hasAdventureToday && !hasBossToday) {
+    primaryHref = '/boss';
+    primaryLabel = '挑戰 Boss';
+  } else if (hasBossToday && canDrawToday) {
+    primaryHref = '/reward';
+    primaryLabel = '打開今日卡包';
+  }
 
   return (
     <PhoneFrame>
@@ -64,14 +98,14 @@ export default async function HomePage() {
               <span className="kid-status-pill">第 3 天冒險中</span>
               <span className="kid-status-pill">{ownedTotal} 位朋友</span>
             </div>
-            <h1 className="kid-hero-title">今天出發<br />找星星朋友</h1>
-            <p className="kid-hero-sub">完成 5 個小任務，打开今日卡包</p>
+            <h1 className="kid-hero-title">跟小光獸<br />開始今天的冒險</h1>
+            <p className="kid-hero-sub">完成任務，一起收集星星朋友</p>
             <div className="kid-hero-decor" aria-hidden="true">
               <span className="kid-star-badge" />
               <span className="kid-message-note">!</span>
             </div>
-            <Link href="/practice" className="kid-cta">
-              <span className="kid-cta-label">開始冒險</span>
+            <Link href={primaryHref} className="kid-cta">
+              <span className="kid-cta-label">{primaryLabel}</span>
             </Link>
           </section>
 
@@ -86,6 +120,9 @@ export default async function HomePage() {
                 <span className="kid-resource-chip">成長 Lv.{game.growthLevel}</span>
                 <span className="kid-resource-chip">親密度 Lv.{game.intimacyLevel}</span>
               </div>
+              <p style={{ fontSize: 11, fontWeight: 800, color: '#5f6f89', marginTop: 8 }}>
+                星星幣用來和夥伴互動，能量用來讓夥伴成長
+              </p>
             </section>
           )}
 
@@ -135,7 +172,7 @@ export default async function HomePage() {
             <div className="kid-collect-row">
               <div className="kid-collect-icon" aria-hidden="true" />
               <div className="kid-collect-body">
-                <div className="kid-collect-label">今天冒險完成度</div>
+                <div className="kid-collect-label">今日圖鑑進度</div>
                 <div className="kid-collect-track">
                   <div
                     className="kid-collect-fill"
@@ -157,7 +194,7 @@ export default async function HomePage() {
         <KidBottomNav />
 
         <div style={{ textAlign: 'center', fontSize: '10px', opacity: 0.5, padding: '8px 0' }}>
-          V5 RC · 27c2bfa 救援
+          V5 FINAL · {typeof process !== 'undefined' && process.env.NEXT_PUBLIC_COMMIT_HASH ? process.env.NEXT_PUBLIC_COMMIT_HASH : 'local'}
         </div>
       </div>
     </PhoneFrame>

@@ -196,7 +196,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
         <p className="practice-chip practice-chip-success">完成任務</p>
         <h1 className="practice-title">今天練習完成！</h1>
         <p className="practice-subtitle">
-          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，獲得了 2 星星幣！
+          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，獲得了 2 星星幣和 {questions.length} 能量！
         </p>
         {completionMessage ? <p className="practice-note">{completionMessage}</p> : null}
         <div className="practice-complete-actions">

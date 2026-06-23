@@ -1,3 +1,5 @@
+import { execSync } from 'child_process';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -15,6 +17,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '20mb'
     }
+  },
+  env: {
+    NEXT_PUBLIC_COMMIT_HASH: execSync('git rev-parse --short HEAD').toString().trim()
   }
 };
 

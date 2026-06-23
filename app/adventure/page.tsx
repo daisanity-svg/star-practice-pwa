@@ -114,6 +114,7 @@ export default function AdventurePage() {
       };
       saveProgress(next);
       addStars(2);
+      addEnergy(1);
     }
     setChallengeChapter(null);
     setChallengeSelected(null);
@@ -138,7 +139,7 @@ export default function AdventurePage() {
   if (!progress || !game) {
     return (
       <PhoneFrame>
-        <CompanionBar dialogue="森林裡有星光種子" />
+        <CompanionBar dialogue="" />
         <KidTopBar title="冒險地圖" backHref="/" backLabel="首頁" />
         <div className="kid-game-content" />
         <KidBottomNav />
@@ -209,7 +210,7 @@ export default function AdventurePage() {
 
   return (
     <PhoneFrame>
-      <CompanionBar dialogue="森林裡有星光種子" />
+      <CompanionBar dialogue="" />
       <KidTopBar
         title="冒險地圖"
         backHref="/"

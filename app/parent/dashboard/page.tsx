@@ -67,7 +67,7 @@ export default async function ParentDashboardPage() {
 
         <section className="kid-card" style={{ marginTop: 24 }}>
           <p className="kid-card-label">部署標記</p>
-          <h2 className="kid-card-title">V5 RC · 27c2bfa 救援</h2>
+          <h2 className="kid-card-title">V5 FINAL · 收斂完成</h2>
           <p className="kid-card-subtitle">請確認首頁底部也有相同標記，代表已部署最新版本。</p>
         </section>
       </main>
