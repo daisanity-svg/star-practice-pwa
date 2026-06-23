@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
+import { CompanionBar } from '@/components/CompanionBar';
 import { StoryProgressWidget } from '@/components/StoryProgressWidget';
 import { getCollectionSummary } from '@/lib/data/rewards';
 
@@ -20,6 +21,7 @@ export default async function HomePage() {
 
   return (
     <PhoneFrame>
+      <CompanionBar dialogue="今天也要一起冒險" />
       <div className="kid-game-root">
         <div className="kid-sky" aria-hidden="true" />
         <div className="kid-cloud-1" aria-hidden="true" />

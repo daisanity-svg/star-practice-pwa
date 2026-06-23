@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import Link from 'next/link';
 import { completePracticeSession } from '@/lib/actions/practice';
 import type { GeneratedQuestion, SubmittedPracticeAnswer } from '@/lib/types';
 import { KidButton } from '@/components/KidButton';
@@ -189,7 +190,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
     const rewardHref = `/reward?practice_record_id=${practiceRecordId}` as Route;
 
     return (
-      <section className="practice-empty-card practice-complete-card">
+      <section className="practice-empty-card practice-complete-card" style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom) + 20px))' }}>
         <div className="practice-orb practice-orb-success" aria-hidden="true" />
         <p className="practice-chip practice-chip-success">完成任務</p>
         <h1 className="practice-title">今天練習完成！</h1>
@@ -197,9 +198,13 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
           答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，準備打開小禮物。
         </p>
         {completionMessage ? <p className="practice-note">{completionMessage}</p> : null}
-        <div className="practice-actions">
-          <KidButton href={`/reward?practice_record_id=${practiceRecordId}`} tone="primary">去打開卡包</KidButton>
-          <KidButton href="/" tone="white">回首頁地圖</KidButton>
+        <div className="practice-complete-actions">
+          <Link href={`/reward?practice_record_id=${practiceRecordId}`} className="practice-complete-primary">
+            領取今天獎勵
+          </Link>
+          <Link href="/" className="practice-complete-secondary">
+            回首頁地圖
+          </Link>
         </div>
       </section>
     );

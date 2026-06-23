@@ -6,6 +6,7 @@ import { useActionState } from 'react';
 import { drawDailyRewardFromState, saveDrawnRewardFromState } from '@/lib/actions/draw-reward-state';
 import { getRewardCardDisplayName } from '@/lib/cards/display';
 import type { RewardDrawResult, RewardCard, SaveRewardResult } from '@/lib/types';
+import { CompanionBar } from '@/components/CompanionBar';
 
 type RewardDrawPanelProps = {
   practiceRecordId?: string;
@@ -67,31 +68,35 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
         </h1>
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
-          {card ? <RewardCardPreview card={card} /> : <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">?</div>}
-          {typeof drawResult?.remaining_stock === 'number' ? (
-            <p className="mt-4 rounded-full bg-[#fff7e0] px-4 py-2 text-sm font-black text-[#b45309]">這包還剩：{drawResult.remaining_stock} 張</p>
-          ) : null}
-          <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">{saveResult?.message ?? drawResult?.message}</p>
+          <div className="reward-compact-actions">
+            {card ? (
+              <div className="animate-pack-open relative flex w-full justify-center">
+                <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[24px] shadow-[0_24px_50px_rgba(30,64,175,0.22)] ring-4 ring-[#e0f0ff]">
+                  {getCardImageUrl(card) ? (
+                    <Image src={getCardImageUrl(card)!} alt={getRewardCardDisplayName(card)} fill className="object-contain" sizes="260px" unoptimized />
+                  ) : (
+                    <div className="kid-reward-placeholder-frame">{buildCardPlaceholder(getRewardCardDisplayName(card))}</div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">?</div>
+            )}
+            {typeof drawResult?.remaining_stock === 'number' ? (
+              <p className="mt-4 rounded-full bg-[#fff7e0] px-4 py-2 text-sm font-black text-[#b45309]">這包還剩：{drawResult.remaining_stock} 張</p>
+            ) : null}
+            <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">
+              {saved ? '收藏成功！這是你今天找到的新朋友。' : saveResult?.message ?? drawResult?.message}
+            </p>
+          </div>
         </div>
 
-        <div className="relative z-10 mt-4 space-y-3">
-          {drawResult?.ok && drawLogId && !saved ? (
-            <form action={saveFormAction}>
-              <input type="hidden" name="draw_log_id" value={drawLogId} />
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="kid-blue-button flex min-h-[56px] w-full items-center justify-center rounded-[24px] text-base font-black active:scale-[0.99] disabled:opacity-60"
-              >
-                {isSaving ? '儲存中...' : '收到，放進行動箱'}
-              </button>
-            </form>
-          ) : null}
-          <Link href="/collection" className="kid-yellow-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+        <div className="reward-compact-actions">
+          <Link href="/collection" className="reward-compact-primary">
             去看圖鑑
           </Link>
-          <Link href="/" className="kid-ghost-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
-            回首頁地圖
+          <Link href="/" className="reward-compact-secondary">
+            回冒險
           </Link>
         </div>
       </section>

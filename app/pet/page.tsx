@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
+import { CompanionBar } from '@/components/CompanionBar';
 import {
   loadGameState,
   saveGameState,
@@ -36,7 +37,12 @@ function PetVisual({ mood }: { mood: PetMood }) {
   const moodColor = MOOD_COLORS[mood];
   return (
     <div className="kid-pet-visual">
-      <div className="kid-pet-body" style={{ background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 40%), linear-gradient(180deg, #ffd95a 0%, ${moodColor} 100%)` }} />
+      <div
+        className="kid-pet-body"
+        style={{
+          background: `radial-gradient(circle at 35% 30%, rgba(255,255,255,0.5), transparent 40%), linear-gradient(180deg, #ffd95a 0%, ${moodColor} 100%)`,
+        }}
+      />
       <div className="kid-pet-wing-left" />
       <div className="kid-pet-wing-right" />
       <div className="kid-pet-eye left" />
@@ -110,6 +116,7 @@ export default function PetPage() {
   if (!game) {
     return (
       <PhoneFrame>
+        <CompanionBar dialogue="我一直在這裡陪你" />
         <KidTopBar title="小光獸夥伴" backHref="/" backLabel="首頁" />
         <div className="kid-game-content" />
         <KidBottomNav />
@@ -121,49 +128,20 @@ export default function PetPage() {
 
   return (
     <PhoneFrame>
+      <CompanionBar dialogue="我一直在這裡陪你" />
       <KidTopBar title="小光獸夥伴" backHref="/" backLabel="首頁" />
       <div className="kid-game-content">
-        <section className="kid-soft-panel" style={{ padding: '18px 14px' }}>
-          <div style={{ textAlign: 'center' }}>
-            <PetVisual mood={game.petMood} />
-            <div className="kid-pet-name" style={{ marginTop: 14 }}>小光獸</div>
-            <div className="kid-pet-mood" style={{ color: MOOD_COLORS[game.petMood] }}>
-              心情：{MOOD_LABELS[game.petMood]}
+        <div className="pet-companion-sticky">
+          <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <PetVisual mood={game.petMood} />
+              <div className="kid-pet-name" style={{ marginTop: 14 }}>小光獸</div>
+              <div className="kid-pet-mood" style={{ color: MOOD_COLORS[game.petMood] }}>
+                心情：{MOOD_LABELS[game.petMood]}
+              </div>
             </div>
-          </div>
-
-          <div className="kid-pet-stats">
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">星星幣</div>
-              <div className="kid-pet-stat-value">{game.stars}</div>
-            </div>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">星光碎片</div>
-              <div className="kid-pet-stat-value">{game.starlight}</div>
-            </div>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">親密度</div>
-              <div className="kid-pet-stat-value">{game.petIntimacy}</div>
-            </div>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">能量</div>
-              <div className="kid-pet-stat-value">{game.petEnergy}</div>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="kid-pet-stat-label">等級 {game.petLevel}</span>
-              <span className="kid-pet-stat-label">{game.petExp} / {expForNext} 經驗</span>
-            </div>
-            <div className="kid-pet-exp-track">
-              <div
-                className="kid-pet-exp-fill"
-                style={{ width: `${Math.min(100, (game.petExp / expForNext) * 100)}%` }}
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
         <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
           <div className="kid-map-header" style={{ padding: '0 2px' }}>

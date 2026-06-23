@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
+import { CompanionBar } from '@/components/CompanionBar';
 import { CHAPTERS, BOSS_ENCOUNTERS } from '@/lib/story/data';
 import { loadProgress, saveProgress, type StoryProgress } from '@/lib/story/local-storage';
 import {
@@ -173,10 +174,15 @@ function BossContent() {
 
   return (
     <PhoneFrame>
+      <CompanionBar dialogue="守護者出現了，一起挑戰" />
       <KidTopBar title={boss?.bossName ?? 'Boss'} backHref="/adventure" backLabel="冒險" />
       <div className="kid-game-content">
         {phase === 'idle' && (
           <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
+            <div className="kid-boss-companion-hint">
+              <span className="kid-pet-antenna" style={{ position: 'relative', top: 0, left: 0, width: 3, height: 10, background: '#ffb800', borderRadius: 999 }} />
+              小光獸：一起保護森林。
+            </div>
             <BossVisual name={boss?.bossName ?? '???'} />
             <div className="kid-boss-title" style={{ marginTop: 14 }}>{boss?.bossName ?? '未知的守護者'}</div>
             <div className="kid-boss-sub">這個守護者等著你的挑戰</div>
@@ -245,6 +251,9 @@ function BossContent() {
 
         {phase === 'victory' && (
           <section className="kid-soft-panel" style={{ padding: '22px 16px', textAlign: 'center' }}>
+            <div className="kid-pet-dialog" style={{ marginBottom: 12 }}>
+              <div className="kid-pet-dialog-text">小光獸：太厲害了，我們贏了！</div>
+            </div>
             <div style={{ fontSize: 48, fontWeight: 900, color: '#124a3a' }}>勝利</div>
             <p className="kid-boss-sub" style={{ marginTop: 8 }}>{message}</p>
             <div style={{ marginTop: 14 }}>
@@ -263,6 +272,9 @@ function BossContent() {
 
         {phase === 'defeat' && (
           <section className="kid-soft-panel" style={{ padding: '22px 16px', textAlign: 'center' }}>
+            <div className="kid-pet-dialog" style={{ marginBottom: 12 }}>
+              <div className="kid-pet-dialog-text">小光獸：別氣餒，我們再練習一次！</div>
+            </div>
             <div style={{ fontSize: 44, fontWeight: 900, color: '#5c3a04' }}>挑戰失敗</div>
             <p className="kid-boss-sub" style={{ marginTop: 8 }}>{message}</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>

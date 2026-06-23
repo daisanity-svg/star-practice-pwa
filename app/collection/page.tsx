@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
+import { CompanionBar } from '@/components/CompanionBar';
 import { getRewardCardDisplayName } from '@/lib/cards/display';
 import { getChildInventory } from '@/lib/data/rewards';
 import type { RewardCard } from '@/lib/types';
@@ -33,8 +34,8 @@ export default async function CollectionPage() {
 
   return (
     <PhoneFrame>
-      <KidTopBar title="我的收納包" rightLabel={`${inventory.length} 種卡片`} />
-
+      <CompanionBar dialogue="這些都是我們找到的朋友" />
+      <KidTopBar title="我的收納包" backHref="/" rightLabel={`${inventory.length} 種卡片`} />
       <section className="kid-hero relative overflow-hidden rounded-[36px] p-5 text-white">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" aria-hidden="true" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 to-transparent" aria-hidden="true" />

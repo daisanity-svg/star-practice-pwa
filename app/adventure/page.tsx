@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
+import { CompanionBar } from '@/components/CompanionBar';
 import { CHAPTERS, getDialogsForChapter, getDialogById, BOSS_ENCOUNTERS } from '@/lib/story/data';
 import { loadProgress, saveProgress, type StoryProgress } from '@/lib/story/local-storage';
 import type { StoryDialog } from '@/lib/story/types';
@@ -103,6 +104,7 @@ export default function AdventurePage() {
   if (!progress || !game) {
     return (
       <PhoneFrame>
+        <CompanionBar dialogue="森林裡有星光種子" />
         <KidTopBar title="冒險地圖" backHref="/" backLabel="首頁" />
         <div className="kid-game-content" />
         <KidBottomNav />
@@ -111,9 +113,11 @@ export default function AdventurePage() {
   }
 
   const uniqueWorlds = Array.from(new Set(CHAPTERS.map((c) => c.world)));
+  const nextChapter = CHAPTERS.find((c) => !isChapterCompleted(c.id));
 
   return (
     <PhoneFrame>
+      <CompanionBar dialogue="森林裡有星光種子" />
       <KidTopBar
         title="冒險地圖"
         backHref="/"
@@ -194,26 +198,27 @@ export default function AdventurePage() {
           </div>
         </section>
 
-        <section className="kid-soft-panel" style={{ padding: '14px', marginTop: '14px', textAlign: 'center' }}>
+        <section className="adventure-resources-compact" style={{ marginTop: '14px', textAlign: 'center' }}>
           <div className="kid-map-header" style={{ padding: '0 2px' }}>
-            <h2 className="kid-map-title">目前擁有</h2>
+            <h2 className="kid-map-title" style={{ fontSize: '18px' }}>小光獸的背包</h2>
+            <p className="kid-map-sub">目前擁有</p>
           </div>
-          <div className="kid-pet-stats" style={{ marginTop: 10 }}>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">星星幣</div>
-              <div className="kid-pet-stat-value">{game.stars}</div>
+          <div className="adventure-resources-grid">
+            <div className="adventure-resource-item">
+              <div className="adventure-resource-label">星星幣</div>
+              <div className="adventure-resource-value">{game.stars}</div>
             </div>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">星光碎片</div>
-              <div className="kid-pet-stat-value">{game.starlight}</div>
+            <div className="adventure-resource-item">
+              <div className="adventure-resource-label">星光碎片</div>
+              <div className="adventure-resource-value">{game.starlight}</div>
             </div>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">Boss 勝利</div>
-              <div className="kid-pet-stat-value">{game.bossWins}</div>
+            <div className="adventure-resource-item">
+              <div className="adventure-resource-label">Boss 勝利</div>
+              <div className="adventure-resource-value">{game.bossWins}</div>
             </div>
-            <div className="kid-pet-stat">
-              <div className="kid-pet-stat-label">夥伴等級</div>
-              <div className="kid-pet-stat-value">{game.petLevel}</div>
+            <div className="adventure-resource-item">
+              <div className="adventure-resource-label">夥伴等級</div>
+              <div className="adventure-resource-value">{game.petLevel}</div>
             </div>
           </div>
           <div className="kid-adventure-cta-row">
@@ -229,6 +234,22 @@ export default function AdventurePage() {
             </button>
           </div>
         </section>
+
+        {nextChapter && (
+          <section className="kid-soft-panel" style={{ padding: '14px', marginTop: '14px', textAlign: 'center' }}>
+            <div className="kid-map-header" style={{ padding: '0 2px' }}>
+              <h2 className="kid-map-title" style={{ fontSize: '18px' }}>下一個任務</h2>
+              <p className="kid-map-sub">{nextChapter.title}</p>
+            </div>
+            <button
+              type="button"
+              className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
+              onClick={() => startChapter(nextChapter.id)}
+            >
+              開始冒險
+            </button>
+          </section>
+        )}
       </div>
 
       {currentDialog && (
