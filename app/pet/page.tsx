@@ -70,7 +70,6 @@ export default function PetPage() {
     const updated = addStars(-5);
     addPetExp(5);
     setPetMood('happy');
-    saveGameState({ ...updated });
     refresh();
     showFeedback('小光獸吃飽飽，+5 經驗');
     setTimeout(() => setBusy(false), 400);

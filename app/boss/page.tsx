@@ -136,7 +136,6 @@ function BossContent() {
       const updated = addStars(5);
       addStarlight(2);
       addBossWin();
-      saveGameState(updated);
 
       if (boss) {
         const nextWorld = CHAPTERS.find((c) => c.order === chapter.order + 1)?.world;

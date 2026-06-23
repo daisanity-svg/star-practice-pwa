@@ -159,7 +159,6 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
           addStarlight(1);
           addPetExp(Math.max(1, correct));
           incrementPracticeCount();
-          saveGameState(updatedStars);
         } catch {
           // Game state is best-effort; ignore storage errors.
         }
