@@ -1,42 +1,63 @@
-export const GAME_STATE_KEY = 'star-game-v42-state';
+export const GAME_STATE_KEY = 'star-game-v5-state';
 
 export type PetMood = 'happy' | 'curious' | 'sleepy' | 'excited';
 
 export type GameState = {
+  stateVersion: number;
   stars: number;
-  starlight: number;
-  petIntimacy: number;
-  petEnergy: number;
+  energy: number;
+  growthLevel: number;
+  intimacyLevel: number;
+  intimacyPoints: number;
   petMood: PetMood;
-  petLevel: number;
-  petExp: number;
   todayPracticeCount: number;
   bossWins: number;
   unlockedWorlds: string[];
   lastPracticeDate: string | null;
+  lastDrawDate: string | null;
 };
 
 export const DEFAULT_GAME_STATE: GameState = {
+  stateVersion: 5,
   stars: 0,
-  starlight: 0,
-  petIntimacy: 0,
-  petEnergy: 3,
+  energy: 0,
+  growthLevel: 1,
+  intimacyLevel: 1,
+  intimacyPoints: 0,
   petMood: 'happy',
-  petLevel: 1,
-  petExp: 0,
   todayPracticeCount: 0,
   bossWins: 0,
   unlockedWorlds: ['forest'],
   lastPracticeDate: null,
+  lastDrawDate: null,
 };
+
+export function getNextGrowthNeed(level: number): number {
+  return level * 50;
+}
+
+export function getNextIntimacyNeed(level: number): number {
+  return level * 30;
+}
+
+export function migrateGameState(raw: unknown): GameState {
+  try {
+    const parsed = (typeof raw === 'string' ? JSON.parse(raw) : raw) as Partial<GameState>;
+    if (!parsed || parsed.stateVersion !== 5) {
+      return { ...DEFAULT_GAME_STATE };
+    }
+    return { ...DEFAULT_GAME_STATE, ...parsed };
+  } catch {
+    return { ...DEFAULT_GAME_STATE };
+  }
+}
 
 export function loadGameState(): GameState {
   if (typeof window === 'undefined') return DEFAULT_GAME_STATE;
   try {
     const raw = window.localStorage.getItem(GAME_STATE_KEY);
     if (!raw) return DEFAULT_GAME_STATE;
-    const parsed = JSON.parse(raw) as Partial<GameState>;
-    return { ...DEFAULT_GAME_STATE, ...parsed };
+    return migrateGameState(raw);
   } catch {
     return DEFAULT_GAME_STATE;
   }
@@ -45,7 +66,7 @@ export function loadGameState(): GameState {
 export function saveGameState(state: GameState): void {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem(GAME_STATE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(GAME_STATE_KEY, JSON.stringify({ ...state, stateVersion: 5 }));
   } catch {
     // ignore
   }
@@ -53,35 +74,34 @@ export function saveGameState(state: GameState): void {
 
 export function addStars(amount: number): GameState {
   const state = loadGameState();
-  const updated = { ...state, stars: state.stars + amount };
+  const updated = { ...state, stars: Math.max(0, state.stars + amount) };
   saveGameState(updated);
   return updated;
 }
 
-export function addStarlight(amount: number): GameState {
+export function addEnergy(amount: number): GameState {
   const state = loadGameState();
-  const updated = { ...state, starlight: state.starlight + amount };
+  const updated = { ...state, energy: Math.max(0, state.energy + amount) };
   saveGameState(updated);
   return updated;
 }
 
-export function addPetIntimacy(amount: number): GameState {
+export function consumeEnergy(amount: number): GameState {
   const state = loadGameState();
-  const updated = { ...state, petIntimacy: state.petIntimacy + amount };
+  const updated = { ...state, energy: Math.max(0, state.energy - amount) };
   saveGameState(updated);
   return updated;
 }
 
-export function consumePetEnergy(amount: number): GameState {
+export function addIntimacyPoints(amount: number): GameState {
   const state = loadGameState();
-  const updated = { ...state, petEnergy: Math.max(0, state.petEnergy - amount) };
-  saveGameState(updated);
-  return updated;
-}
-
-export function addPetExp(amount: number): GameState {
-  const state = loadGameState();
-  const updated = { ...state, petExp: state.petExp + amount };
+  let newPoints = state.intimacyPoints + amount;
+  let newLevel = state.intimacyLevel;
+  while (newPoints >= getNextIntimacyNeed(newLevel)) {
+    newPoints -= getNextIntimacyNeed(newLevel);
+    newLevel += 1;
+  }
+  const updated = { ...state, intimacyPoints: newPoints, intimacyLevel: newLevel };
   saveGameState(updated);
   return updated;
 }
@@ -123,6 +143,34 @@ export function unlockWorld(worldId: string): GameState {
   return updated;
 }
 
-export function getExpForNextLevel(level: number): number {
-  return level * 20;
+export function tryGrowPet(): GameState {
+  const state = loadGameState();
+  const need = getNextGrowthNeed(state.growthLevel);
+  if (state.energy < need) return state;
+  const updated = {
+    ...state,
+    growthLevel: state.growthLevel + 1,
+    energy: state.energy - need,
+  };
+  saveGameState(updated);
+  return updated;
+}
+
+export function recordDraw(): GameState {
+  const state = loadGameState();
+  const today = new Date().toISOString().slice(0, 10);
+  const updated = { ...state, lastDrawDate: today };
+  saveGameState(updated);
+  return updated;
+}
+
+export function canDrawToday(state: GameState): boolean {
+  if (!state.lastDrawDate) return true;
+  const today = new Date().toISOString().slice(0, 10);
+  return state.lastDrawDate !== today;
+}
+
+export function resetGameState(): GameState {
+  saveGameState(DEFAULT_GAME_STATE);
+  return DEFAULT_GAME_STATE;
 }

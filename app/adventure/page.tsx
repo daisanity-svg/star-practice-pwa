@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
@@ -13,6 +12,8 @@ import type { StoryDialog } from '@/lib/story/types';
 import {
   loadGameState,
   saveGameState,
+  addStars,
+  addEnergy,
   type GameState,
 } from '@/lib/game/state';
 
@@ -22,68 +23,101 @@ const WORLD_NAMES: Record<string, string> = {
   sky: '天空島',
 };
 
+const CHAPTER_QUESTIONS: Record<string, { question: string; options: string[]; answer: string }[]> = {
+  ch1: [
+    { question: '「ㄅ」是下列哪個詞的聲母？', options: ['葡萄', '爸爸', '貓咪', '小狗'], answer: '爸爸' },
+    { question: '「ㄇ」是下列哪個詞的聲母？', options: ['蜜蜂', '蝴蝶', '小雞', '小鴨'], answer: '蜜蜂' },
+  ],
+  ch2: [
+    { question: '高山之城的回聲會說什麼？', options: ['勇氣', '懶惰', '害怕', '悲傷'], answer: '勇氣' },
+    { question: '迷霧山脉裡有什麼？', options: ['回聲', '怪獸', '寶藏', '火山'], answer: '回聲' },
+  ],
+  ch3: [
+    { question: '天空島上有什麼？', options: ['水晶宮殿', '海底世界', '沙漠', '冰川'], answer: '水晶宮殿' },
+    { question: '星光守護者接受什麼？', options: ['洗禮', '考試', '懲罰', '休息'], answer: '洗禮' },
+  ],
+  ch4: [
+    { question: '迷霧熊王要考驗什麼？', options: [' kindness', '力量', '速度', '智慧'], answer: ' kindness' },
+    { question: '熊王讓開了什麼？', options: ['道路', '城門', '橋梁', '山洞'], answer: '道路' },
+  ],
+  ch5: [
+    { question: '誰會幫助我們對抗黑雲龍？', options: ['回聲巨鷹', '小光獸', '露米', '全部'], answer: '全部' },
+    { question: '什麼力量驅散了黑暗？', options: ['星光', '雷電', '火焰', '風暴'], answer: '星光' },
+  ],
+};
+
 export default function AdventurePage() {
   const router = useRouter();
   const [progress, setProgress] = useState<StoryProgress | null>(() => loadProgress());
   const [game, setGame] = useState<GameState | null>(() => loadGameState());
-  const [activeChapter, setActiveChapter] = useState<string | null>(() => {
-    const p = loadProgress();
-    if (p.currentChapter && !p.completedChapters.includes(p.currentChapter)) {
-      return p.currentChapter;
-    }
-    return null;
-  });
-  const [currentDialog, setCurrentDialog] = useState<StoryDialog | null>(() => {
-    const p = loadProgress();
-    if (p.currentChapter && !p.completedChapters.includes(p.currentChapter)) {
-      const dialogs = getDialogsForChapter(p.currentChapter);
-      return dialogs[0] ?? null;
-    }
-    return null;
-  });
+
+  const [challengeChapter, setChallengeChapter] = useState<string | null>(null);
+  const [challengeQIndex, setChallengeQIndex] = useState(0);
+  const [challengeSelected, setChallengeSelected] = useState<string | null>(null);
+  const [challengeCorrectCount, setChallengeCorrectCount] = useState(0);
+  const [challengeTotal, setChallengeTotal] = useState(0);
+  const [challengeAnswered, setChallengeAnswered] = useState(false);
+
+  const refresh = () => {
+    setProgress(loadProgress());
+    setGame(loadGameState());
+  };
 
   const startChapter = (chapterId: string) => {
-    if (!progress) return;
-    const first = getDialogsForChapter(chapterId)[0];
-    if (!first) return;
-    const next: StoryProgress = {
-      ...progress,
-      currentChapter: chapterId,
-      currentDialogId: first.id,
-      unlockedChapters: progress.unlockedChapters.includes(chapterId)
-        ? progress.unlockedChapters
-        : [...progress.unlockedChapters, chapterId],
-    };
-    saveProgress(next);
-    setProgress(next);
-    setActiveChapter(chapterId);
-    setCurrentDialog(first);
+    const qs = CHAPTER_QUESTIONS[chapterId] ?? [];
+    if (!qs.length) return;
+    setChallengeChapter(chapterId);
+    setChallengeQIndex(0);
+    setChallengeSelected(null);
+    setChallengeCorrectCount(0);
+    setChallengeTotal(qs.length);
+    setChallengeAnswered(false);
   };
 
-  const handleDialogChoice = (nextId: string) => {
-    const next = getDialogById(nextId);
-    if (next) {
-      setCurrentDialog(next);
-      const p = loadProgress();
-      setProgress({ ...p, currentDialogId: nextId });
+  const handleChallengeAnswer = (opt: string) => {
+    if (!challengeChapter || challengeSelected !== null) return;
+    const qs = CHAPTER_QUESTIONS[challengeChapter] ?? [];
+    const q = qs[challengeQIndex];
+    if (!q) return;
+    const ok = opt === q.answer;
+    setChallengeSelected(opt);
+    setChallengeAnswered(true);
+    if (ok) {
+      setChallengeCorrectCount((v) => v + 1);
+      try { addEnergy(1); } catch {}
     }
   };
 
-  const handleDialogComplete = () => {
-    if (!progress || !activeChapter) return;
-    const next: StoryProgress = {
-      ...progress,
-      completedChapters: progress.completedChapters.includes(activeChapter)
-        ? progress.completedChapters
-        : [...progress.completedChapters, activeChapter],
-      currentChapter: null,
-      currentDialogId: null,
-    };
-    saveProgress(next);
-    setProgress(next);
-    setActiveChapter(null);
-    setCurrentDialog(null);
-    setGame(loadGameState());
+  const goNextChallenge = () => {
+    if (!challengeChapter) return;
+    const qs = CHAPTER_QUESTIONS[challengeChapter] ?? [];
+    if (challengeQIndex >= qs.length - 1) {
+      finishChallenge(challengeSelected === (qs[challengeQIndex]?.answer));
+    } else {
+      setChallengeQIndex((v) => v + 1);
+      setChallengeSelected(null);
+      setChallengeAnswered(false);
+    }
+  };
+
+  const finishChallenge = (lastCorrect: boolean) => {
+    if (!challengeChapter) return;
+    const allCorrect = challengeCorrectCount + (lastCorrect ? 1 : 0) === challengeTotal;
+    if (allCorrect && progress) {
+      const next: StoryProgress = {
+        ...progress,
+        completedChapters: progress.completedChapters.includes(challengeChapter)
+          ? progress.completedChapters
+          : [...progress.completedChapters, challengeChapter],
+        currentChapter: null,
+        currentDialogId: null,
+      };
+      saveProgress(next);
+      addStars(2);
+    }
+    setChallengeChapter(null);
+    setChallengeSelected(null);
+    refresh();
   };
 
   const isChapterUnlocked = (chapterId: string) => {
@@ -114,6 +148,64 @@ export default function AdventurePage() {
 
   const uniqueWorlds = Array.from(new Set(CHAPTERS.map((c) => c.world)));
   const nextChapter = CHAPTERS.find((c) => !isChapterCompleted(c.id));
+
+  // 互動挑戰模式
+  if (challengeChapter) {
+    const qs = CHAPTER_QUESTIONS[challengeChapter] ?? [];
+    const q = qs[challengeQIndex];
+    if (!q) {
+      setChallengeChapter(null);
+      return null;
+    }
+    const answered = challengeAnswered;
+    const isCorrect = answered && challengeSelected === q.answer;
+
+    return (
+      <PhoneFrame>
+        <CompanionBar dialogue={`冒險關卡 ${challengeQIndex + 1} / ${qs.length}`} />
+        <KidTopBar title="冒險挑戰" backHref="/adventure" backLabel="地圖" />
+        <div className="kid-game-content">
+          <section className="kid-soft-panel" style={{ padding: '16px 14px', textAlign: 'center' }}>
+            <p className="practice-question-label">互動挑戰</p>
+            <h1 className="practice-question-text" style={{ fontSize: 22 }}>{q.question}</h1>
+            <div className="practice-options-grid" style={{ marginTop: 14 }}>
+              {q.options.map((opt) => {
+                const showState = answered && (opt === q.answer || opt === challengeSelected);
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => handleChallengeAnswer(opt)}
+                    disabled={answered}
+                    className={`practice-option ${showState && opt === q.answer ? 'is-correct' : ''} ${showState && challengeSelected === opt && opt !== q.answer ? 'is-wrong' : ''}`}
+                  >
+                    <span className="practice-option-text">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {answered && (
+              <div className={`practice-feedback ${isCorrect ? 'is-ok' : 'is-retry'}`} style={{ marginTop: 14 }}>
+                <p className="practice-feedback-title">{isCorrect ? '答對了！' : '差一點，繼續加油！'}</p>
+              </div>
+            )}
+            {answered && (
+              <div style={{ marginTop: 14 }}>
+                <button
+                  type="button"
+                  className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
+                  onClick={goNextChallenge}
+                >
+                  {challengeQIndex >= qs.length - 1 ? '完成冒險' : '下一題'}
+                </button>
+              </div>
+            )}
+          </section>
+        </div>
+        <KidBottomNav />
+      </PhoneFrame>
+    );
+  }
 
   return (
     <PhoneFrame>
@@ -188,9 +280,14 @@ export default function AdventurePage() {
                     </button>
                   )}
                   {done && (
-                    <Link href={boss ? `/boss?chapter=${ch.id}` : '/pet'} className="kid-quest-arrow" aria-label="前往">
+                    <button
+                      type="button"
+                      className="kid-quest-arrow"
+                      onClick={() => router.push(boss ? `/boss?chapter=${ch.id}` : '/pet')}
+                      aria-label="前往"
+                    >
                       →
-                    </Link>
+                    </button>
                   )}
                 </div>
               );
@@ -209,8 +306,8 @@ export default function AdventurePage() {
               <div className="adventure-resource-value">{game.stars}</div>
             </div>
             <div className="adventure-resource-item">
-              <div className="adventure-resource-label">星光碎片</div>
-              <div className="adventure-resource-value">{game.starlight}</div>
+              <div className="adventure-resource-label">能量</div>
+              <div className="adventure-resource-value">{game.energy}</div>
             </div>
             <div className="adventure-resource-item">
               <div className="adventure-resource-label">Boss 勝利</div>
@@ -218,7 +315,7 @@ export default function AdventurePage() {
             </div>
             <div className="adventure-resource-item">
               <div className="adventure-resource-label">夥伴等級</div>
-              <div className="adventure-resource-value">{game.petLevel}</div>
+              <div className="adventure-resource-value">{game.growthLevel}</div>
             </div>
           </div>
           <div className="kid-adventure-cta-row">
@@ -251,40 +348,6 @@ export default function AdventurePage() {
           </section>
         )}
       </div>
-
-      {currentDialog && (
-        <div className="dlg-shell">
-          <div className="dlg-card dlg-enter">
-            <div className="dlg-header">
-              <div className={`dlg-icon dlg-icon-${currentDialog.speaker}`} />
-              <div className="dlg-speaker">{currentDialog.speaker === 'narrator' ? '說書人' : currentDialog.speaker === 'lumi' ? '露米' : currentDialog.speaker === 'pet' ? '小光獸' : 'Boss'}</div>
-            </div>
-            <div className="dlg-text">{currentDialog.text}</div>
-            <div className="dlg-actions">
-              {currentDialog.choices?.length ? (
-                currentDialog.choices.map((choice, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="dlg-choice"
-                    onClick={() => handleDialogChoice(choice.next)}
-                  >
-                    {choice.text}
-                  </button>
-                ))
-              ) : (
-                <button
-                  type="button"
-                  className="dlg-next"
-                  onClick={handleDialogComplete}
-                >
-                  繼續
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       <KidBottomNav />
     </PhoneFrame>

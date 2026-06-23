@@ -11,8 +11,8 @@ import {
   loadGameState,
   saveGameState,
   addStars,
-  addStarlight,
-  addPetExp,
+  addEnergy,
+  setPetMood,
   incrementPracticeCount,
   type GameState,
 } from '@/lib/game/state';
@@ -87,8 +87,6 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
     ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [selectedAnswer]);
 
-
-
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(displayQuestionText(current));
@@ -133,6 +131,10 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
 
     const answer = buildAnswer(selectedAnswer, isTracingQuestion(current) ? true : undefined);
     const nextAnswers = [...answers, answer];
+
+    // V5: 每完成一題 +1 能量
+    try { addEnergy(1); } catch {}
+
     setAnswers(nextAnswers);
 
     if (currentIndex < questions.length - 1) {
@@ -155,11 +157,10 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
       if (result.ok && result.practice_record_id) {
         setPracticeRecordId(result.practice_record_id);
         try {
-          const gameState = loadGameState();
-          const updatedStars = addStars(Math.max(1, correct));
-          addStarlight(1);
-          addPetExp(Math.max(1, correct));
+          // V5: 每完成一輪練習 +2 星星幣
+          addStars(2);
           incrementPracticeCount();
+          setPetMood('happy');
         } catch {
           // Game state is best-effort; ignore storage errors.
         }
@@ -195,11 +196,11 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
         <p className="practice-chip practice-chip-success">完成任務</p>
         <h1 className="practice-title">今天練習完成！</h1>
         <p className="practice-subtitle">
-          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，準備打開小禮物。
+          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，獲得了 2 星星幣！
         </p>
         {completionMessage ? <p className="practice-note">{completionMessage}</p> : null}
         <div className="practice-complete-actions">
-          <Link href={`/reward?practice_record_id=${practiceRecordId}`} className="practice-complete-primary">
+          <Link href={rewardHref} className="practice-complete-primary">
             領取今天獎勵
           </Link>
           <Link href="/" className="practice-complete-secondary">

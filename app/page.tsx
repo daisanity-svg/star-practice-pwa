@@ -1,15 +1,41 @@
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
+import { KidTopBar } from '@/components/KidTopBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { CompanionBar } from '@/components/CompanionBar';
 import { StoryProgressWidget } from '@/components/StoryProgressWidget';
-import { getCollectionSummary } from '@/lib/data/rewards';
+import { getRewardCardDisplayName } from '@/lib/cards/display';
+import { getChildInventory } from '@/lib/data/rewards';
+import type { RewardCard } from '@/lib/types';
+import { loadGameState } from '@/lib/game/state';
+
+function cardImageUrl(card: RewardCard) {
+  return card.rendered_card_image_url || card.source_image_url || null;
+}
+
+function groupInventoryBySeries(inventory: Awaited<ReturnType<typeof getChildInventory>>) {
+  const map = new Map<string, { id: string; name: string; items: typeof inventory }>();
+
+  for (const item of inventory) {
+    const card = item.card;
+    if (!card) continue;
+    const id = card.series?.id ?? 'saved-cards';
+    const name = card.series?.name ?? '我的收藏卡';
+    const group = map.get(id) ?? { id, name, items: [] as typeof inventory };
+    group.items.push(item);
+    map.set(id, group);
+  }
+
+  return Array.from(map.values());
+}
 
 export default async function HomePage() {
-  const collections = await getCollectionSummary();
-  const ownedTotal = collections.reduce((sum, item) => sum + item.owned, 0) || 0;
-  const cardTotal = collections.reduce((sum, item) => sum + item.total, 0) || 1;
-  const progressPercent = Math.round((ownedTotal / cardTotal) * 100);
+  const inventory = await getChildInventory();
+  const collections = groupInventoryBySeries(inventory);
+  const ownedTotal = inventory.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
+  const cardTotal = collections.reduce((sum, item) => sum + item.items.length, 0) || 1;
+  const progressPercent = Math.round((ownedTotal / Math.max(1, cardTotal)) * 100);
+  const game = typeof window !== 'undefined' ? loadGameState() : null;
 
   const quests = [
     { id: 1, label: '找朋友', status: 'done' },
@@ -39,7 +65,7 @@ export default async function HomePage() {
               <span className="kid-status-pill">{ownedTotal} 位朋友</span>
             </div>
             <h1 className="kid-hero-title">今天出發<br />找星星朋友</h1>
-            <p className="kid-hero-sub">完成 5 個小任務，打開今日卡包</p>
+            <p className="kid-hero-sub">完成 5 個小任務，打开今日卡包</p>
             <div className="kid-hero-decor" aria-hidden="true">
               <span className="kid-star-badge" />
               <span className="kid-message-note">!</span>
@@ -48,6 +74,20 @@ export default async function HomePage() {
               <span className="kid-cta-label">開始冒險</span>
             </Link>
           </section>
+
+          {game && (
+            <section className="kid-soft-panel" style={{ padding: '14px', marginTop: 14, textAlign: 'center' }}>
+              <div className="kid-map-header" style={{ padding: '0 2px' }}>
+                <h2 className="kid-map-title" style={{ fontSize: '18px' }}>我的資源</h2>
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <span className="kid-resource-chip">星星幣 {game.stars}</span>
+                <span className="kid-resource-chip">能量 {game.energy}</span>
+                <span className="kid-resource-chip">成長 Lv.{game.growthLevel}</span>
+                <span className="kid-resource-chip">親密度 Lv.{game.intimacyLevel}</span>
+              </div>
+            </section>
+          )}
 
           <StoryProgressWidget />
 

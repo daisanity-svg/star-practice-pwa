@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
@@ -13,9 +13,10 @@ import {
   loadGameState,
   saveGameState,
   addStars,
-  addStarlight,
-  unlockWorld,
+  addEnergy,
   addBossWin,
+  unlockWorld,
+  setPetMood,
   type GameState,
 } from '@/lib/game/state';
 
@@ -39,24 +40,71 @@ const BOSS_QUESTIONS: BattleQuestion[] = [
 ];
 
 function BossVisual({ name }: { name: string }) {
-  const initial = name?.charAt(0) ?? '?';
+  const isMistBear = name === '迷霧熊王';
+  const isBlackDragon = name === '黑雲龍';
   return (
     <div className="kid-boss-avatar">
-      <span
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 28,
-          fontWeight: 900,
-          color: '#1e293b',
-          zIndex: 1,
-        }}
-      >
-        {initial}
-      </span>
+      <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {isMistBear ? (
+          <>
+            <circle cx="60" cy="58" r="40" fill="#8B5E3C" />
+            <circle cx="60" cy="58" r="40" fill="url(#bearGrad)" />
+            <circle cx="44" cy="50" r="5" fill="#1f5ef6" />
+            <circle cx="76" cy="50" r="5" fill="#1f5ef6" />
+            <circle cx="44" cy="50" r="2" fill="#fff" />
+            <circle cx="76" cy="50" r="2" fill="#fff" />
+            <ellipse cx="60" cy="66" rx="8" ry="5" fill="#3b2314" />
+            <path d="M52 74 Q60 82 68 74" stroke="#3b2314" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <circle cx="30" cy="40" r="10" fill="#8B5E3C" />
+            <circle cx="90" cy="40" r="10" fill="#8B5E3C" />
+            <circle cx="30" cy="40" r="10" fill="url(#bearEar)" />
+            <circle cx="90" cy="40" r="10" fill="url(#bearEar)" />
+            <defs>
+              <linearGradient id="bearGrad" x1="0" y1="0" x2="120" y2="120">
+                <stop offset="0%" stopColor="#D4A373" />
+                <stop offset="100%" stopColor="#8B5E3C" />
+              </linearGradient>
+              <linearGradient id="bearEar" x1="0" y1="0" x2="60" y2="60">
+                <stop offset="0%" stopColor="#D4A373" />
+                <stop offset="100%" stopColor="#8B5E3C" />
+              </linearGradient>
+            </defs>
+          </>
+        ) : isBlackDragon ? (
+          <>
+            <path d="M60 10 L80 30 L100 50 L95 80 L75 100 L45 100 L25 80 L20 50 L40 30 Z" fill="#2d3748" />
+            <path d="M60 10 L80 30 L100 50 L95 80 L75 100 L45 100 L25 80 L20 50 L40 30 Z" fill="url(#dragonGrad)" />
+            <circle cx="50" cy="45" r="4" fill="#ef4444" />
+            <circle cx="70" cy="45" r="4" fill="#ef4444" />
+            <circle cx="45" cy="28" r="6" fill="#2d3748" />
+            <circle cx="75" cy="28" r="6" fill="#2d3748" />
+            <path d="M55 70 L60 85 L65 70" fill="#1a202c" />
+            <path d="M20 50 L5 40" stroke="#2d3748" strokeWidth="4" strokeLinecap="round" />
+            <path d="M100 50 L115 40" stroke="#2d3748" strokeWidth="4" strokeLinecap="round" />
+            <defs>
+              <linearGradient id="dragonGrad" x1="0" y1="0" x2="120" y2="120">
+                <stop offset="0%" stopColor="#4a5568" />
+                <stop offset="100%" stopColor="#1a202c" />
+              </linearGradient>
+            </defs>
+          </>
+        ) : (
+          <>
+            <circle cx="60" cy="55" r="35" fill="#4a5568" />
+            <circle cx="60" cy="55" r="35" fill="url(#bossGrad)" />
+            <circle cx="45" cy="48" r="4" fill="#ef4444" />
+            <circle cx="75" cy="48" r="4" fill="#ef4444" />
+            <circle cx="60" cy="62" r="5" fill="#1a202c" />
+            <path d="M50 72 Q60 80 70 72" stroke="#1a202c" strokeWidth="3" strokeLinecap="round" fill="none" />
+            <defs>
+              <linearGradient id="bossGrad" x1="0" y1="0" x2="120" y2="120">
+                <stop offset="0%" stopColor="#718096" />
+                <stop offset="100%" stopColor="#4a5568" />
+              </linearGradient>
+            </defs>
+          </>
+        )}
+      </svg>
     </div>
   );
 }
@@ -80,6 +128,10 @@ function BossContent() {
   const [playerEnergy, setPlayerEnergy] = useState(100);
   const [feedback, setFeedback] = useState<{ type: 'ok' | 'retry'; text: string } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  // eslint-disable-next-line react-hooks/purity
+  const questionStartedAtRef = useRef(Date.now());
+  const fastAnswerCountRef = useRef(0);
 
   const refresh = () => {
     setProgress(loadProgress());
@@ -94,6 +146,9 @@ function BossContent() {
     setPlayerEnergy(100);
     setFeedback(null);
     setMessage(null);
+    setQuestionIndex(0);
+    questionStartedAtRef.current = Date.now();
+    fastAnswerCountRef.current = 0;
   };
 
   const current = questions[qIndex];
@@ -103,11 +158,17 @@ function BossContent() {
     if (!current) return;
 
     const ok = opt === current.answer;
+    // eslint-disable-next-line react-hooks/purity
+    const isFast = Date.now() - questionStartedAtRef.current <= 3000;
     setSelected(opt);
 
     if (ok) {
       setFeedback({ type: 'ok', text: '答對了！Boss 受到傷害！' });
       setBossHp((v) => Math.max(0, v - 34));
+      try { addEnergy(1); } catch {}
+      if (isFast) {
+        fastAnswerCountRef.current += 1;
+      }
       setTimeout(() => {
         setFeedback(null);
         if (qIndex >= questions.length - 1 || Math.max(0, bossHp - 34) <= 0) {
@@ -115,6 +176,7 @@ function BossContent() {
         } else {
           setQIndex((v) => v + 1);
           setSelected(null);
+          setQuestionIndex((v) => v + 1);
         }
       }, 700);
     } else {
@@ -134,9 +196,11 @@ function BossContent() {
   const finishBattle = (won: boolean) => {
     if (won) {
       setPhase('victory');
-      const updated = addStars(5);
-      addStarlight(2);
+      const fastCount = fastAnswerCountRef.current;
+      addStars(2 + fastCount);
+      addEnergy(questions.length + fastCount);
       addBossWin();
+      setPetMood('excited');
 
       if (boss) {
         const nextWorld = CHAPTERS.find((c) => c.order === chapter.order + 1)?.world;
@@ -155,7 +219,12 @@ function BossContent() {
         saveProgress(next);
       }
       refresh();
-      setMessage('勝利！獲得 5 星星幣與 2 星光碎片');
+      const rewardParts = ['勝利！'];
+      if (fastCount > 0) {
+        rewardParts.push(`速度獎勵 +${fastCount} 星星幣、+${fastCount} 能量`);
+      }
+      rewardParts.push('獲得 2 星星幣與能量！');
+      setMessage(rewardParts.join(' '));
     } else {
       setPhase('defeat');
       setMessage('能量耗盡了，先去練習補充能量吧！');
@@ -187,7 +256,7 @@ function BossContent() {
             <div className="kid-boss-title" style={{ marginTop: 14 }}>{boss?.bossName ?? '未知的守護者'}</div>
             <div className="kid-boss-sub">這個守護者等著你的挑戰</div>
             <div className="kid-quest-next" style={{ marginTop: 12 }}>
-              答對 3 題就能獲勝，準備好了嗎？
+              答對 {questions.length} 題就能獲勝，準備好了嗎？
             </div>
             <button
               type="button"
