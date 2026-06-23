@@ -6,6 +6,15 @@ import type { Route } from 'next';
 import { completePracticeSession } from '@/lib/actions/practice';
 import type { GeneratedQuestion, SubmittedPracticeAnswer } from '@/lib/types';
 import { KidButton } from '@/components/KidButton';
+import {
+  loadGameState,
+  saveGameState,
+  addStars,
+  addStarlight,
+  addPetExp,
+  incrementPracticeCount,
+  type GameState,
+} from '@/lib/game/state';
 
 type PracticeRunnerProps = {
   questions: GeneratedQuestion[];
@@ -144,6 +153,16 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
       setCompletionMessage(result.message);
       if (result.ok && result.practice_record_id) {
         setPracticeRecordId(result.practice_record_id);
+        try {
+          const gameState = loadGameState();
+          const updatedStars = addStars(Math.max(1, correct));
+          addStarlight(1);
+          addPetExp(Math.max(1, correct));
+          incrementPracticeCount();
+          saveGameState(updatedStars);
+        } catch {
+          // Game state is best-effort; ignore storage errors.
+        }
       } else {
         completionStartedRef.current = false;
         setCompletionError(result.message || '練習完成資料儲存失敗，請再試一次。');

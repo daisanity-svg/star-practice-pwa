@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
-import { DialogBox } from '@/components/DialogBox';
 import { CHAPTERS, getDialogsForChapter, getDialogById, BOSS_ENCOUNTERS } from '@/lib/story/data';
 import { loadProgress, saveProgress, type StoryProgress } from '@/lib/story/local-storage';
 import type { StoryDialog } from '@/lib/story/types';
+import {
+  loadGameState,
+  saveGameState,
+  type GameState,
+} from '@/lib/game/state';
 
 const WORLD_NAMES: Record<string, string> = {
   forest: '森林王國',
@@ -17,22 +22,24 @@ const WORLD_NAMES: Record<string, string> = {
 };
 
 export default function AdventurePage() {
+  const router = useRouter();
   const [progress, setProgress] = useState<StoryProgress | null>(() => loadProgress());
-  const [activeChapter, setActiveChapter] = useState<string | null>(null);
-  const [currentDialog, setCurrentDialog] = useState<StoryDialog | null>(null);
-
-  useEffect(() => {
+  const [game, setGame] = useState<GameState | null>(() => loadGameState());
+  const [activeChapter, setActiveChapter] = useState<string | null>(() => {
     const p = loadProgress();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setProgress(p);
     if (p.currentChapter && !p.completedChapters.includes(p.currentChapter)) {
-      const first = getDialogsForChapter(p.currentChapter)[0];
-      if (first) {
-        setCurrentDialog(first);
-        setActiveChapter(p.currentChapter);
-      }
+      return p.currentChapter;
     }
-  }, []);
+    return null;
+  });
+  const [currentDialog, setCurrentDialog] = useState<StoryDialog | null>(() => {
+    const p = loadProgress();
+    if (p.currentChapter && !p.completedChapters.includes(p.currentChapter)) {
+      const dialogs = getDialogsForChapter(p.currentChapter);
+      return dialogs[0] ?? null;
+    }
+    return null;
+  });
 
   const startChapter = (chapterId: string) => {
     if (!progress) return;
@@ -75,6 +82,7 @@ export default function AdventurePage() {
     setProgress(next);
     setActiveChapter(null);
     setCurrentDialog(null);
+    setGame(loadGameState());
   };
 
   const isChapterUnlocked = (chapterId: string) => {
@@ -92,7 +100,7 @@ export default function AdventurePage() {
     return ch?.requiredStars ?? 0;
   };
 
-  if (!progress) {
+  if (!progress || !game) {
     return (
       <PhoneFrame>
         <KidTopBar title="冒險地圖" backHref="/" backLabel="首頁" />
@@ -106,7 +114,12 @@ export default function AdventurePage() {
 
   return (
     <PhoneFrame>
-      <KidTopBar title="冒險地圖" backHref="/" backLabel="首頁" rightLabel={`${progress.completedChapters.length}/${CHAPTERS.length}`} />
+      <KidTopBar
+        title="冒險地圖"
+        backHref="/"
+        backLabel="首頁"
+        rightLabel={`${progress.completedChapters.length}/${CHAPTERS.length}`}
+      />
       <div className="kid-game-content">
         <section className="kid-soft-panel" style={{ padding: '14px' }}>
           <div className="kid-map-header">
@@ -117,12 +130,15 @@ export default function AdventurePage() {
             {uniqueWorlds.map((world) => {
               const worldChapters = CHAPTERS.filter((c) => c.world === world);
               const unlocked = worldChapters.some((c) => isChapterUnlocked(c.id));
+              const completed = worldChapters.filter((c) => isChapterCompleted(c.id)).length;
               return (
                 <div key={world} className={`kid-world-chip ${unlocked ? '' : 'locked'}`}>
                   <div className={`kid-world-icon ${world}`} aria-hidden="true" />
-                  <div className="kid-world-name">{WORLD_NAMES[world] ?? world}</div>
-                  <div className="kid-world-status">
-                    {unlocked ? '已開啟' : '尚未開啟'}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="kid-world-name">{WORLD_NAMES[world] ?? world}</div>
+                    <div className="kid-world-status">
+                      {unlocked ? `已開啟 ${completed}/${worldChapters.length} 章` : '尚未開啟'}
+                    </div>
                   </div>
                 </div>
               );
@@ -177,14 +193,76 @@ export default function AdventurePage() {
             })}
           </div>
         </section>
+
+        <section className="kid-soft-panel" style={{ padding: '14px', marginTop: '14px', textAlign: 'center' }}>
+          <div className="kid-map-header" style={{ padding: '0 2px' }}>
+            <h2 className="kid-map-title">目前擁有</h2>
+          </div>
+          <div className="kid-pet-stats" style={{ marginTop: 10 }}>
+            <div className="kid-pet-stat">
+              <div className="kid-pet-stat-label">星星幣</div>
+              <div className="kid-pet-stat-value">{game.stars}</div>
+            </div>
+            <div className="kid-pet-stat">
+              <div className="kid-pet-stat-label">星光碎片</div>
+              <div className="kid-pet-stat-value">{game.starlight}</div>
+            </div>
+            <div className="kid-pet-stat">
+              <div className="kid-pet-stat-label">Boss 勝利</div>
+              <div className="kid-pet-stat-value">{game.bossWins}</div>
+            </div>
+            <div className="kid-pet-stat">
+              <div className="kid-pet-stat-label">夥伴等級</div>
+              <div className="kid-pet-stat-value">{game.petLevel}</div>
+            </div>
+          </div>
+          <div className="kid-adventure-cta-row">
+            <button type="button" className="kid-adventure-cta primary" onClick={() => router.push('/practice')}>
+              開始練習
+            </button>
+            <button
+              type="button"
+              className="kid-adventure-cta secondary"
+              onClick={() => router.push('/pet')}
+            >
+              去見小光獸
+            </button>
+          </div>
+        </section>
       </div>
 
       {currentDialog && (
-        <DialogBox
-          dialog={currentDialog}
-          onComplete={handleDialogComplete}
-          onChoice={handleDialogChoice}
-        />
+        <div className="dlg-shell">
+          <div className="dlg-card dlg-enter">
+            <div className="dlg-header">
+              <div className={`dlg-icon dlg-icon-${currentDialog.speaker}`} />
+              <div className="dlg-speaker">{currentDialog.speaker === 'narrator' ? '說書人' : currentDialog.speaker === 'lumi' ? '露米' : currentDialog.speaker === 'pet' ? '小光獸' : 'Boss'}</div>
+            </div>
+            <div className="dlg-text">{currentDialog.text}</div>
+            <div className="dlg-actions">
+              {currentDialog.choices?.length ? (
+                currentDialog.choices.map((choice, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="dlg-choice"
+                    onClick={() => handleDialogChoice(choice.next)}
+                  >
+                    {choice.text}
+                  </button>
+                ))
+              ) : (
+                <button
+                  type="button"
+                  className="dlg-next"
+                  onClick={handleDialogComplete}
+                >
+                  繼續
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <KidBottomNav />

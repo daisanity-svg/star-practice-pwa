@@ -1,17 +1,64 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
-import { DialogBox } from '@/components/DialogBox';
-import { CHAPTERS, BOSS_ENCOUNTERS, getDialogsForChapter, getDialogById } from '@/lib/story/data';
+import { CHAPTERS, BOSS_ENCOUNTERS } from '@/lib/story/data';
 import { loadProgress, saveProgress, type StoryProgress } from '@/lib/story/local-storage';
-import type { StoryDialog } from '@/lib/story/types';
+import {
+  loadGameState,
+  saveGameState,
+  addStars,
+  addStarlight,
+  unlockWorld,
+  addBossWin,
+  type GameState,
+} from '@/lib/game/state';
 
-type BossPhase = 'intro' | 'battle' | 'outro';
+type BattlePhase = 'idle' | 'battle' | 'victory' | 'defeat';
+
+type BattleQuestion = {
+  text: string;
+  options: string[];
+  answer: string;
+};
+
+const BOSS_QUESTIONS: BattleQuestion[] = [
+  { text: '哪一個是正確的 A？', options: ['A', 'B', 'C', 'D'], answer: 'A' },
+  { text: '哪一個是正確的 B？', options: ['A', 'B', 'C', 'D'], answer: 'B' },
+  { text: '哪一個是正確的 C？', options: ['A', 'B', 'C', 'D'], answer: 'C' },
+  { text: '哪一個是正確的 D？', options: ['A', 'B', 'C', 'D'], answer: 'D' },
+  { text: '星星的「星」通常是什麼顏色？', options: ['黃色', '藍色', '紅色', '綠色'], answer: '黃色' },
+  { text: '小光獸通常是什麼顏色？', options: ['黃色', '藍色', '紅色', '綠色'], answer: '黃色' },
+  { text: '以下哪一個是英文字母？', options: ['一', '二', 'A', 'ㄅ'], answer: 'A' },
+  { text: '森林王國的守護者是？', options: ['小光獸', '黑雲龍', '迷霧熊王', '回聲巨鷹'], answer: '小光獸' },
+];
+
+function BossVisual({ name }: { name: string }) {
+  const initial = name?.charAt(0) ?? '?';
+  return (
+    <div className="kid-boss-avatar">
+      <span
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 28,
+          fontWeight: 900,
+          color: '#1e293b',
+          zIndex: 1,
+        }}
+      >
+        {initial}
+      </span>
+    </div>
+  );
+}
 
 function BossContent() {
   const searchParams = useSearchParams();
@@ -20,63 +67,107 @@ function BossContent() {
   const boss = BOSS_ENCOUNTERS.find((b) => b.chapter === chapter.id);
 
   const [progress, setProgress] = useState<StoryProgress | null>(() => loadProgress());
-  const [phase, setPhase] = useState<BossPhase>('intro');
-  const [dialog, setDialog] = useState<StoryDialog | null>(null);
+  const [game, setGame] = useState<GameState | null>(() => loadGameState());
+  const [phase, setPhase] = useState<BattlePhase>('idle');
+  const [questions] = useState<BattleQuestion[]>(() => {
+    const shuffled = [...BOSS_QUESTIONS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  });
+  const [qIndex, setQIndex] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [bossHp, setBossHp] = useState(100);
+  const [playerEnergy, setPlayerEnergy] = useState(100);
+  const [feedback, setFeedback] = useState<{ type: 'ok' | 'retry'; text: string } | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    const pre = getDialogsForChapter(chapter.id).find((d) => d.id === `${chapter.id}-boss-intro`);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (pre) setDialog(pre);
-  }, [chapter.id]);
-
-  const complete = () => {
-    if (!progress) return;
-    const updated: StoryProgress = {
-      ...progress,
-      completedChapters: progress.completedChapters.includes(chapter.id)
-        ? progress.completedChapters
-        : [...progress.completedChapters, chapter.id],
-      currentChapter: null,
-      currentDialogId: null,
-    };
-    saveProgress(updated);
-    setProgress(updated);
+  const refresh = () => {
+    setProgress(loadProgress());
+    setGame(loadGameState());
   };
 
-  const handleDialogChoice = (nextId: string) => {
-    const next = getDialogById(nextId);
-    if (next) {
-      setDialog(next);
-      if (nextId.endsWith('start')) {
-        setPhase('battle');
+  const startBattle = () => {
+    setPhase('battle');
+    setQIndex(0);
+    setSelected(null);
+    setBossHp(100);
+    setPlayerEnergy(100);
+    setFeedback(null);
+    setMessage(null);
+  };
+
+  const current = questions[qIndex];
+
+  const handleAnswer = (opt: string) => {
+    if (selected) return;
+    if (!current) return;
+
+    const ok = opt === current.answer;
+    setSelected(opt);
+
+    if (ok) {
+      setFeedback({ type: 'ok', text: '答對了！Boss 受到傷害！' });
+      setBossHp((v) => Math.max(0, v - 34));
+      setTimeout(() => {
+        setFeedback(null);
+        if (qIndex >= questions.length - 1 || Math.max(0, bossHp - 34) <= 0) {
+          finishBattle(true);
+        } else {
+          setQIndex((v) => v + 1);
+          setSelected(null);
+        }
+      }, 700);
+    } else {
+      setFeedback({ type: 'retry', text: '差一點，再仔細想想！' });
+      setPlayerEnergy((v) => Math.max(0, v - 20));
+      setTimeout(() => {
+        setFeedback(null);
+        if (playerEnergy <= 20) {
+          finishBattle(false);
+        } else {
+          setSelected(null);
+        }
+      }, 700);
+    }
+  };
+
+  const finishBattle = (won: boolean) => {
+    if (won) {
+      setPhase('victory');
+      const updated = addStars(5);
+      addStarlight(2);
+      addBossWin();
+      saveGameState(updated);
+
+      if (boss) {
+        const nextWorld = CHAPTERS.find((c) => c.order === chapter.order + 1)?.world;
+        if (nextWorld) unlockWorld(nextWorld);
       }
-      if (nextId.endsWith('win')) {
-        setPhase('outro');
-        const outro = getDialogsForChapter(chapter.id).find((d) => d.id === `${chapter.id}-boss-complete`);
-        if (outro) setDialog(outro);
+
+      if (progress && boss) {
+        const next: StoryProgress = {
+          ...progress,
+          completedChapters: progress.completedChapters.includes(chapter.id)
+            ? progress.completedChapters
+            : [...progress.completedChapters, chapter.id],
+          currentChapter: null,
+          currentDialogId: null,
+        };
+        saveProgress(next);
       }
+      refresh();
+      setMessage('勝利！獲得 5 星星幣與 2 星光碎片');
+    } else {
+      setPhase('defeat');
+      setMessage('能量耗盡了，先去練習補充能量吧！');
     }
   };
 
-  const startBoss = () => {
-    const start = getDialogById(`${chapter.id}-boss-start`);
-    if (start) {
-      setDialog(start);
-      setPhase('battle');
-    }
+  const retry = () => {
+    startBattle();
   };
 
-  const battleResult = () => {
-    const win = getDialogById(`${chapter.id}-boss-win`);
-    if (win) {
-      setDialog(win);
-      setPhase('outro');
-    }
-  };
-
-  const outroComplete = () => {
-    setDialog(null);
-    complete();
+  const goPractice = () => {
+    window.location.href = '/practice';
   };
 
   const nextChapter = CHAPTERS.find((c) => c.order === chapter.order + 1);
@@ -85,52 +176,113 @@ function BossContent() {
     <PhoneFrame>
       <KidTopBar title={boss?.bossName ?? 'Boss'} backHref="/adventure" backLabel="冒險" />
       <div className="kid-game-content">
-        <section className="kid-soft-panel" style={{ padding: '14px' }}>
-          <div className="kid-map-header">
-            <h2 className="kid-map-title">
-              {boss?.bossName ?? '未知的守護者'}
-            </h2>
-            <p className="kid-map-sub">
-              {phase === 'intro' && '前方傳來一陣奇異的氣息...'}
-              {phase === 'battle' && '戰鬥正在進行中'}
-              {phase === 'outro' && '戰役結束了'}
-            </p>
-          </div>
-          <div className="kid-boss-callout" aria-hidden="true">
-            {boss?.bossName ?? '???'}
-          </div>
-          <div className="kid-quest-next" style={{ marginTop: '12px' }}>
-            {phase === 'intro' && (
-              <button
-                type="button"
-                className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
-                onClick={startBoss}
-              >
-                開始戰鬥
-              </button>
-            )}
-            {phase === 'battle' && (
-              <button
-                type="button"
-                className="kid-yellow-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
-                onClick={battleResult}
-              >
-                用最強的星光攻擊！
-              </button>
-            )}
-            {phase === 'outro' && (
-              <div className="kid-quest-next">
-                {nextChapter ? `下一章：${nextChapter.title}` : '旅程暫告一段落'}
+        {phase === 'idle' && (
+          <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
+            <BossVisual name={boss?.bossName ?? '???'} />
+            <div className="kid-boss-title" style={{ marginTop: 14 }}>{boss?.bossName ?? '未知的守護者'}</div>
+            <div className="kid-boss-sub">這個守護者等著你的挑戰</div>
+            <div className="kid-quest-next" style={{ marginTop: 12 }}>
+              答對 3 題就能獲勝，準備好了嗎？
+            </div>
+            <button
+              type="button"
+              className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
+              onClick={startBattle}
+              style={{ marginTop: 14 }}
+            >
+              開始戰鬥
+            </button>
+          </section>
+        )}
+
+        {(phase === 'battle') && current && (
+          <div className="kid-boss-stage">
+            <div className="kid-boss-header">
+              <BossVisual name={boss?.bossName ?? '???'} />
+              <div className="kid-boss-meta">
+                <div className="kid-boss-title">{boss?.bossName ?? '未知守護者'}</div>
+                <div className="kid-boss-sub">
+                  第 {qIndex + 1} 題 / 共 {questions.length} 題
+                </div>
+                <div className="kid-bar-track">
+                  <div className="kid-bar-fill" style={{ width: `${Math.max(0, bossHp)}%` }} />
+                </div>
+                <div className="kid-bar-track" style={{ marginTop: 8 }}>
+                  <div className="kid-bar-fill player" style={{ width: `${Math.max(0, playerEnergy)}%` }} />
+                </div>
+              </div>
+            </div>
+
+            <section className="kid-soft-panel" style={{ padding: '16px 14px', textAlign: 'center' }}>
+              <p className="practice-question-label">戰鬥題目</p>
+              <h1 className="practice-question-text" style={{ fontSize: 22 }}>{current.text}</h1>
+              <div className="practice-options-grid" style={{ marginTop: 14 }}>
+                {current.options.map((opt) => {
+                  const isSelected = selected === opt;
+                  const correct = opt === current.answer;
+                  const showState = selected !== null && (isSelected || correct);
+                  return (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => handleAnswer(opt)}
+                      disabled={selected !== null}
+                      className={`practice-option ${showState && correct ? 'is-correct' : ''} ${showState && isSelected && !correct ? 'is-wrong' : ''}`}
+                    >
+                      <span className="practice-option-text">{opt}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {feedback && (
+              <div className={`kid-boss-feedback ${feedback.type}`}>
+                <p className="kid-boss-feedback-title">{feedback.text}</p>
               </div>
             )}
           </div>
-        </section>
-        {dialog && phase !== 'outro' && (
-          <DialogBox
-            dialog={dialog}
-            onComplete={complete}
-            onChoice={handleDialogChoice}
-          />
+        )}
+
+        {phase === 'victory' && (
+          <section className="kid-soft-panel" style={{ padding: '22px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 48, fontWeight: 900, color: '#124a3a' }}>勝利</div>
+            <p className="kid-boss-sub" style={{ marginTop: 8 }}>{message}</p>
+            <div style={{ marginTop: 14 }}>
+              {nextChapter ? `下一章：${nextChapter.title}` : '旅程暫告一段落'}
+            </div>
+            <button
+              type="button"
+              className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
+              onClick={() => (window.location.href = '/adventure')}
+              style={{ marginTop: 14 }}
+            >
+              返回冒險
+            </button>
+          </section>
+        )}
+
+        {phase === 'defeat' && (
+          <section className="kid-soft-panel" style={{ padding: '22px 16px', textAlign: 'center' }}>
+            <div style={{ fontSize: 44, fontWeight: 900, color: '#5c3a04' }}>挑戰失敗</div>
+            <p className="kid-boss-sub" style={{ marginTop: 8 }}>{message}</p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button
+                type="button"
+                className="kid-blue-button flex min-h-[54px] flex-1 items-center justify-center rounded-[22px] text-base font-black"
+                onClick={retry}
+              >
+                再挑戰一次
+              </button>
+              <button
+                type="button"
+                className="kid-yellow-button flex min-h-[54px] flex-1 items-center justify-center rounded-[22px] text-base font-black"
+                onClick={goPractice}
+              >
+                去練習
+              </button>
+            </div>
+          </section>
         )}
       </div>
       <KidBottomNav />

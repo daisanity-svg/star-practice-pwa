@@ -95,10 +95,8 @@ export function KidBottomNav() {
                 href={item.href}
                 className={`kid-nav-item${active ? ' kid-nav-item-active' : ''}`}
               >
-                {active && <span className="kid-nav-pill" aria-hidden="true" />}
-                <span className="kid-nav-icon">
-                  <NavIcon active={active} keyName={item.key} />
-                </span>
+                {active && <span className="kid-nav-pill" />}
+                <NavIcon active={active} keyName={item.key} />
                 <span className="kid-nav-label">{item.label}</span>
               </Link>
             );
