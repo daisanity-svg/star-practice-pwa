@@ -15,6 +15,8 @@ export type GameState = {
   unlockedWorlds: string[];
   lastPracticeDate: string | null;
   lastDrawDate: string | null;
+  feedCount: number;
+  playCount: number;
 };
 
 export const DEFAULT_GAME_STATE: GameState = {
@@ -30,14 +32,16 @@ export const DEFAULT_GAME_STATE: GameState = {
   unlockedWorlds: ['forest'],
   lastPracticeDate: null,
   lastDrawDate: null,
+  feedCount: 0,
+  playCount: 0,
 };
 
 export function getNextGrowthNeed(level: number): number {
-  return level * 50;
+  return 10;
 }
 
 export function getNextIntimacyNeed(level: number): number {
-  return level * 30;
+  return 10;
 }
 
 export function migrateGameState(raw: unknown): GameState {
@@ -46,7 +50,12 @@ export function migrateGameState(raw: unknown): GameState {
     if (!parsed || parsed.stateVersion !== 5) {
       return { ...DEFAULT_GAME_STATE };
     }
-    return { ...DEFAULT_GAME_STATE, ...parsed };
+    return {
+      ...DEFAULT_GAME_STATE,
+      ...parsed,
+      feedCount: parsed.feedCount ?? 0,
+      playCount: parsed.playCount ?? 0,
+    };
   } catch {
     return { ...DEFAULT_GAME_STATE };
   }
@@ -151,6 +160,46 @@ export function tryGrowPet(): GameState {
     ...state,
     growthLevel: state.growthLevel + 1,
     energy: state.energy - need,
+  };
+  saveGameState(updated);
+  return updated;
+}
+
+export function feedPet(): GameState {
+  const state = loadGameState();
+  if (state.energy < 2) return state;
+  const newFeedCount = state.feedCount + 1;
+  let newGrowthLevel = state.growthLevel;
+  let remaining = newFeedCount;
+  if (newFeedCount >= getNextGrowthNeed(newGrowthLevel)) {
+    newGrowthLevel += 1;
+    remaining = newFeedCount - getNextGrowthNeed(newGrowthLevel - 1);
+  }
+  const updated = {
+    ...state,
+    energy: state.energy - 2,
+    feedCount: remaining,
+    growthLevel: newGrowthLevel,
+  };
+  saveGameState(updated);
+  return updated;
+}
+
+export function playWithPet(): GameState {
+  const state = loadGameState();
+  if (state.stars < 1) return state;
+  const newPlayCount = state.playCount + 1;
+  let newIntimacyLevel = state.intimacyLevel;
+  let remaining = newPlayCount;
+  if (newPlayCount >= getNextIntimacyNeed(newIntimacyLevel)) {
+    newIntimacyLevel += 1;
+    remaining = newPlayCount - getNextIntimacyNeed(newIntimacyLevel - 1);
+  }
+  const updated = {
+    ...state,
+    stars: state.stars - 1,
+    playCount: remaining,
+    intimacyLevel: newIntimacyLevel,
   };
   saveGameState(updated);
   return updated;

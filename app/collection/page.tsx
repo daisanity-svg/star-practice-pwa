@@ -11,26 +11,12 @@ function cardImageUrl(card: RewardCard) {
   return card.rendered_card_image_url || card.source_image_url || null;
 }
 
-function groupInventoryBySeries(inventory: Awaited<ReturnType<typeof getChildInventory>>) {
-  const map = new Map<string, { id: string; name: string; items: typeof inventory }>();
-
-  for (const item of inventory) {
-    const card = item.card;
-    if (!card) continue;
-    const id = card.series?.id ?? 'saved-cards';
-    const name = card.series?.name ?? '我的收藏卡';
-    const group = map.get(id) ?? { id, name, items: [] as typeof inventory };
-    group.items.push(item);
-    map.set(id, group);
-  }
-
-  return Array.from(map.values());
-}
-
 export default async function CollectionPage() {
   const inventory = await getChildInventory();
-  const groups = groupInventoryBySeries(inventory);
   const totalQuantity = inventory.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
+  const sorted = inventory
+    .slice()
+    .sort((a, b) => (a.card?.card_no || '').localeCompare(b.card?.card_no || ''));
 
   return (
     <PhoneFrame>
@@ -44,7 +30,7 @@ export default async function CollectionPage() {
             <p className="text-sm font-black text-white/80">星星朋友藏寶盒</p>
             <h1 className="mt-1 text-[32px] font-black leading-tight tracking-[-0.04em]">已收藏的朋友</h1>
             <p className="mt-2 text-sm font-bold leading-relaxed text-white/90">
-              把冒險找到的朋友收在這裡，蒐齊一整頁吧。
+              依序號排列，看看收集到第幾張。
             </p>
           </div>
           <div className="kid-collect-jewel relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[28px] shadow-[0_14px_28px_rgba(31,94,246,0.18)]" aria-hidden="true" />
@@ -63,51 +49,33 @@ export default async function CollectionPage() {
       </section>
 
       {inventory.length ? (
-        <section className="space-y-4 pb-[calc(env(safe-area-inset-bottom)+120px)]">
-          {groups.map((group) => (
-            <div key={group.id} className="kid-card p-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-[#2f8cff]">收藏系列</p>
-                  <h2 className="text-2xl font-black text-[#172033]">{group.name}</h2>
+        <section className="space-y-3 pb-[calc(env(safe-area-inset-bottom)+120px)]">
+          <div className="grid grid-cols-2 gap-2.5">
+            {sorted.map((item) => {
+              const card = item.card;
+              if (!card) return null;
+              const imageUrl = cardImageUrl(card);
+              const displayName = getRewardCardDisplayName(card);
+              const quantity = Number(item.quantity ?? 1);
+
+              return (
+                <div key={item.id} className="group overflow-hidden rounded-[22px]">
+                  <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[18px] bg-white/70">
+                    {imageUrl ? (
+                      <img src={imageUrl} alt={displayName} className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="kid-card-placeholder" aria-label={displayName} />
+                    )}
+                  </div>
+                  {quantity > 1 ? (
+                    <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
+                      x{quantity}
+                    </span>
+                  ) : null}
                 </div>
-                <div className="kid-series-chip rounded-full px-3 py-2 text-sm font-black text-[#1766e6]">
-                  {group.items.length} 種
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                {group.items.map((item) => {
-                  const card = item.card;
-                  if (!card) return null;
-                  const imageUrl = cardImageUrl(card);
-                  const displayName = getRewardCardDisplayName(card);
-                  const quantity = Number(item.quantity ?? 1);
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="kid-card-strong group relative overflow-hidden rounded-[22px] p-2 active:scale-[0.99]"
-                    >
-                      <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[18px] bg-[#f5f9ff]">
-                        {imageUrl ? (
-                          <img src={imageUrl} alt={displayName} className="h-full w-full object-contain" />
-                        ) : (
-                          <span className="kid-card-placeholder" aria-label={displayName} />
-                        )}
-                      </div>
-
-                      {quantity > 1 ? (
-                        <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
-                          x{quantity}
-                        </span>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </section>
       ) : (
         <section className="kid-empty-card flex min-h-[440px] flex-col items-center justify-center p-6 text-center">

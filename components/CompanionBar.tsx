@@ -74,7 +74,7 @@ export function CompanionBar({ dialogue }: { dialogue: string }) {
 
   if (!game) {
     return (
-      <div className="companion-bar">
+      <div className="companion-bar" style={{ paddingTop: 'env(safe-area-inset-top, 12px)' }}>
         <div className="companion-bar-avatar" />
         <div className="companion-bar-info">
           <div className="companion-bar-name">載入中...</div>
@@ -86,11 +86,11 @@ export function CompanionBar({ dialogue }: { dialogue: string }) {
 
   const growthNeed = getNextGrowthNeed(game.growthLevel);
   const intimacyNeed = getNextIntimacyNeed(game.intimacyLevel);
-  const growthPct = Math.min(100, Math.round((game.energy / growthNeed) * 100));
-  const intimacyPct = Math.min(100, Math.round((game.intimacyPoints / intimacyNeed) * 100));
+  const growthPct = Math.min(100, Math.round((game.feedCount / growthNeed) * 100));
+  const intimacyPct = Math.min(100, Math.round((game.playCount / intimacyNeed) * 100));
 
   return (
-    <div className="companion-bar">
+    <div className="companion-bar" style={{ paddingTop: 'env(safe-area-inset-top, 12px)' }}>
       <PetAvatar growthLevel={game.growthLevel} />
       <div className="companion-bar-info">
         <div className="companion-bar-name">

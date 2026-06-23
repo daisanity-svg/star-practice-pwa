@@ -812,6 +812,49 @@ a[aria-disabled='true'] {
   box-shadow: 0 12px 24px rgba(245, 158, 11, 0.18);
 }
 
+.kid-white-button {
+  background: rgba(255, 255, 255, 0.92);
+  color: #12304f;
+  border: 1px solid rgba(215, 234, 255, 0.9);
+  box-shadow: 0 10px 22px rgba(31, 64, 175, 0.08);
+}
+
+.kid-empty-card {
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px 16px;
+  text-align: center;
+  border-radius: 36px;
+  border: 1px solid rgba(210, 232, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(252, 251, 246, 0.96));
+  box-shadow: 0 14px 30px rgba(31, 60, 120, 0.08);
+}
+
+.kid-empty-orb {
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #dff0ff 0%, #b9dfff 100%);
+  box-shadow: 0 14px 28px rgba(31, 94, 246, 0.15);
+}
+
+.kid-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(210, 232, 255, 0.9);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #2f8cff;
+  letter-spacing: 0.08em;
+}
+
 .kid-topbar {
   position: relative;
   z-index: 20;
@@ -2076,6 +2119,11 @@ a[aria-disabled='true'] {
   box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
 }
 
+.kid-bar-fill.timer {
+  background: linear-gradient(90deg, #ffd95a, #ffb800);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+}
+
 .kid-boss-feedback {
   border-radius: 24px;
   padding: 14px;
@@ -2215,6 +2263,7 @@ a[aria-disabled='true'] {
   color: #1a5df8;
   text-align: right;
   max-width: 150px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

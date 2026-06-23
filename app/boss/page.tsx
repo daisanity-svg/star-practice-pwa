@@ -120,7 +120,7 @@ function BossContent() {
   const [phase, setPhase] = useState<BattlePhase>('idle');
   const [questions] = useState<BattleQuestion[]>(() => {
     const shuffled = [...BOSS_QUESTIONS].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    return shuffled.slice(0, 4);
   });
   const [qIndex, setQIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -132,6 +132,9 @@ function BossContent() {
   // eslint-disable-next-line react-hooks/purity
   const questionStartedAtRef = useRef(Date.now());
   const fastAnswerCountRef = useRef(0);
+  const [timeLeft, setTimeLeft] = useState(5);
+  const [timerActive, setTimerActive] = useState(false);
+
 
   const refresh = () => {
     setProgress(loadProgress());
@@ -149,9 +152,77 @@ function BossContent() {
     setQuestionIndex(0);
     questionStartedAtRef.current = Date.now();
     fastAnswerCountRef.current = 0;
+    setTimeLeft(5);
+    setTimerActive(true);
   };
 
   const current = questions[qIndex];
+
+  const finishBattle = (won: boolean) => {
+    if (won) {
+      setPhase('victory');
+      const fastCount = fastAnswerCountRef.current;
+      addStars(2 + fastCount);
+      addEnergy(questions.length + fastCount);
+      addBossWin();
+      setPetMood('excited');
+
+      if (boss) {
+        const nextWorld = CHAPTERS.find((c) => c.order === chapter.order + 1)?.world;
+        if (nextWorld) unlockWorld(nextWorld);
+      }
+
+      if (progress && boss) {
+        const next: StoryProgress = {
+          ...progress,
+          completedChapters: progress.completedChapters.includes(chapter.id)
+            ? progress.completedChapters
+            : [...progress.completedChapters, chapter.id],
+          currentChapter: null,
+          currentDialogId: null,
+        };
+        saveProgress(next);
+      }
+      refresh();
+      const rewardParts = ['勝利！'];
+      if (fastCount > 0) {
+        rewardParts.push(`超快反應獎勵 +${fastCount} 星星幣、+${fastCount} 能量`);
+      }
+      rewardParts.push('獲得 2 星星幣與能量！');
+      setMessage(rewardParts.join(' '));
+    } else {
+      setPhase('defeat');
+      setMessage('能量耗盡了，先去練習補充能量吧！');
+    }
+  };
+
+  const handleAnswerTimedOut = () => {
+    setFeedback({ type: 'retry', text: '時間到！' });
+    setPlayerEnergy((v) => Math.max(0, v - 20));
+    setTimeout(() => {
+      setFeedback(null);
+      if (playerEnergy <= 20) {
+        finishBattle(false);
+      } else {
+        setSelected(null);
+        setTimeLeft(5);
+        setTimerActive(true);
+      }
+    }, 700);
+  };
+
+  useEffect(() => {
+    if (!timerActive) return;
+    if (timeLeft <= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- timer lifecycle controls state
+      handleAnswerTimedOut();
+      return;
+    }
+    const id = window.setInterval(() => {
+      setTimeLeft((v) => v - 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [timeLeft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAnswer = (opt: string) => {
     if (selected) return;
@@ -193,44 +264,6 @@ function BossContent() {
     }
   };
 
-  const finishBattle = (won: boolean) => {
-    if (won) {
-      setPhase('victory');
-      const fastCount = fastAnswerCountRef.current;
-      addStars(2 + fastCount);
-      addEnergy(questions.length + fastCount);
-      addBossWin();
-      setPetMood('excited');
-
-      if (boss) {
-        const nextWorld = CHAPTERS.find((c) => c.order === chapter.order + 1)?.world;
-        if (nextWorld) unlockWorld(nextWorld);
-      }
-
-      if (progress && boss) {
-        const next: StoryProgress = {
-          ...progress,
-          completedChapters: progress.completedChapters.includes(chapter.id)
-            ? progress.completedChapters
-            : [...progress.completedChapters, chapter.id],
-          currentChapter: null,
-          currentDialogId: null,
-        };
-        saveProgress(next);
-      }
-      refresh();
-      const rewardParts = ['勝利！'];
-      if (fastCount > 0) {
-        rewardParts.push(`超快反應獎勵 +${fastCount} 星星幣、+${fastCount} 能量`);
-      }
-      rewardParts.push('獲得 2 星星幣與能量！');
-      setMessage(rewardParts.join(' '));
-    } else {
-      setPhase('defeat');
-      setMessage('能量耗盡了，先去練習補充能量吧！');
-    }
-  };
-
   const retry = () => {
     startBattle();
   };
@@ -260,7 +293,7 @@ function BossContent() {
               <span className="kid-resource-chip">玩家能量 100</span>
             </div>
             <div className="kid-quest-next" style={{ marginTop: 12 }}>
-              答對 {questions.length} 題就能獲勝，準備好了嗎？
+              在時限內答對 {questions.length} 題就能獲勝，準備好了嗎？
             </div>
             <button
               type="button"
@@ -314,6 +347,12 @@ function BossContent() {
             </div>
 
             <section className="kid-soft-panel" style={{ padding: '16px 14px', textAlign: 'center' }}>
+              <div className="kid-bar-track">
+                <div className="kid-bar-fill timer" style={{ width: `${Math.max(0, (timeLeft / 5) * 100)}%` }} />
+              </div>
+              <p style={{ fontSize: 11, fontWeight: 800, color: '#5f6f89', marginTop: 4 }}>
+                剩餘時間 {timeLeft} 秒
+              </p>
               <p className="practice-question-label">戰鬥題目</p>
               <h1 className="practice-question-text" style={{ fontSize: 22 }}>{current.text}</h1>
               <div className="practice-options-grid" style={{ marginTop: 14 }}>

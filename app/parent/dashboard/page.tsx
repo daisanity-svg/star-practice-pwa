@@ -1,64 +1,110 @@
 import Link from 'next/link';
 import type { Route } from 'next';
-import { KidTopBar } from '@/components/KidTopBar';
-import { resetV5GameState } from '@/lib/actions/admin';
+import { resetTodayRecord, resetCardRecord, resetGlobal } from '@/lib/actions/admin';
 
-const sections = [
-  { title: '學習項目', description: '管理 ㄅ、ㄇ、A、B 與多記憶詞', href: '/parent/learning' },
-  { title: '學習進度', description: '查看熟練度與容易忘記的項目', href: '/parent/progress' },
-  { title: '卡片獎池', description: '新增卡片與補卡包', href: '/parent/cards' },
-  { title: '活動卡包', description: '設定主題與前台提示', href: '/parent/events' },
-  { title: '題型模板', description: '管理自動出題句型', href: '/parent/templates' },
-  { title: '今日規則', description: '每日題數、抽卡條件', href: '/parent/settings' },
-];
+async function resetToday() {
+  'use server';
+  await resetTodayRecord();
+}
+
+async function resetCards() {
+  'use server';
+  await resetCardRecord();
+}
+
+async function resetAll() {
+  'use server';
+  await resetGlobal();
+}
 
 export default async function ParentDashboardPage() {
-  const commitHash = process.env.NEXT_PUBLIC_COMMIT_HASH ?? 'local';
+  const commitHash = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_COMMIT_HASH
+    ? process.env.NEXT_PUBLIC_COMMIT_HASH
+    : 'local';
 
   return (
-    <div className="safe-screen">
-      <KidTopBar title="家長後台" backHref="/" backLabel="小孩端" />
-      <main className="kid-shell">
-        <section className="kid-card">
-          <p className="kid-card-label">Dashboard</p>
-          <h1 className="kid-card-title">今天學習總覽</h1>
-          <p className="kid-card-subtitle">從這裡快速前往各項設定</p>
+    <main className="admin-shell safe-screen">
+      <div className="space-y-5">
+        <section className="rounded-[36px] border border-blue-100 bg-white p-6 shadow-[0_16px_42px_rgba(18,48,79,0.08)]">
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-blue-500">家長後台</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">小光獸學習後台</h1>
+          <p className="mt-3 text-sm leading-relaxed text-slate-600">
+            這裡管理孩子的每日練習、題材與小光獸成長。
+          </p>
         </section>
 
-        <section className="kid-card" style={{ marginTop: 24 }}>
-          <p className="kid-card-label">版本標記</p>
-          <h2 className="kid-card-title">V5 FINAL · {commitHash}</h2>
-          <p className="kid-card-subtitle">請確認首頁底部也有相同標記，代表已部署最新版本。</p>
-        </section>
-
-        <section className="kid-stack">
-          {sections.map((item) => (
-            <Link key={item.href} href={item.href as Route} className="kid-quest-link">
-              <span className="kid-quest-pin">
-                <span className="kid-quest-num">{item.title[0]}</span>
-              </span>
-              <span className="kid-quest-body">
-                <span className="kid-quest-title">{item.title}</span>
-                <span className="kid-quest-meta">{item.description}</span>
-              </span>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[
+            { label: '今日卡片', description: '上傳與管理每日卡包內容', href: '/parent/cards' as Route, icon: '🎴' },
+            { label: '生活題材', description: '新增今天想練的題材，系統會記住', href: '/parent/templates' as Route, icon: '📝' },
+            { label: '學習分析', description: '看錯誤次數與常錯題型', href: '/parent/progress' as Route, icon: '📊' },
+            { label: '收藏圖鑑', description: '孩子收集到的卡片', href: '/collection' as Route, icon: '🗂️' },
+            { label: '遊戲設定', description: '模式與每日任務設定', href: '/parent/settings' as Route, icon: '⚙️' },
+          ].map((item) => (
+            <Link key={item.href} href={item.href} className="block rounded-[28px] border border-blue-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+              <p className="text-sm font-black text-blue-500">{item.icon}</p>
+              <h2 className="mt-2 text-lg font-black text-slate-950">{item.label}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500">{item.description}</p>
             </Link>
           ))}
+        </div>
+
+        <section className="rounded-[36px] border border-amber-100 bg-white p-5 shadow-[0_16px_42px_rgba(18,48,79,0.08)]">
+          <p className="text-sm font-black text-amber-600">⚠️ 重置</p>
+          <h2 className="mt-1 text-xl font-black text-slate-950">分層重置</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            請選擇要 reset 的範圍。每層都會再確認，請務必看清楚說明。
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <form action={resetToday}>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="text-sm font-black text-amber-700">今日紀錄重置</p>
+                <p className="mt-2 text-sm font-medium text-amber-900">
+                  只歸零「今天練習了幾題」以及「今天有沒有抽卡」。星星幣、能量、小光獸成長、親密度都保留。
+                </p>
+                <button
+                  type="submit"
+                  className="mt-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-black text-amber-700 shadow-sm transition hover:bg-amber-100"
+                >
+                  確認重置
+                </button>
+              </div>
+            </form>
+            <form action={resetCards}>
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <p className="text-sm font-black text-amber-700">卡片紀錄重置</p>
+                <p className="mt-2 text-sm font-medium text-amber-900">
+                  只清除本地已收藏卡片的 cache。資料庫中的孩子卡片 necesidades（child_card_inventory）與抽卡紀錄（reward_draw_logs）不會自動刪除；如要完整重置，請手動執行建議 SQL。
+                </p>
+                <button
+                  type="submit"
+                  className="mt-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-black text-amber-700 shadow-sm transition hover:bg-amber-100"
+                >
+                  確認重置
+                </button>
+              </div>
+            </form>
+            <form action={resetAll}>
+              <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
+                <p className="text-sm font-black text-red-700">全域重置</p>
+                <p className="mt-2 text-sm font-medium text-red-900">
+                  全部遊戲進度（星星、能量、成長、親密度、練習、冒險、收藏）都會歸零。
+                </p>
+                <button
+                  type="submit"
+                  className="mt-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-100"
+                >
+                  確認重置
+                </button>
+              </div>
+            </form>
+          </div>
         </section>
 
-        <section className="kid-card" style={{ marginTop: 24 }}>
-          <p className="kid-card-label">管理工具</p>
-          <h2 className="kid-card-title">V5 遊戲資料重置</h2>
-          <p className="kid-card-subtitle">將星星幣、能量、成長、親密度、Boss 勝利、冒險進度與抽卡紀錄全部歸零。</p>
-          <form action={resetV5GameState} className="mt-4">
-            <button
-              type="submit"
-              className="kid-yellow-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]"
-            >
-              重置所有遊戲進度
-            </button>
-          </form>
-        </section>
-      </main>
-    </div>
+        <div style={{ textAlign: 'center', fontSize: '10px', opacity: 0.5, padding: '8px 0' }}>
+          V5.1 · {commitHash}
+        </div>
+      </div>
+    </main>
   );
 }

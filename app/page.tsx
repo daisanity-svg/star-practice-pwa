@@ -44,6 +44,19 @@ function getTodayPracticeCount(): number {
   }
 }
 
+function isChapterUnlocked(chapterId: string): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const raw = window.localStorage.getItem('star-game-v5-state');
+    if (!raw) return true;
+    const state = JSON.parse(raw) as { unlockedWorlds?: string[] };
+    // V5: all chapters unlocked for MVP; safe fallback
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 export default async function HomePage() {
   const inventory = await getChildInventory();
   const collections = groupInventoryBySeries(inventory);
@@ -52,32 +65,32 @@ export default async function HomePage() {
   const progressPercent = Math.min(100, Math.round((ownedTotal / Math.max(1, cardTotal)) * 100));
   const game = typeof window !== 'undefined' ? loadGameState() : null;
 
-  const quests = [
-    { id: 1, label: '找朋友', status: 'done' },
-    { id: 2, label: '小司機', status: 'active' },
-    { id: 3, label: '恐龍', status: 'locked' },
-    { id: 4, label: '植物', status: 'locked' },
-    { id: 5, label: '星星章', status: 'locked' },
-  ];
-
   const todayCount = typeof window !== 'undefined' ? getTodayPracticeCount() : 0;
   const hasPracticedToday = todayCount > 0;
-  const hasAdventureToday = false;
-  const hasBossToday = false;
-  const canDrawToday = game ? (game.lastDrawDate !== new Date().toISOString().slice(0, 10)) : true;
+  const canDrawToday = game ? game.lastDrawDate !== new Date().toISOString().slice(0, 10) : true;
 
   let primaryHref: Route = '/practice';
   let primaryLabel = '開始練習';
-  if (hasPracticedToday && !hasAdventureToday) {
+  if (hasPracticedToday && !canDrawToday) {
     primaryHref = '/adventure';
-    primaryLabel = '開始冒險';
-  } else if (hasAdventureToday && !hasBossToday) {
-    primaryHref = '/boss';
-    primaryLabel = '挑戰 Boss';
-  } else if (hasBossToday && canDrawToday) {
+    primaryLabel = '開始今天的冒險';
+  } else if (hasPracticedToday && canDrawToday) {
     primaryHref = '/reward';
     primaryLabel = '打開今日卡包';
   }
+
+  const mapNodes = [
+    { id: 'n1', label: '1', type: 'chapter' as const, chapterId: 'ch1' },
+    { id: 'n2', label: '2', type: 'chapter' as const, chapterId: 'ch1' },
+    { id: 'n3', label: 'Boss', type: 'boss' as const, chapterId: 'ch4' },
+    { id: 'n4', label: '4', type: 'chapter' as const, chapterId: 'ch2' },
+    { id: 'n5', label: '5', type: 'chapter' as const, chapterId: 'ch2' },
+    { id: 'n6', label: '6', type: 'chapter' as const, chapterId: 'ch3' },
+    { id: 'n7', label: '7', type: 'chapter' as const, chapterId: 'ch3' },
+    { id: 'n8', label: '8', type: 'chapter' as const, chapterId: 'ch5' },
+    { id: 'n9', label: 'Boss', type: 'boss' as const, chapterId: 'ch5' },
+    { id: 'n10', label: '10', type: 'chapter' as const, chapterId: 'ch5' },
+  ];
 
   return (
     <PhoneFrame>
@@ -130,18 +143,18 @@ export default async function HomePage() {
 
           <section className="kid-map">
             <div className="kid-map-header">
-              <h2 className="kid-map-title">今天 5 關冒險</h2>
+              <h2 className="kid-map-title">今天 10 關冒險</h2>
               <p className="kid-map-sub">跟著小徑前進，一站一站完成</p>
             </div>
             <div className="kid-map-route">
               <div className="kid-route-line" aria-hidden="true" />
               <div className="kid-quests">
-                {quests.map((quest) => (
-                  <div key={quest.id} className={`kid-quest ${quest.status}`}>
+                {mapNodes.map((node) => (
+                  <div key={node.id} className={`kid-quest ${node.type === 'boss' ? 'boss' : ''}`}>
                     <div className="kid-quest-pin">
-                      <span className="kid-quest-num">{quest.id}</span>
+                      <span className="kid-quest-num">{node.label}</span>
                     </div>
-                    <span className="kid-quest-label">{quest.label}</span>
+                    <span className="kid-quest-label">{node.type === 'boss' ? 'Boss' : node.chapterId.replace('ch', '章 ')}</span>
                   </div>
                 ))}
               </div>
@@ -184,7 +197,7 @@ export default async function HomePage() {
             </div>
             <p className="kid-collect-sub">已找到 {ownedTotal} 位朋友</p>
             <div className="kid-parent-entry">
-              <Link href="/parent/login" className="kid-parent-btn">
+              <Link href="/parent/dashboard" className="kid-parent-btn">
                 家長後台
               </Link>
             </div>
@@ -194,7 +207,7 @@ export default async function HomePage() {
         <KidBottomNav />
 
         <div style={{ textAlign: 'center', fontSize: '10px', opacity: 0.5, padding: '8px 0' }}>
-          V5 FINAL · {typeof process !== 'undefined' && process.env.NEXT_PUBLIC_COMMIT_HASH ? process.env.NEXT_PUBLIC_COMMIT_HASH : 'local'}
+          V5.1 · {typeof process !== 'undefined' && process.env.NEXT_PUBLIC_COMMIT_HASH ? process.env.NEXT_PUBLIC_COMMIT_HASH : 'local'}
         </div>
       </div>
     </PhoneFrame>

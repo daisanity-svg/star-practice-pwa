@@ -11,11 +11,9 @@ import {
   saveGameState,
   addStars,
   addEnergy,
-  consumeEnergy,
-  addIntimacyPoints,
   setPetMood,
-  incrementPracticeCount,
-  tryGrowPet,
+  feedPet,
+  playWithPet,
   getNextGrowthNeed,
   getNextIntimacyNeed,
   type PetMood,
@@ -107,63 +105,45 @@ export default function PetPage() {
 
   const handleFeed = () => {
     if (!game || busy) return;
-    if (game.stars < 5) {
-      showFeedback('星星幣不夠，先去練習賺星星吧！');
+    if (game.energy < 2) {
+      showFeedback('能量不夠，先去練習賺能量吧！');
       return;
     }
     setBusy(true);
-    const before = game.stars;
-    addStars(-5);
-    addIntimacyPoints(5);
+    const before = game.growthLevel;
+    feedPet();
     setPetMood('happy');
     refresh();
-    const newLevel = loadGameState().intimacyLevel;
-    const leveled = newLevel > game.intimacyLevel;
+    const updated = loadGameState();
+    const leveled = updated.growthLevel > before;
+    const remaining = getNextGrowthNeed(updated.growthLevel) - updated.feedCount;
     showFeedback(
       leveled
-        ? `小光獸吃飽飽，親密度升級到 Lv.${newLevel}！小光獸更喜歡你了！`
-        : '小光獸吃飽飽，親密度 +5',
+        ? `小光獸吃飽飽，成長升級到 Lv.${updated.growthLevel}！`
+        : `小光獸吃飽飽，再餵 ${remaining} 次就升級了`,
     );
     setTimeout(() => setBusy(false), 400);
   };
 
   const handlePlay = () => {
     if (!game || busy) return;
-    if (game.energy < 1) {
-      showFeedback('能量不足，去休息一下吧！');
+    if (game.stars < 1) {
+      showFeedback('星星幣不夠，先去練習賺星星吧！');
       return;
     }
     setBusy(true);
-    consumeEnergy(1);
-    addIntimacyPoints(3);
+    const before = game.intimacyLevel;
+    playWithPet();
     setPetMood('excited');
     refresh();
-    const newLevel = loadGameState().intimacyLevel;
-    const leveled = newLevel > game.intimacyLevel;
+    const updated = loadGameState();
+    const leveled = updated.intimacyLevel > before;
+    const remaining = getNextIntimacyNeed(updated.intimacyLevel) - updated.playCount;
     showFeedback(
       leveled
-        ? `一起玩耍！親密度升級到 Lv.${newLevel}！小光獸更喜歡你了！`
-        : '一起玩耍！親密度 +3',
+        ? `一起玩耍！親密度升級到 Lv.${updated.intimacyLevel}！小光獸更喜歡你了！`
+        : `一起玩耍！親密度 +1，再玩 ${remaining} 次就升級了`,
     );
-    setTimeout(() => setBusy(false), 400);
-  };
-
-  const handleGrow = () => {
-    if (!game || busy) return;
-    const need = getNextGrowthNeed(game.growthLevel);
-    if (game.energy < need) {
-      showFeedback(`能量不足，成長還差 ${need - game.energy} 能量`);
-      return;
-    }
-    setBusy(true);
-    const updated = tryGrowPet();
-    setPetMood('excited');
-    refresh();
-    if (updated.growthLevel > game.growthLevel) {
-      showFeedback(`成長升級！小光獸來到 Lv.${updated.growthLevel}！`);
-    } else {
-      showFeedback('成長中...');
-    }
     setTimeout(() => setBusy(false), 400);
   };
 
@@ -184,8 +164,8 @@ export default function PetPage() {
 
   const growthNeed = getNextGrowthNeed(game.growthLevel);
   const intimacyNeed = getNextIntimacyNeed(game.intimacyLevel);
-  const growthPct = Math.min(100, Math.round((game.energy / growthNeed) * 100));
-  const intimacyPct = Math.min(100, Math.round((game.intimacyPoints / intimacyNeed) * 100));
+  const growthPct = Math.min(100, Math.round((game.feedCount / growthNeed) * 100));
+  const intimacyPct = Math.min(100, Math.round((game.playCount / intimacyNeed) * 100));
 
   const tierName = game.growthLevel <= 1 ? '小光蛋' : game.growthLevel <= 3 ? '幼年小光獸' : '守護小光獸';
 
@@ -221,7 +201,7 @@ export default function PetPage() {
                     <div className="kid-pet-exp-fill" style={{ width: `${growthPct}%` }} />
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#5f6f89', marginTop: 2 }}>
-                    能量 {game.energy} / 需要 {growthNeed}
+                    餵食 {game.feedCount} / {growthNeed} 次
                   </div>
                 </div>
                 <div>
@@ -230,7 +210,7 @@ export default function PetPage() {
                     <div className="kid-pet-exp-fill" style={{ width: `${intimacyPct}%`, background: '#ff6b6b' }} />
                   </div>
                   <div style={{ fontSize: 11, fontWeight: 800, color: '#5f6f89', marginTop: 2 }}>
-                    親密度點數 {game.intimacyPoints} / 需要 {intimacyNeed}
+                    玩耍 {game.playCount} / {intimacyNeed} 次
                   </div>
                 </div>
               </div>
@@ -241,35 +221,26 @@ export default function PetPage() {
         <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
           <div className="kid-map-header" style={{ padding: '0 2px' }}>
             <h2 className="kid-map-title">照顧小光獸</h2>
-            <p className="kid-map-sub">互動會消耗星星幣或能量，也會提升好感度</p>
+            <p className="kid-map-sub">互動會消耗星星幣或能量</p>
           </div>
           <div className="kid-pet-actions">
             <button
               type="button"
               className="kid-pet-btn"
               onClick={handleFeed}
-              disabled={busy || game.stars < 5}
+              disabled={busy || game.energy < 2}
               aria-busy={busy}
             >
-              餵食（消耗 5 星星幣，親密度 +5）
+              餵食（消耗 2 能量）
             </button>
             <button
               type="button"
               className="kid-pet-btn"
               onClick={handlePlay}
-              disabled={busy || game.energy < 1}
+              disabled={busy || game.stars < 1}
               aria-busy={busy}
             >
-              玩耍（消耗 1 能量，親密度 +3）
-            </button>
-            <button
-              type="button"
-              className="kid-pet-btn"
-              onClick={handleGrow}
-              disabled={busy || game.energy < growthNeed}
-              aria-busy={busy}
-            >
-              使用能量成長（需要 {growthNeed}）
+              玩耍（消耗 1 星星幣）
             </button>
           </div>
           <div style={{ marginTop: 12, fontSize: 12, fontWeight: 800, color: '#5f6f89', lineHeight: 1.6 }}>
