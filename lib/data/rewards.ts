@@ -136,13 +136,23 @@ export async function getTodayDrawnReward(practiceRecordId?: string | null): Pro
   const { data, error } = await query.maybeSingle();
   if (error || !data?.id || !data.cards) return null;
 
+  const cardId = data.card_id;
+  const { data: inventoryData } = await client
+    .from('child_card_inventory')
+    .select('id')
+    .eq('child_id', childId)
+    .eq('card_id', cardId)
+    .maybeSingle();
+
+  const savedToInventory = Boolean(inventoryData?.id);
+
   return {
     ok: true,
-    message: '這是今天抽到的卡片。按「儲存到收納包」後，就可以在收納包裡隨時查看。',
+    message: savedToInventory ? '這是今天抽到的卡片。已放進你的圖鑑。' : '這是今天抽到的卡片。按「儲存到收納包」後，就可以在收納包裡隨時查看。',
     card: data.cards as any,
     draw_log_id: data.id as string,
     is_new: true,
     remaining_stock: null,
-    saved_to_inventory: false
+    saved_to_inventory: savedToInventory
   };
 }

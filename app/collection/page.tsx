@@ -114,7 +114,7 @@ export default async function CollectionPage() {
           <p className="kid-chip">收納包是空的</p>
           <h2 className="mt-4 text-[30px] font-black leading-tight text-[#172033]">還沒有收藏卡片</h2>
           <p className="mt-3 text-base font-bold leading-relaxed text-[#5f6f89]">
-            完成練習、打開小禮物，按「儲存到收納包」後，卡片才會出現。
+            完成練習、打開小禮物，就會自動放進圖鑑。
           </p>
           <div className="mt-7 w-full space-y-3">
             <Link href="/practice" className="kid-blue-button flex min-h-[60px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">

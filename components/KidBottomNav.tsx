@@ -11,10 +11,13 @@ type NavItem = {
 };
 
 const items: NavItem[] = [
-  { href: '/', label: '首頁', key: 'home' },
-  { href: '/practice', label: '練習', key: 'practice' },
-  { href: '/collection', label: '收納', key: 'collection' },
-  { href: '/reward', label: '獎勵', key: 'reward' },
+  { href: '/' as any, label: '首頁', key: 'home' },
+  { href: '/adventure' as any, label: '冒險', key: 'adventure' },
+  { href: '/practice' as any, label: '練習', key: 'practice' },
+  { href: '/pet' as any, label: '夥伴', key: 'pet' },
+  { href: '/boss' as any, label: 'Boss', key: 'boss' },
+  { href: '/collection' as any, label: '收納', key: 'collection' },
+  { href: '/reward' as any, label: '獎勵', key: 'reward' },
 ];
 
 function NavIcon({ active, keyName }: { active: boolean; keyName: string }) {
@@ -41,6 +44,30 @@ function NavIcon({ active, keyName }: { active: boolean; keyName: string }) {
     return (
       <span className="nav-icon-box">
         <span className="nav-bookmark" />
+      </span>
+    );
+  }
+
+  if (keyName === 'adventure') {
+    return (
+      <span className="nav-icon-box">
+        <span className="nav-star" />
+      </span>
+    );
+  }
+
+  if (keyName === 'pet') {
+    return (
+      <span className="nav-icon-box">
+        <span className="nav-house" />
+      </span>
+    );
+  }
+
+  if (keyName === 'boss') {
+    return (
+      <span className="nav-icon-box">
+        <span className="nav-star" />
       </span>
     );
   }

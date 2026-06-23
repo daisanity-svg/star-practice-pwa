@@ -176,17 +176,12 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
         <p className="practice-chip practice-chip-success">完成任務</p>
         <h1 className="practice-title">今天練習完成！</h1>
         <p className="practice-subtitle">
-          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，
-          {practiceMode === 'production' ? '準備打開小禮物。' : '準備打開驚喜卡包。'}
+          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，準備打開小禮物。
         </p>
         {completionMessage ? <p className="practice-note">{completionMessage}</p> : null}
         <div className="practice-actions">
+          <KidButton href={`/reward?practice_record_id=${practiceRecordId}`} tone="primary">去打開卡包</KidButton>
           <KidButton href="/" tone="white">回首頁地圖</KidButton>
-          {practiceMode === 'production' ? (
-            <p className="practice-chip practice-chip-success practice-chip-wide">練習已完成</p>
-          ) : (
-            <KidButton href={rewardHref} tone="primary">去獎勵頁</KidButton>
-          )}
         </div>
       </section>
     );

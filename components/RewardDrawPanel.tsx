@@ -47,7 +47,11 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
 
   const card = saveResult?.card ?? drawResult?.card;
   const drawLogId = drawResult?.draw_log_id;
-  const saved = Boolean(saveResult?.ok && saveResult.saved_to_inventory);
+  const saved = Boolean((drawResult?.saved_to_inventory || saveResult?.saved_to_inventory));
+
+  const isFreshDraw = Boolean(drawResult?.drawn_now && drawResult?.ok);
+  const isAlreadyDrawn = Boolean(drawResult?.ok && !drawResult?.drawn_now);
+  const cantDraw = Boolean(drawResult && !drawResult?.ok);
 
   if (drawResult || saveResult) {
     return (
@@ -59,7 +63,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
 
         <p className="relative z-10 self-center rounded-full bg-[#e9f4ff] px-4 py-2 text-sm font-black text-[#1766e6]">今日獎勵</p>
         <h1 className="relative z-10 mt-3 text-[28px] font-black leading-tight text-[#172033]">
-          {saved ? '已放進收納包！' : drawResult?.ok ? '你抽到這張卡！' : '還不能抽卡'}
+          {isFreshDraw ? '你找到新朋友了' : isAlreadyDrawn ? '今天已經找到這位朋友了' : cantDraw ? '今天卡包正在準備中' : ''}
         </h1>
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
@@ -84,7 +88,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
             </form>
           ) : null}
           <Link href="/collection" className="kid-yellow-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
-            去收納包看看
+            去看圖鑑
           </Link>
           <Link href="/" className="kid-ghost-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
             回首頁地圖
@@ -122,7 +126,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
           {isDrawing ? '打開中...' : '打開小禮物'}
         </button>
         <Link href="/collection" className="kid-yellow-button flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
-          看收納包
+          去看圖鑑
         </Link>
       </form>
     </section>

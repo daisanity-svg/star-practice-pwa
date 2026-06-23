@@ -133,6 +133,7 @@ export type RewardDrawResult = {
   is_new?: boolean;
   remaining_stock?: number | null;
   saved_to_inventory?: boolean;
+  drawn_now?: boolean;
   demo?: boolean;
 };
 

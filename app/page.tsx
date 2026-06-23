@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
+import { StoryProgressWidget } from '@/components/StoryProgressWidget';
 import { getCollectionSummary } from '@/lib/data/rewards';
 
 export default async function HomePage() {
@@ -45,6 +46,8 @@ export default async function HomePage() {
               <span className="kid-cta-label">開始冒險</span>
             </Link>
           </section>
+
+          <StoryProgressWidget />
 
           <section className="kid-map">
             <div className="kid-map-header">
