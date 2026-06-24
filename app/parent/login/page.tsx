@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { KidButton } from '@/components/KidButton';
+import { CompanionBar } from '@/components/CompanionBar';
 
 export default function ParentLoginPage() {
   return (
     <main className="admin-shell safe-screen">
+      <CompanionBar title="家長登入" backHref="/" backLabel="小孩端" />
       <section className="kid-card flex flex-1 flex-col p-6">
         <Link href="/" className="mb-6 w-fit rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 回小孩端

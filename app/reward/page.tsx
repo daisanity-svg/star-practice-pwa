@@ -1,5 +1,5 @@
 import { KidBottomNav } from '@/components/KidBottomNav';
-import { KidTopBar } from '@/components/KidTopBar';
+import { CompanionBar } from '@/components/CompanionBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { RewardDrawPanel } from '@/components/RewardDrawPanel';
 import { getTodayDrawnReward } from '@/lib/data/rewards';
@@ -17,7 +17,7 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
 
   return (
     <PhoneFrame>
-      <KidTopBar title="今日獎勵" backHref="/" backLabel="地圖" rightLabel="卡片" />
+      <CompanionBar title="今日獎勵" backHref="/" backLabel="地圖" rightLabel="卡片" />
       <RewardDrawPanel practiceRecordId={practiceRecordId} initialResult={todayDraw} />
       <KidBottomNav />
     </PhoneFrame>

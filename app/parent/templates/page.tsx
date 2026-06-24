@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createQuestionTemplate } from '@/lib/actions/learning';
 import { getQuestionTemplates } from '@/lib/data/templates';
+import { CompanionBar } from '@/components/CompanionBar';
 
 const inputClass = 'mt-2 w-full rounded-3xl border-0 bg-white/90 px-4 py-4 text-lg font-bold text-ink shadow-sm outline-none ring-2 ring-transparent focus:ring-grape/30';
 const labelClass = 'text-sm font-black text-slate-500';
@@ -19,6 +20,7 @@ export default async function ParentTemplatesPage() {
 
   return (
     <main className="admin-shell safe-screen">
+      <CompanionBar title="題型模板" backHref="/" backLabel="小孩端" />
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台

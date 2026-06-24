@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
-import { KidTopBar } from '@/components/KidTopBar';
+import { CompanionBar } from '@/components/CompanionBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { getRewardCardDisplayName } from '@/lib/cards/display';
 import { getChildInventory } from '@/lib/data/rewards';
@@ -33,8 +33,7 @@ export default async function CollectionPage() {
 
   return (
     <PhoneFrame>
-      <KidTopBar title="我的收納包" rightLabel={`${inventory.length} 種卡片`} />
-
+      <CompanionBar title="我的收納包" backHref="/" backLabel="地圖" rightLabel={`${inventory.length} 種卡片`} />
       <section className="kid-hero relative overflow-hidden rounded-[36px] p-5 text-white">
         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl" aria-hidden="true" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/10 to-transparent" aria-hidden="true" />
@@ -76,34 +75,33 @@ export default async function CollectionPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
-                {group.items.map((item) => {
-                  const card = item.card;
-                  if (!card) return null;
-                  const imageUrl = cardImageUrl(card);
-                  const displayName = getRewardCardDisplayName(card);
-                  const quantity = Number(item.quantity ?? 1);
+                {[...group.items]
+                  .sort((a, b) => (a.card?.card_no ?? '').localeCompare(b.card?.card_no ?? ''))
+                  .map((item) => {
+                    const card = item.card;
+                    if (!card) return null;
+                    const imageUrl = cardImageUrl(card);
+                    const displayName = getRewardCardDisplayName(card);
+                    const quantity = Number(item.quantity ?? 1);
 
-                  return (
-                    <div
-                      key={item.id}
-                      className="kid-card-strong group relative overflow-hidden rounded-[22px] p-2 active:scale-[0.99]"
-                    >
-                      <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[18px] bg-[#f5f9ff]">
+                    return (
+                      <div
+                        key={item.id}
+                        className="relative overflow-hidden rounded-3xl bg-white shadow-sm active:scale-[0.99]"
+                      >
                         {imageUrl ? (
-                          <img src={imageUrl} alt={displayName} className="h-full w-full object-contain" />
+                          <img src={imageUrl} alt={displayName} className="aspect-[3/4] w-full object-contain" />
                         ) : (
                           <span className="kid-card-placeholder" aria-label={displayName} />
                         )}
+                        {quantity > 1 ? (
+                          <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
+                            x{quantity}
+                          </span>
+                        ) : null}
                       </div>
-
-                      {quantity > 1 ? (
-                        <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
-                          x{quantity}
-                        </span>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           ))}

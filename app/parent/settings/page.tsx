@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getPracticeSettings } from '@/lib/data/settings';
+import { CompanionBar } from '@/components/CompanionBar';
 
 const rowClass = 'rounded-[28px] bg-white/75 p-4 shadow-sm';
 
@@ -8,6 +9,7 @@ export default async function ParentSettingsPage() {
 
   return (
     <main className="admin-shell safe-screen">
+      <CompanionBar title="每日規則" backHref="/" backLabel="小孩端" />
       <div className="mb-4 flex items-center justify-between">
         <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台
