@@ -1,7 +1,6 @@
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { CompanionBar } from '@/components/CompanionBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
-import { CompanionBar } from '@/components/CompanionBar';
 import { RewardDrawPanel } from '@/components/RewardDrawPanel';
 import { getTodayDrawnReward } from '@/lib/data/rewards';
 

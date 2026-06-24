@@ -138,6 +138,6 @@ export default function ParentTemplatesPage() {
           ))
         )}
       </section>
-    </div>
+    </main>
   );
 }

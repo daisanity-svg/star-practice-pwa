@@ -15,7 +15,6 @@ const items: NavItem[] = [
   { href: '/practice' as any, label: '練習', key: 'practice' },
   { href: '/adventure' as any, label: '冒險', key: 'adventure' },
   { href: '/pet' as any, label: '夥伴', key: 'pet' },
-  { href: '/boss' as any, label: 'Boss', key: 'boss' },
   { href: '/reward' as any, label: '獎勵', key: 'reward' },
   { href: '/collection' as any, label: '收納', key: 'collection' },
 ];

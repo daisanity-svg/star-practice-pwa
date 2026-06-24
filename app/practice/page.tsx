@@ -2,7 +2,6 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 import { PracticeRunner } from '@/components/PracticeRunner';
 import { CompanionBar } from '@/components/CompanionBar';
 import { KidBottomNav } from '@/components/KidBottomNav';
-import { CompanionBar } from '@/components/CompanionBar';
 import { getTodayQuestions } from '@/lib/data/learning';
 import { getPracticeMode } from '@/lib/config/app-mode';
 

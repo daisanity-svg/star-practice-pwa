@@ -154,7 +154,7 @@ export default function PetPage() {
   if (!game) {
     return (
       <PhoneFrame>
-        <CompanionBar dialogue="我一直在這裡陪你" />
+        <CompanionBar title="我一直在這裡陪你" />
         <KidTopBar title="小光獸夥伴" backHref="/" backLabel="首頁" />
         <div className="kid-game-content" />
         <KidBottomNav />
@@ -171,7 +171,7 @@ export default function PetPage() {
 
   return (
     <PhoneFrame>
-      <CompanionBar dialogue="我一直在這裡陪你" />
+      <CompanionBar title="我一直在這裡陪你" />
       <KidTopBar title="小光獸夥伴" backHref="/" backLabel="首頁" />
       <div className="kid-game-content">
         <div className="pet-companion-sticky">

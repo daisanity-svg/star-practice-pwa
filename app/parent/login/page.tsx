@@ -3,12 +3,6 @@ import { KidButton } from '@/components/KidButton';
 import { CompanionBar } from '@/components/CompanionBar';
 
 export default function ParentLoginPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/parent/dashboard');
-  }, [router]);
-
   return (
     <main className="admin-shell safe-screen">
       <CompanionBar title="家長登入" backHref="/" backLabel="小孩端" />
