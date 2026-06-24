@@ -1,111 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import { loadGameState, type GameState, getNextGrowthNeed, getNextIntimacyNeed } from '@/lib/game/state';
+import Link from 'next/link';
+import type { Route } from 'next';
+import { usePathname } from 'next/navigation';
 
-const MOOD_LABELS: Record<string, string> = {
-  happy: '開心',
-  curious: '好奇',
-  sleepy: '想睡覺',
-  excited: '興奮',
+type CompanionBarProps = {
+  title?: string;
+  rightLabel?: string;
+  backHref?: Route;
+  backLabel?: string;
 };
 
-function PetAvatar({ growthLevel }: { growthLevel: number }) {
-  const tier = growthLevel <= 1 ? 'egg' : growthLevel <= 3 ? 'young' : 'guardian';
+export function CompanionBar({ title, rightLabel, backHref, backLabel = '地圖' }: CompanionBarProps) {
+  const pathname = usePathname();
+  const isRoot = pathname === '/';
+  const showBack = backHref && !isRoot;
+
   return (
-    <div className="companion-bar-avatar" aria-hidden="true">
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-        {tier === 'egg' ? (
-          <>
-            <ellipse cx="18" cy="20" rx="12" ry="14" fill="url(#eggGrad)" />
-            <circle cx="14" cy="17" r="2" fill="#1f5ef6" />
-            <circle cx="24" cy="17" r="2" fill="#1f5ef6" />
-            <path d="M15 24 Q18 28 21 24" stroke="#ffb800" strokeWidth="2" strokeLinecap="round" fill="none" />
-            <defs>
-              <linearGradient id="eggGrad" x1="0" y1="0" x2="36" y2="36">
-                <stop offset="0%" stopColor="#ffd95a" />
-                <stop offset="100%" stopColor="#ffb800" />
-              </linearGradient>
-            </defs>
-          </>
-        ) : tier === 'young' ? (
-          <>
-            <circle cx="18" cy="18" r="14" fill="url(#youngGrad)" />
-            <circle cx="12" cy="16" r="2.5" fill="#1f5ef6" />
-            <circle cx="24" cy="16" r="2.5" fill="#1f5ef6" />
-            <path d="M14 24 Q18 28 22 24" stroke="#ffb800" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-            <path d="M6 12 L2 8" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
-            <path d="M30 12 L34 8" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
-            <defs>
-              <linearGradient id="youngGrad" x1="0" y1="0" x2="36" y2="36">
-                <stop offset="0%" stopColor="#ffd95a" />
-                <stop offset="100%" stopColor="#ffb800" />
-              </linearGradient>
-            </defs>
-          </>
+    <header className="companion-bar" aria-label="小光獸資訊列">
+      <div className="companion-shell">
+        <div className="companion-left">
+          {showBack ? (
+            <Link href={backHref} className="companion-back" aria-label={backLabel}>
+              <span className="companion-back-icon" aria-hidden="true" />
+              <span className="companion-back-text">{backLabel}</span>
+            </Link>
+          ) : (
+            <span className="companion-brand" aria-hidden="true">
+              <span className="companion-orb" />
+              <span className="companion-name">小光獸</span>
+            </span>
+          )}
+        </div>
+
+        {title ? (
+          <div className="companion-center">
+            <span className="companion-title">{title}</span>
+          </div>
         ) : (
-          <>
-            <circle cx="18" cy="18" r="16" fill="url(#guardGrad)" />
-            <circle cx="12" cy="16" r="3" fill="#1f5ef6" />
-            <circle cx="24" cy="16" r="3" fill="#1f5ef6" />
-            <path d="M13 25 Q18 30 23 25" stroke="#ffb800" strokeWidth="3" strokeLinecap="round" fill="none" />
-            <path d="M4 10 L0 4" stroke="#ffd95a" strokeWidth="3" strokeLinecap="round" />
-            <path d="M32 10 L36 4" stroke="#ffd95a" strokeWidth="3" strokeLinecap="round" />
-            <path d="M10 6 L8 2" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
-            <path d="M26 6 L28 2" stroke="#ffd95a" strokeWidth="2" strokeLinecap="round" />
-            <defs>
-              <linearGradient id="guardGrad" x1="0" y1="0" x2="36" y2="36">
-                <stop offset="0%" stopColor="#ffd95a" />
-                <stop offset="100%" stopColor="#ffb800" />
-              </linearGradient>
-            </defs>
-          </>
+          <div className="companion-center">
+            <span className="companion-chip">第 3 天冒險中</span>
+          </div>
         )}
-      </svg>
-    </div>
-  );
-}
 
-export function CompanionBar({ dialogue }: { dialogue: string }) {
-  const [game] = useState<GameState | null>(() => {
-    if (typeof window === 'undefined') return null;
-    return loadGameState();
-  });
-
-  if (!game) {
-    return (
-      <div className="companion-bar" style={{ paddingTop: 'env(safe-area-inset-top, 12px)' }}>
-        <div className="companion-bar-avatar" />
-        <div className="companion-bar-info">
-          <div className="companion-bar-name">載入中...</div>
-        </div>
-        <div className="companion-bar-dialogue">{dialogue}</div>
-      </div>
-    );
-  }
-
-  const growthNeed = getNextGrowthNeed(game.growthLevel);
-  const intimacyNeed = getNextIntimacyNeed(game.intimacyLevel);
-  const growthPct = Math.min(100, Math.round((game.feedCount / growthNeed) * 100));
-  const intimacyPct = Math.min(100, Math.round((game.playCount / intimacyNeed) * 100));
-
-  return (
-    <div className="companion-bar" style={{ paddingTop: 'env(safe-area-inset-top, 12px)' }}>
-      <PetAvatar growthLevel={game.growthLevel} />
-      <div className="companion-bar-info">
-        <div className="companion-bar-name">
-          小光獸 Lv.{game.growthLevel}
-        </div>
-        <div className="companion-bar-meta">
-          {MOOD_LABELS[game.petMood] ?? game.petMood} • 親密度 Lv.{game.intimacyLevel}
-        </div>
-        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-          <span className="kid-resource-chip">星星幣 {game.stars}</span>
-          <span className="kid-resource-chip">能量 {game.energy}</span>
-          <span className="kid-resource-chip">親密度 Lv.{game.intimacyLevel}</span>
+        <div className="companion-right">
+          {rightLabel ? <span className="companion-meta">{rightLabel}</span> : null}
+          <Link href="/parent/dashboard" className="companion-settings" aria-label="家長後台">
+            <span className="companion-settings-icon" aria-hidden="true" />
+          </Link>
         </div>
       </div>
-      <div className="companion-bar-dialogue">{dialogue}</div>
-    </div>
+    </header>
   );
 }

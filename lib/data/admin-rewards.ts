@@ -86,6 +86,19 @@ export const demoPackItems: RewardPackItem[] = [
 
 export const demoScheduledRewards: ScheduledReward[] = [];
 
+export async function getCardSeries() {
+  if (!supabase) {
+    return demoSeries;
+  }
+
+  const { data } = await supabase
+    .from('card_series')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  return (data?.length ? data : demoSeries) as CardSeries[];
+}
+
 export async function getAdminRewardData() {
   if (!supabase) {
     return {

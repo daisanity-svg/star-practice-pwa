@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { createLearningItem, createMemoryHook } from '@/lib/actions/learning';
-import { getLearningItems, getMemoryHooks } from '@/lib/data/learning';
+import { getLearningItems, getMemoryHooks, getLearningProgress } from '@/lib/data/learning';
+import { CompanionBar } from '@/components/CompanionBar';
 
 const itemTypes = [
   { value: 'bopomofo_initial', label: '注音聲母' },
@@ -28,24 +29,16 @@ export default async function ParentLearningPage() {
 
   return (
     <main className="admin-shell safe-screen">
-      <div className="mb-4 flex items-center justify-between">
-        <Link href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
-          ← 後台
-        </Link>
-        <div className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-grape shadow-sm">
-          學習項目
-        </div>
-      </div>
-
-      <section className="kid-card p-6">
-        <p className="text-base font-bold text-grape">Learning Items</p>
-        <h1 className="mt-2 text-3xl font-black leading-tight text-ink">題庫素材管理</h1>
-        <p className="mt-3 text-lg font-bold leading-relaxed text-slate-500">
-          這裡先完成「新增學習項目」與「新增記憶詞」。Supabase 尚未設定時仍會顯示示範素材。
+      <CompanionBar title="學習項目" backHref="/" backLabel="小孩端" />
+      <section className="kid-card p-5">
+        <p className="text-sm font-black text-[#5f6f89]">Learning</p>
+        <h1 className="mt-2 text-[30px] font-black leading-tight text-ink">學習項目</h1>
+        <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
+          管理兒童可學習的注音、英文與對應記憶詞。
         </p>
       </section>
 
-      <section className="mt-5 kid-card p-5">
+      <section className="mt-5 space-y-4">
         <h2 className="text-2xl font-black text-ink">新增學習項目</h2>
         <form action={createLearningItem} className="mt-4 space-y-4">
           <label className="block">

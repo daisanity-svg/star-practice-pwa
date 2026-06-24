@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createQuestionTemplate } from '@/lib/actions/learning';
 import { getQuestionTemplates } from '@/lib/data/templates';
+import { CompanionBar } from '@/components/CompanionBar';
 
 type Topic = {
   what: string;
@@ -48,7 +49,8 @@ export default function ParentTemplatesPage() {
   };
 
   return (
-    <div className="safe-screen">
+    <main className="admin-shell safe-screen">
+      <CompanionBar title="題型模板" backHref="/" backLabel="小孩端" />
       <div className="mb-4 flex items-center justify-between">
         <a href="/parent/dashboard" className="rounded-full bg-white/80 px-4 py-3 text-base font-black text-slate-600 shadow-sm">
           ← 後台

@@ -4,58 +4,7 @@ import { KidBottomNav } from '@/components/KidBottomNav';
 import { KidTopBar } from '@/components/KidTopBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { CompanionBar } from '@/components/CompanionBar';
-import { StoryProgressWidget } from '@/components/StoryProgressWidget';
-import { getRewardCardDisplayName } from '@/lib/cards/display';
-import { getChildInventory } from '@/lib/data/rewards';
-import type { RewardCard } from '@/lib/types';
-import { loadGameState } from '@/lib/game/state';
-
-function cardImageUrl(card: RewardCard) {
-  return card.rendered_card_image_url || card.source_image_url || null;
-}
-
-function groupInventoryBySeries(inventory: Awaited<ReturnType<typeof getChildInventory>>) {
-  const map = new Map<string, { id: string; name: string; items: typeof inventory }>();
-
-  for (const item of inventory) {
-    const card = item.card;
-    if (!card) continue;
-    const id = card.series?.id ?? 'saved-cards';
-    const name = card.series?.name ?? '我的收藏卡';
-    const group = map.get(id) ?? { id, name, items: [] as typeof inventory };
-    group.items.push(item);
-    map.set(id, group);
-  }
-
-  return Array.from(map.values());
-}
-
-function getTodayPracticeCount(): number {
-  if (typeof window === 'undefined') return 0;
-  try {
-    const raw = window.localStorage.getItem('star-game-v5-state');
-    if (!raw) return 0;
-    const state = JSON.parse(raw) as { todayPracticeCount?: number; lastPracticeDate?: string | null };
-    const today = new Date().toISOString().slice(0, 10);
-    if (state.lastPracticeDate !== today) return 0;
-    return Number(state.todayPracticeCount ?? 0);
-  } catch {
-    return 0;
-  }
-}
-
-function isChapterUnlocked(chapterId: string): boolean {
-  if (typeof window === 'undefined') return true;
-  try {
-    const raw = window.localStorage.getItem('star-game-v5-state');
-    if (!raw) return true;
-    const state = JSON.parse(raw) as { unlockedWorlds?: string[] };
-    // V5: all chapters unlocked for MVP; safe fallback
-    return true;
-  } catch {
-    return true;
-  }
-}
+import { getCollectionSummary } from '@/lib/data/rewards';
 
 export default async function HomePage() {
   const inventory = await getChildInventory();
@@ -94,7 +43,7 @@ export default async function HomePage() {
 
   return (
     <PhoneFrame>
-      <CompanionBar dialogue="今天也要一起冒險" />
+      <CompanionBar title="今天出發" rightLabel={`${ownedTotal} 位朋友`} />
       <div className="kid-game-root">
         <div className="kid-sky" aria-hidden="true" />
         <div className="kid-cloud-1" aria-hidden="true" />
@@ -117,8 +66,8 @@ export default async function HomePage() {
               <span className="kid-star-badge" />
               <span className="kid-message-note">!</span>
             </div>
-            <Link href={primaryHref} className="kid-cta">
-              <span className="kid-cta-label">{primaryLabel}</span>
+            <Link href={"/adventure" as Route} className="kid-cta">
+              <span className="kid-cta-label">開始冒險</span>
             </Link>
           </section>
 
