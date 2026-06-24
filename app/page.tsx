@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Route } from 'next';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { CompanionBar } from '@/components/CompanionBar';
@@ -43,7 +44,7 @@ export default async function HomePage() {
               <span className="kid-star-badge" />
               <span className="kid-message-note">!</span>
             </div>
-            <Link href="/practice" className="kid-cta">
+            <Link href={"/adventure" as Route} className="kid-cta">
               <span className="kid-cta-label">開始冒險</span>
             </Link>
           </section>
