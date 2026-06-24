@@ -33,7 +33,7 @@ export const dashboardStats = [
 ];
 
 export const cardCollections = [
-  { name: '小車系列', owned: 5, total: 12, emoji: '🚗' },
-  { name: '狗狗系列', owned: 2, total: 8, emoji: '🐶' },
-  { name: '植物朋友', owned: 1, total: 10, emoji: '🌱' }
+  { name: '小車系列', owned: 5, total: 12, icon: 'car' },
+  { name: '狗狗系列', owned: 2, total: 8, icon: 'dog' },
+  { name: '植物朋友', owned: 1, total: 10, icon: 'plant' }
 ];

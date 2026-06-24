@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
-import { KidTopBar } from '@/components/KidTopBar';
 import { CompanionBar } from '@/components/CompanionBar';
 import {
   loadGameState,
@@ -33,7 +32,6 @@ const MOOD_COLORS: Record<PetMood, string> = {
   sleepy: '#a855f7',
   excited: '#ef4444',
 };
-
 function PetAvatar({ growthLevel }: { growthLevel: number }) {
   const tier = growthLevel <= 1 ? 'egg' : growthLevel <= 3 ? 'young' : 'guardian';
   return (
@@ -119,8 +117,8 @@ export default function PetPage() {
     const remaining = getNextGrowthNeed(updated.growthLevel) - updated.feedCount;
     showFeedback(
       leveled
-        ? `小光獸吃飽飽，成長升級到 Lv.${updated.growthLevel}！`
-        : `小光獸吃飽飽，再餵 ${remaining} 次就升級了`,
+        ? `${tierName}吃飽飽，成長升級到 Lv.${updated.growthLevel}！`
+        : `${tierName}吃飽飽，再餵 ${remaining} 次就升級了`,
     );
     setTimeout(() => setBusy(false), 400);
   };
@@ -141,7 +139,7 @@ export default function PetPage() {
     const remaining = getNextIntimacyNeed(updated.intimacyLevel) - updated.playCount;
     showFeedback(
       leveled
-        ? `一起玩耍！親密度升級到 Lv.${updated.intimacyLevel}！小光獸更喜歡你了！`
+        ? `一起玩耍！親密度升級到 Lv.${updated.intimacyLevel}！${tierName}更喜歡你了！`
         : `一起玩耍！親密度 +1，再玩 ${remaining} 次就升級了`,
     );
     setTimeout(() => setBusy(false), 400);
@@ -155,7 +153,6 @@ export default function PetPage() {
     return (
       <PhoneFrame>
         <CompanionBar title="我一直在這裡陪你" />
-        <KidTopBar title="小光獸夥伴" backHref="/" backLabel="首頁" />
         <div className="kid-game-content" />
         <KidBottomNav />
       </PhoneFrame>
@@ -167,12 +164,11 @@ export default function PetPage() {
   const growthPct = Math.min(100, Math.round((game.feedCount / growthNeed) * 100));
   const intimacyPct = Math.min(100, Math.round((game.playCount / intimacyNeed) * 100));
 
-  const tierName = game.growthLevel <= 1 ? '小光蛋' : game.growthLevel <= 3 ? '幼年小光獸' : '守護小光獸';
+  const tierName = game.growthLevel <= 1 ? '小光蛋' : game.growthLevel <= 3 ? '幼光獸' : '守護小光獸';
 
   return (
     <PhoneFrame>
       <CompanionBar title="我一直在這裡陪你" />
-      <KidTopBar title="小光獸夥伴" backHref="/" backLabel="首頁" />
       <div className="kid-game-content">
         <div className="pet-companion-sticky">
           <section className="kid-soft-panel" style={{ padding: '18px 14px', textAlign: 'center' }}>
@@ -189,7 +185,7 @@ export default function PetPage() {
                 />
               </div>
               <div className="kid-pet-name" style={{ marginTop: 14 }}>
-                小光獸 Lv.{game.growthLevel}（{tierName}）
+                {tierName} Lv.{game.growthLevel}
               </div>
               <div className="kid-pet-mood" style={{ color: MOOD_COLORS[game.petMood] }}>
                 心情：{MOOD_LABELS[game.petMood]}

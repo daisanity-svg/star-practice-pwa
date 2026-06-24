@@ -17,6 +17,7 @@ const items: NavItem[] = [
   { href: '/pet' as any, label: '夥伴', key: 'pet' },
   { href: '/reward' as any, label: '獎勵', key: 'reward' },
   { href: '/collection' as any, label: '收納', key: 'collection' },
+  { href: '/parent/dashboard' as any, label: '家長', key: 'parent' },
 ];
 
 function NavIcon({ active, keyName }: { active: boolean; keyName: string }) {
@@ -75,6 +76,14 @@ function NavIcon({ active, keyName }: { active: boolean; keyName: string }) {
     return (
       <span className="nav-icon-box">
         <span className="nav-reward-icon" />
+      </span>
+    );
+  }
+
+  if (keyName === 'parent') {
+    return (
+      <span className="nav-icon-box">
+        <span className="nav-parent-icon" />
       </span>
     );
   }

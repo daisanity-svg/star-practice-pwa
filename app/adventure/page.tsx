@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { Route } from 'next';
+import { useRouter } from 'next/navigation';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { CompanionBar } from '@/components/CompanionBar';
@@ -36,6 +37,7 @@ function getInitialProgress(): MapProgress {
 }
 
 export default function AdventurePage() {
+  const router = useRouter();
   const [progress, setProgress] = useState<MapProgress>(getInitialProgress);
 
   const nodes = Array.from({ length: NODE_COUNT }, (_, i) => i);
@@ -70,7 +72,7 @@ export default function AdventurePage() {
                   <div className="adventure-node-info">
                     <span className="adventure-node-label">
                       {nodeLabel(index)}
-                      {isBossNode ? ' 👑' : ''}
+                      {isBossNode ? <span className="boss-crown-icon" aria-hidden="true" /> : ''}
                     </span>
                     <span className="adventure-node-status">
                       {status === 'done'
@@ -91,7 +93,11 @@ export default function AdventurePage() {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => completeAdventureNode(progress.current)}
+                          onClick={() => {
+                            const next = completeAdventureNode(progress.current);
+                            setProgress(next);
+                            router.push('/practice');
+                          }}
                           className="kid-cta adventure-cta"
                         >
                           前往第 {index + 1} 關

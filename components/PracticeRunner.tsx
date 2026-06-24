@@ -63,6 +63,7 @@ function encouragement(question: GeneratedQuestion) {
 }
 
 export function PracticeRunner({ questions, practiceMode = 'production' }: PracticeRunnerProps) {
+  const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answers, setAnswers] = useState<SubmittedPracticeAnswer[]>([]);
@@ -84,8 +85,16 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
 
   useEffect(() => {
     if (!selectedAnswer) return;
-    ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    ctaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [selectedAnswer]);
+
+  useEffect(() => {
+    if (!isCompleting || !practiceRecordId) return;
+    const timer = setTimeout(() => {
+      router.push(`/reward?practice_record_id=${practiceRecordId}`);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [isCompleting, practiceRecordId, router]);
 
   function speakQuestion() {
     if (!current || typeof window === 'undefined' || !('speechSynthesis' in window)) return;

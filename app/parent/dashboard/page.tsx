@@ -34,7 +34,9 @@ export default async function ParentDashboardPage() {
         {menuCards.map((item) => (
           <Link key={item.href} href={item.href} className="kid-card flex flex-col justify-between gap-3 p-4 active:scale-[0.99]">
             <div className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-black ${item.accent}`}>
-              ★
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+              </svg>
             </div>
             <div>
               <h2 className="text-lg font-black text-ink">{item.title}</h2>

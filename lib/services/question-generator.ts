@@ -219,13 +219,16 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
 
   const { data: created, error } = await supabase!
     .from('daily_learning_plan')
-    .insert({
-      child_id: childId,
-      date: today,
-      ...DEFAULT_COUNTS,
-      total_required_questions: TOTAL_QUESTIONS,
-      reward_pack_id: rewardPackId
-    })
+    .upsert(
+      {
+        child_id: childId,
+        date: today,
+        ...DEFAULT_COUNTS,
+        total_required_questions: TOTAL_QUESTIONS,
+        reward_pack_id: rewardPackId
+      },
+      { onConflict: 'child_id,date' }
+    )
     .select('*')
     .single();
 

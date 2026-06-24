@@ -11,6 +11,7 @@ import { CompanionBar } from '@/components/CompanionBar';
 type RewardDrawPanelProps = {
   practiceRecordId?: string;
   initialResult?: RewardDrawResult | null;
+  onDrawStart?: () => void;
 };
 
 function getCardImageUrl(card: RewardCard) {
@@ -42,7 +43,7 @@ function RewardCardPreview({ card }: { card: RewardCard }) {
   );
 }
 
-export function RewardDrawPanel({ practiceRecordId, initialResult = null }: RewardDrawPanelProps) {
+export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDrawStart }: RewardDrawPanelProps) {
   const [drawResult, drawFormAction, isDrawing] = useActionState<RewardDrawResult | null, FormData>(drawDailyRewardFromState, initialResult);
   const [saveResult, saveFormAction, isSaving] = useActionState<SaveRewardResult | null, FormData>(saveDrawnRewardFromState, null);
 
@@ -71,7 +72,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
           <div className="reward-compact-actions">
             {card ? (
               <div className="animate-pack-open relative flex w-full justify-center">
-                <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[24px] shadow-[0_24px_50px_rgba(30,64,175,0.22)] ring-4 ring-[#e0f0ff]">
+                <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[24px] shadow-[0_24px_50px_rgba(30,64,175,0.22)]">
                   {getCardImageUrl(card) ? (
                     <Image src={getCardImageUrl(card)!} alt={getRewardCardDisplayName(card)} fill className="object-contain" sizes="260px" unoptimized />
                   ) : (
@@ -82,9 +83,6 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
             ) : (
               <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">?</div>
             )}
-            {typeof drawResult?.remaining_stock === 'number' ? (
-              <p className="mt-4 rounded-full bg-[#fff7e0] px-4 py-2 text-sm font-black text-[#b45309]">這包還剩：{drawResult.remaining_stock} 張</p>
-            ) : null}
             <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">
               {saved ? '收藏成功！這是你今天找到的新朋友。' : saveResult?.message ?? drawResult?.message}
             </p>
@@ -92,11 +90,16 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
         </div>
 
         <div className="reward-compact-actions">
+          {!saved ? (
+            <form action={saveFormAction} className="w-full">
+              {drawLogId ? <input type="hidden" name="draw_log_id" value={drawLogId} /> : null}
+              <button type="submit" disabled={isSaving} className="kid-yellow-button flex min-h-[54px] w-full items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99] disabled:opacity-60">
+                {isSaving ? '收到中...' : '收到收納包'}
+              </button>
+            </form>
+          ) : null}
           <Link href="/collection" className="reward-compact-primary">
-            去看圖鑑
-          </Link>
-          <Link href="/" className="reward-compact-secondary">
-            回冒險
+            前往收納包
           </Link>
         </div>
       </section>
@@ -121,7 +124,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null }: Rewa
           測試模式可以直接抽卡；正式模式會要求先完成練習。
         </p>
       ) : null}
-      <form action={drawFormAction} className="relative z-10 mt-5 w-full space-y-3">
+      <form action={drawFormAction} className="relative z-10 mt-5 w-full space-y-3" onSubmit={() => onDrawStart?.()}>
         {practiceRecordId ? <input type="hidden" name="practice_record_id" value={practiceRecordId} /> : null}
         <button
           type="submit"

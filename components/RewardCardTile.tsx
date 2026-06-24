@@ -21,11 +21,7 @@ export function getRewardCardImageUrl(card: RewardCard) {
 }
 
 export function getRewardCardFallbackEmoji(card: RewardCard) {
-  const text = `${getRewardCardDisplayName(card)} ${card.series?.name ?? ''}`;
-  if (text.includes('車')) return '🚗';
-  if (text.includes('狗') || text.includes('布麗')) return '🐶';
-  if (text.includes('植物') || text.includes('皮克')) return '🌱';
-  return '⭐';
+  return '?';
 }
 
 type RewardCardTileProps = {
@@ -53,15 +49,8 @@ export function RewardCardTile({ card, quantity, variant = 'album' }: RewardCard
         )}
       </div>
 
-      <div className={isReward ? 'mt-3 rounded-[24px] bg-[#f5f9ff] px-4 py-3 text-center' : 'mt-2'}>
-        <p className="truncate text-xs font-black text-[#1766e6]">{card.series?.name ?? '收藏卡'}</p>
-        <h2 className={isReward ? 'mt-1 truncate text-2xl font-black text-[#172033]' : 'mt-1 truncate text-base font-black text-[#172033]'}>{displayName}</h2>
-        <div className="mt-2 flex flex-wrap justify-center gap-1">
-          <span className={`rounded-full px-2.5 py-1 text-[11px] font-black ${rarityStyle[card.rarity] ?? rarityStyle.common}`}>
-            {rarityLabel[card.rarity] ?? card.rarity}
-          </span>
-          {quantity ? <span className="rounded-full bg-[#fff0b8] px-2.5 py-1 text-[11px] font-black text-amber-900">x{quantity}</span> : null}
-        </div>
+      <div className={isReward ? 'mt-3 text-center' : 'mt-2'}>
+        <h2 className={isReward ? 'truncate text-2xl font-black text-[#172033]' : 'truncate text-base font-black text-[#172033]'}>{displayName}</h2>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export default async function HomePage() {
   return (
     <PhoneFrame>
       <CompanionBar title="今天出發" rightLabel={`${ownedTotal} 位朋友`} />
-      <p className="kid-chip mt-2 text-center font-mono text-xs">V5.1 Critical Fix · f9881ca</p>
+      <p className="kid-chip mt-2 text-center font-mono text-xs text-slate-400">V5.1 Stability Pass</p>
       <div className="kid-game-root">
         <div className="kid-sky" aria-hidden="true" />
         <div className="kid-cloud-1" aria-hidden="true" />
