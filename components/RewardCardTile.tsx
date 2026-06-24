@@ -36,16 +36,12 @@ export function RewardCardTile({ card, quantity, variant = 'album' }: RewardCard
   const isReward = variant === 'reward';
 
   return (
-    <div className={isReward ? 'animate-pack-open relative w-full max-w-[286px] rounded-[34px] bg-white p-3 shadow-[0_24px_52px_rgba(30,64,175,0.18)]' : 'relative rounded-[28px] bg-white p-2 shadow-[0_10px_22px_rgba(30,64,175,0.08)]'}>
-      {card.card_no ? <div className="absolute -left-2 top-3 z-10 rounded-full bg-[#ffd95a] px-3 py-1 text-xs font-black text-[#193153] shadow-sm">{card.card_no}</div> : null}
-      {quantity && quantity > 1 ? <div className="absolute -right-2 top-3 z-10 rounded-full bg-[#2f8cff] px-3 py-1 text-xs font-black text-white shadow-sm">x{quantity}</div> : null}
-      {isReward ? <div className="absolute -right-2 top-3 z-10 rounded-full bg-[#2f8cff] px-3 py-1 text-xs font-black text-white shadow-sm">今日卡片</div> : null}
-
+    <div className={isReward ? 'relative w-full max-w-[286px] rounded-[28px] bg-white p-3' : 'relative rounded-[24px] bg-white p-2'}>
       <div className="relative flex aspect-[3/4] items-center justify-center overflow-hidden rounded-[24px] bg-gradient-to-br from-[#e6f3ff] via-white to-[#fff5c7]">
         {imageUrl ? (
           <Image src={imageUrl} alt={displayName} fill className="object-cover" sizes={isReward ? '300px' : '180px'} unoptimized />
         ) : (
-          <div className="flex h-28 w-28 items-center justify-center rounded-full bg-white/70 text-7xl shadow-inner">{getRewardCardFallbackEmoji(card)}</div>
+          <div className="flex h-28 w-28 items-center justify-center text-7xl text-slate-400">{getRewardCardFallbackEmoji(card)}</div>
         )}
       </div>
 

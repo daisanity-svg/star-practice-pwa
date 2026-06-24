@@ -263,14 +263,6 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
           </div>
           <button
             type="button"
-            onTouchEnd={(event) => {
-              event.preventDefault();
-              handleTracingDone();
-            }}
-            onPointerUp={(event) => {
-              event.preventDefault();
-              handleTracingDone();
-            }}
             onClick={handleTracingDone}
             className={`practice-trace-btn ${answeredCurrent ? 'is-done' : ''}`}
           >
@@ -287,14 +279,6 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
               <button
                 key={option}
                 type="button"
-                onTouchEnd={(event) => {
-                  event.preventDefault();
-                  handleSelect(option);
-                }}
-                onPointerUp={(event) => {
-                  event.preventDefault();
-                  handleSelect(option);
-                }}
                 onClick={() => handleSelect(option)}
                 className={`practice-option ${showState && correct ? 'is-correct' : ''} ${showState && isSelected && !correct ? 'is-wrong' : ''}`}
               >
@@ -322,7 +306,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
       ) : null}
 
       {answeredCurrent ? (
-        <div className="practice-next-wrap">
+        <div className={`practice-next-wrap`}>
           <button
             ref={ctaRef}
             type="button"
