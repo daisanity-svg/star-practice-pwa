@@ -32,13 +32,13 @@ function RewardCardPreview({ card }: { card: RewardCard }) {
 
   return (
     <div className="animate-pack-open relative flex w-full justify-center">
-      {cardImageUrl ? (
-        <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[20px] shadow-[0_18px_42px_rgba(30,64,175,0.16)] sm:max-w-[300px]">
+      <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[20px] shadow-[0_18px_42px_rgba(30,64,175,0.16)] sm:max-w-[300px]">
+        {cardImageUrl ? (
           <Image src={cardImageUrl} alt={displayName} fill className="object-contain" sizes="300px" unoptimized />
-        </div>
-      ) : (
-        <div className="kid-reward-placeholder-frame">{buildCardPlaceholder(displayName)}</div>
-      )}
+        ) : (
+          buildCardPlaceholder(displayName)
+        )}
+      </div>
     </div>
   );
 }
@@ -72,11 +72,11 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
           <div className="reward-compact-actions">
             {card ? (
               <div className="animate-pack-open relative flex w-full justify-center">
-                <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[24px] shadow-[0_24px_50px_rgba(30,64,175,0.22)]">
+                <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[24px]">
                   {getCardImageUrl(card) ? (
                     <Image src={getCardImageUrl(card)!} alt={getRewardCardDisplayName(card)} fill className="object-contain" sizes="260px" unoptimized />
                   ) : (
-                    <div className="kid-reward-placeholder-frame">{buildCardPlaceholder(getRewardCardDisplayName(card))}</div>
+                    buildCardPlaceholder(getRewardCardDisplayName(card))
                   )}
                 </div>
               </div>

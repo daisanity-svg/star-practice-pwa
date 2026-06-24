@@ -4,6 +4,19 @@ function normalizeText(text: string) {
   return text.trim().replace(/\s+/g, ' ');
 }
 
+function stripRarityPrefix(name: string): string {
+  const rarity = [
+    '傳說', 'LEGENDARY', '超稀有', 'SUPER_RARE', '閃亮', 'RARE', '普通', 'COMMON',
+  ];
+  let cleaned = name;
+  for (const token of rarity) {
+    if (cleaned.startsWith(token)) {
+      cleaned = cleaned.slice(token.length).trim();
+    }
+  }
+  return cleaned;
+}
+
 export function isLikelyUploadFileName(name?: string | null) {
   if (!name) return false;
   const normalized = normalizeText(name).toLowerCase();
@@ -46,8 +59,10 @@ function cardNumberSuffix(cardNo?: string | null) {
 }
 
 export function getRewardCardDisplayName(card: Pick<RewardCard, 'name' | 'card_no' | 'series'>) {
-  const name = normalizeText(card.name || '');
-  if (name && !isLikelyUploadFileName(name)) return name;
+  const rawName = normalizeText(card.name || '');
+  const cleanName = stripRarityPrefix(rawName);
+  if (cleanName && !isLikelyUploadFileName(cleanName)) return cleanName;
 
-  return `${seriesBaseName(card.series?.name)}${cardNumberSuffix(card.card_no)}`;
+  const fallback = stripRarityPrefix(seriesBaseName(card.series?.name) || '神秘卡片');
+  return `${fallback}${cardNumberSuffix(card.card_no)}`;
 }

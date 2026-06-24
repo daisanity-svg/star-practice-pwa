@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { CompanionBar } from '@/components/CompanionBar';
+import { PetAvatar } from '@/components/PetAvatar';
 import { getCollectionSummary } from '@/lib/data/rewards';
 
 export default async function HomePage() {
@@ -21,7 +22,6 @@ export default async function HomePage() {
   return (
     <PhoneFrame>
       <CompanionBar title="今天出發" rightLabel={`${ownedTotal} 位朋友`} />
-      <p className="kid-chip mt-2 text-center font-mono text-xs text-slate-400">V5.1 Stability Pass</p>
       <div className="kid-game-root">
         <div className="kid-sky" aria-hidden="true" />
         <div className="kid-cloud-1" aria-hidden="true" />
@@ -37,6 +37,9 @@ export default async function HomePage() {
             <div className="kid-status-row">
               <span className="kid-status-pill">第 3 天冒險中</span>
               <span className="kid-status-pill">{ownedTotal} 位朋友</span>
+            </div>
+            <div className="flex justify-center">
+              <PetAvatar growthLevel={1} />
             </div>
             <h1 className="kid-hero-title">今天出發<br />找星星朋友</h1>
             <p className="kid-hero-sub">完成 5 個小任務，打開今日卡包</p>
@@ -108,7 +111,8 @@ export default async function HomePage() {
         </div>
 
         <KidBottomNav />
-      </div>
-    </PhoneFrame>
-  );
+        <p className="kid-chip text-center font-mono text-xs text-slate-400" style={{ padding: '8px 0' }}>V5.1 Stability Pass</p>
+        </div>
+        </PhoneFrame>
+        );
 }

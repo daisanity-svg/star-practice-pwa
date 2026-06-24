@@ -232,7 +232,19 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
     .select('*')
     .single();
 
-  if (error || !created?.id) throw new Error(error?.message ?? '無法建立今日任務');
+  if (error || !created?.id) {
+    const message = error?.message ?? '';
+    if (message.includes('duplicate key') || message.includes('unique constraint')) {
+      const { data: existing } = await supabase!
+        .from('daily_learning_plan')
+        .select('*')
+        .eq('child_id', childId)
+        .eq('date', today)
+        .maybeSingle();
+      if (existing?.id) return existing;
+    }
+    throw new Error(error?.message ?? '無法建立今日任務');
+  }
   return created;
 }
 

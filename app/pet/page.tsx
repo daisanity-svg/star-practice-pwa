@@ -162,9 +162,22 @@ export default function PetPage() {
 
         <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
           <div className="kid-map-header" style={{ padding: '0 2px' }}>
-            <h2 className="kid-map-title">照顧小光獸</h2>
-            <p className="kid-map-sub">互動會消耗星星幣或能量</p>
+            <h2 className="kid-map-title">目前資源</h2>
+            <p className="kid-map-sub">看看還剩多少星星幣和能量</p>
           </div>
+          <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
+            <div style={{ flex: 1, borderRadius: 20, background: '#e9f4ff', padding: '12px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#1766e6' }}>星星幣</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#172033' }}>{game.stars}</div>
+            </div>
+            <div style={{ flex: 1, borderRadius: 20, background: '#fff8e1', padding: '12px 10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: '#b45f1a' }}>能量</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: '#172033' }}>{game.energy}</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
           <div className="kid-pet-actions">
             <button
               type="button"

@@ -30,6 +30,10 @@ export default async function ParentDashboardPage() {
         </p>
       </section>
 
+      <section className="mt-3">
+        <p className="text-center font-mono text-xs text-slate-400" style={{ padding: '4px 0' }}>V5.1 Stability Pass</p>
+      </section>
+
       <section className="mt-5 grid grid-cols-2 gap-3">
         {menuCards.map((item) => (
           <Link key={item.href} href={item.href} className="kid-card flex flex-col justify-between gap-3 p-4 active:scale-[0.99]">

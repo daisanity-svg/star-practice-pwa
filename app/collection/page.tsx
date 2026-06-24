@@ -10,25 +10,8 @@ function cardImageUrl(card: RewardCard) {
   return card.rendered_card_image_url || card.source_image_url || null;
 }
 
-function groupInventoryBySeries(inventory: Awaited<ReturnType<typeof getChildInventory>>) {
-  const map = new Map<string, { id: string; name: string; items: typeof inventory }>();
-
-  for (const item of inventory) {
-    const card = item.card;
-    if (!card) continue;
-    const id = card.series?.id ?? 'saved-cards';
-    const name = card.series?.name ?? '我的收藏卡';
-    const group = map.get(id) ?? { id, name, items: [] as typeof inventory };
-    group.items.push(item);
-    map.set(id, group);
-  }
-
-  return Array.from(map.values());
-}
-
 export default async function CollectionPage() {
   const inventory = await getChildInventory();
-  const groups = groupInventoryBySeries(inventory);
   const totalQuantity = inventory.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
 
   return (
@@ -62,49 +45,34 @@ export default async function CollectionPage() {
 
       {inventory.length ? (
         <section className="space-y-4 pb-[calc(env(safe-area-inset-bottom)+120px)]">
-          {groups.map((group) => (
-            <div key={group.id} className="kid-card p-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-black text-[#2f8cff]">收藏系列</p>
-                  <h2 className="text-2xl font-black text-[#172033]">{group.name}</h2>
-                </div>
-                <div className="kid-series-chip rounded-full px-3 py-2 text-sm font-black text-[#1766e6]">
-                  {group.items.length} 種
-                </div>
-              </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {inventory.map((item) => {
+              const card = item.card;
+              if (!card) return null;
+              const imageUrl = cardImageUrl(card);
+              const displayName = getRewardCardDisplayName(card);
+              const quantity = Number(item.quantity ?? 1);
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {[...group.items]
-                  .sort((a, b) => (a.card?.card_no ?? '').localeCompare(b.card?.card_no ?? ''))
-                  .map((item) => {
-                    const card = item.card;
-                    if (!card) return null;
-                    const imageUrl = cardImageUrl(card);
-                    const displayName = getRewardCardDisplayName(card);
-                    const quantity = Number(item.quantity ?? 1);
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="relative overflow-hidden rounded-3xl bg-white shadow-sm active:scale-[0.99]"
-                      >
-                        {imageUrl ? (
-                          <img src={imageUrl} alt={displayName} className="aspect-[3/4] w-full object-contain" />
-                        ) : (
-                          <span className="kid-card-placeholder" aria-label={displayName} />
-                        )}
-                        {quantity > 1 ? (
-                          <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
-                            x{quantity}
-                          </span>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
+              return (
+                <div
+                  key={item.id}
+                  className="relative overflow-hidden rounded-3xl bg-white shadow-sm active:scale-[0.99]"
+                >
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={displayName} className="aspect-[3/4] w-full object-contain" />
+                  ) : (
+                    <span className="kid-card-placeholder" aria-label={displayName} />
+                  )}
+                  <p className="truncate px-2 py-2 text-center text-sm font-black text-[#172033]">{displayName}</p>
+                  {quantity > 1 ? (
+                    <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
+                      x{quantity}
+                    </span>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
         </section>
       ) : (
         <section className="kid-empty-card flex min-h-[440px] flex-col items-center justify-center p-6 text-center">

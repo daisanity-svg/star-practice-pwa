@@ -20,12 +20,19 @@ const MOOD_LABELS: Record<PetMood, string> = {
   excited: '興奮',
 };
 
+function petTierName(growthLevel: number): string {
+  if (growthLevel <= 1) return '小光蛋';
+  if (growthLevel <= 3) return '幼光獸';
+  return '守護小光獸';
+}
+
 export function CompanionBar({ title, rightLabel, backHref, backLabel = '地圖' }: CompanionBarProps) {
   const pathname = usePathname();
   const isRoot = pathname === '/';
   const showBack = backHref && !isRoot;
 
   const game = loadGameState();
+  const tierName = game ? petTierName(game.growthLevel) : '小光獸';
   const petLabel =
     title ??
     (game ? `${MOOD_LABELS[game.petMood] || '冒險中'} Lv.${game.growthLevel}` : '第 3 天冒險中');
@@ -42,7 +49,7 @@ export function CompanionBar({ title, rightLabel, backHref, backLabel = '地圖'
           ) : (
             <span className="companion-brand" aria-hidden="true">
               <PetAvatar growthLevel={game.growthLevel} />
-              <span className="companion-name">小光獸</span>
+              <span className="companion-name">{tierName}</span>
             </span>
           )}
         </div>
