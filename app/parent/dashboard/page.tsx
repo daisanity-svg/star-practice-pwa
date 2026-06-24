@@ -31,7 +31,7 @@ export default async function ParentDashboardPage() {
       </section>
 
       <section className="mt-3">
-        <p className="text-center font-mono text-xs text-slate-400" style={{ padding: '4px 0' }}>V5.1 Stability Pass</p>
+        <p className="text-center font-mono text-xs text-slate-400" style={{ padding: '4px 0' }}>V5.1 Stability Pass · 499e72e</p>
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-3">
