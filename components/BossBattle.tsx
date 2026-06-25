@@ -5,10 +5,8 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { KidButton } from '@/components/KidButton';
 import { damageBoss } from '@/lib/actions/map';
-
-const BOSS_TOTAL_HP = 100;
-const QUESTION_TIME_LIMIT = 5;
-const QUICK_BONUS_THRESHOLD = 3;
+import { addEnergy, addStars, addBossWin } from '@/lib/game/state';
+import { completeBossNode } from '@/lib/actions/map';
 
 type Choice = {
   questionId: string;
@@ -48,6 +46,40 @@ type BossBattleProps = {
   nodeIndex?: number;
 };
 
+function BossIcon({ size = 120 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 140 140"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="Boss"
+      role="img"
+    >
+      <circle cx="70" cy="68" r="46" fill="#ef4444" stroke="#b91c1c" strokeWidth="5" />
+      <circle cx="52" cy="56" r="8" fill="white" />
+      <circle cx="88" cy="56" r="8" fill="white" />
+      <circle cx="52" cy="56" r="4" fill="#1f5ef6" />
+      <circle cx="88" cy="56" r="4" fill="#1f5ef6" />
+      <rect x="46" y="84" width="48" height="8" rx="4" fill="white" />
+      <path
+        d="M70 18 L80 4 L96 12 L90 28 L80 22 L70 32 L60 22 L50 28 L44 12 L60 4 Z"
+        fill="#ffd95a"
+        stroke="#e5a100"
+        strokeWidth="3"
+      />
+      <circle cx="70" cy="40" r="4" fill="#b91c1c" />
+      <path d="M42 70 Q30 85 38 95 Q50 90 52 78" fill="#b91c1c" />
+      <path d="M98 70 Q110 85 102 95 Q90 90 88 78" fill="#b91c1c" />
+    </svg>
+  );
+}
+
+const BOSS_TOTAL_HP = 100;
+const QUESTION_TIME_LIMIT = 5;
+const QUICK_BONUS_THRESHOLD = 3;
+
 export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
   const [hp, setHp] = useState(BOSS_TOTAL_HP);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
@@ -84,12 +116,21 @@ export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
     setSelected(option);
     const correct = option === question.correct;
     if (correct) {
+      try { addEnergy(1); } catch {}
       const damage = 25 + (spent < QUICK_BONUS_THRESHOLD * 1000 ? 5 : 0);
       const nextHp = Math.max(0, hp - damage);
       setHp(nextHp);
       if (nextHp <= 0) {
         setVictory(true);
         if (timerRef.current) clearInterval(timerRef.current);
+        damageBoss(nodeIndex, BOSS_TOTAL_HP);
+        const isQuick = spent < QUICK_BONUS_THRESHOLD * 1000;
+        try {
+          addStars(isQuick ? 3 : 2);
+          if (isQuick) addEnergy(1);
+          addBossWin();
+          completeBossNode(nodeIndex);
+        } catch {}
       }
     }
     setTimeout(() => {
@@ -115,12 +156,6 @@ export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
     };
   }, [victory, finished, handleTimeout]);
 
-  useEffect(() => {
-    if (victory) {
-      damageBoss(nodeIndex, BOSS_TOTAL_HP);
-    }
-  }, [victory, nodeIndex]);
-
   const timerPercent = (timeLeft / QUESTION_TIME_LIMIT) * 100;
 
   return (
@@ -133,6 +168,10 @@ export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
           <h1 className="boss-title">Boss 挑戰</h1>
           <span className="boss-step">第 {currentIndex + 1} / {DEMO_BOSS_QUESTIONS.length} 題</span>
         </div>
+      </div>
+
+      <div className="flex justify-center">
+        <BossIcon size={120} />
       </div>
 
       <div className="boss-hp-card">

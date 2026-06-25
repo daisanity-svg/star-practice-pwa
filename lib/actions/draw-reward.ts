@@ -343,7 +343,8 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
         rendered_card_image_url,
         description,
         series:card_series(id, name),
-        category:card_categories(id, name)
+        category:card_categories(id, name),
+        created_at
       )
     `
     )
@@ -365,21 +366,27 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
 
   if (!(await isPracticeTestModeAsync())) {
     const today = new Date().toISOString().slice(0, 10);
-    const { data: todayLogs } = await client
+    const { data: allDrawLogs } = await client
       .from('reward_draw_logs')
       .select('card_id')
-      .eq('child_id', childId)
-      .eq('reward_pack_id', rewardPackId)
-      .gte('created_at', `${today}T00:00:00.000Z`);
+      .eq('child_id', childId);
 
-    const drawnCardIds = new Set((todayLogs ?? []).map((row: { card_id: string }) => row.card_id));
-    const candidates = availableItems.filter((item) => !drawnCardIds.has(item.card_id));
+    const drawnCardIds = new Set((allDrawLogs ?? []).map((row: { card_id: string }) => row.card_id));
 
-    if (!candidates.length) {
-      return { ok: false, message: '這個卡包今天的卡片都已經抽完了，明天再來吧！' };
+    const freshTodayItems = availableItems.filter((item) => {
+      const card = item.cards as any;
+      if (!card?.created_at) return false;
+      const createdDate = new Date(card.created_at).toISOString().slice(0, 10);
+      if (createdDate !== today) return false;
+      if (drawnCardIds.has(item.card_id)) return false;
+      return true;
+    });
+
+    if (!freshTodayItems.length) {
+      return { ok: false, message: '今天還沒有新卡片，請家長先上傳今日卡片。' };
     }
 
-    picked = pickWeightedItem(candidates);
+    picked = pickWeightedItem(freshTodayItems);
   } else {
     picked = pickWeightedItem(availableItems);
   }
