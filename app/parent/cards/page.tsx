@@ -32,7 +32,7 @@ const labelClass = 'text-sm font-black text-slate-700';
 
 export default function ParentCardsPage() {
   const [series, setSeries] = useState<CardSeries[]>([]);
-  const [seriesLoading, setSeriesLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [recentCards, setRecentCards] = useState<RecentCard[]>([]);
   const [formState, formAction, isSubmitting] = useActionState<CardFormState, FormData>(createCard, null);
 
@@ -49,7 +49,7 @@ export default function ParentCardsPage() {
         console.error('fetch series failed', e);
       } finally {
         if (!cancelled) {
-          setSeriesLoading(false);
+          setLoading(false);
         }
       }
 
@@ -79,6 +79,19 @@ export default function ParentCardsPage() {
     form?.reset();
   };
 
+  if (loading) {
+    return (
+      <main className="admin-shell safe-screen">
+        <CompanionBar title="卡片管理" backHref="/" backLabel="小孩端" />
+        <section className={`kid-card p-5`}>
+          <p className="text-sm font-black text-[#5f6f89]">Cards</p>
+          <h1 className="mt-2 text-[30px] font-black leading-tight text-ink">卡片管理</h1>
+          <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">載入中...</p>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="admin-shell safe-screen">
       <CompanionBar title="卡片管理" backHref="/" backLabel="小孩端" />
@@ -107,12 +120,7 @@ export default function ParentCardsPage() {
         >
           <div>
             <span className={labelClass}>所屬系列</span>
-            <select
-              name="series_id"
-              className={inputClass}
-              defaultValue={series[0]?.id || ''}
-              disabled={seriesLoading || isSubmitting}
-            >
+            <select name="series_id" className={inputClass} defaultValue={series[0]?.id || ''} disabled={isSubmitting}>
               {series.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
