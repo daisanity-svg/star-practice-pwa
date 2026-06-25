@@ -196,17 +196,35 @@ export async function createCardCategory(formData: FormData) {
   revalidatePath('/parent/cards');
 }
 
-export async function createCard(formData: FormData) {
-  if (!supabase) return;
+export type CardFormState =
+  | { ok: true; message: string }
+  | { ok: false; message: string }
+  | null;
+
+export async function createCard(
+  _prevState: CardFormState,
+  formData: FormData
+): Promise<CardFormState> {
+  if (!supabase) {
+    return { ok: false, message: 'Supabase 尚未連線。' };
+  }
 
   const seriesId = value(formData, 'series_id');
   const name = value(formData, 'name');
-  if (!seriesId || !name) return;
+  if (!seriesId || !name) {
+    return { ok: false, message: '請選擇所屬系列並輸入卡片名稱。' };
+  }
 
   const sourceFile = formData.get('source_image_file');
-  const sourceImageUrl = sourceFile instanceof File
-    ? await uploadFileToStorage(sourceFile, 'source')
-    : nullableValue(formData, 'source_image_url');
+  let sourceImageUrl: string | null = null;
+  if (sourceFile instanceof File && sourceFile.size > 0) {
+    sourceImageUrl = await uploadFileToStorage(sourceFile, 'source');
+    if (!sourceImageUrl) {
+      return { ok: false, message: '原圖上傳失敗，請確認 Storage bucket 設定或稍後再試。' };
+    }
+  } else {
+    sourceImageUrl = nullableValue(formData, 'source_image_url');
+  }
 
   const renderedCardImageUrl = await uploadDataUrlToStorage(
     nullableValue(formData, 'rendered_card_data_url'),
@@ -214,7 +232,7 @@ export async function createCard(formData: FormData) {
     `${value(formData, 'card_no') || name}-rendered`
   ) || nullableValue(formData, 'rendered_card_image_url');
 
-  await supabase.from('cards').insert({
+  const { error } = await supabase.from('cards').insert({
     series_id: seriesId,
     category_id: nullableValue(formData, 'category_id'),
     name,
@@ -226,8 +244,14 @@ export async function createCard(formData: FormData) {
     is_active: true
   });
 
+  if (error) {
+    console.error('createCard insert error', error.message);
+    return { ok: false, message: `新增卡片失敗：${error.message}` };
+  }
+
   revalidatePath('/parent/cards');
   revalidatePath('/collection');
+  return { ok: true, message: '卡片建立成功！' };
 }
 
 export async function createBatchCards(formData: FormData) {
