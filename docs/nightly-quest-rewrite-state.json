@@ -1,0 +1,38 @@
+{
+  "run_id": "nightly-quest-rewrite-20260626",
+  "status": "scheduled",
+  "current_batch": "A",
+  "batches": {
+    "A": {
+      "name": "Quest Chain Finalization",
+      "status": "pending",
+      "output": null
+    },
+    "B": {
+      "name": "Gameplay Blueprint Sync",
+      "status": "pending",
+      "output": null
+    },
+    "C": {
+      "name": "First Playable Revision Implementation",
+      "status": "pending",
+      "output": null
+    },
+    "D": {
+      "name": "Flow Validation + Screenshots",
+      "status": "pending",
+      "output": null
+    },
+    "E": {
+      "name": "Journal / Recovery State",
+      "status": "pending",
+      "output": null
+    }
+  },
+  "commit_hashes": [],
+  "build_test": [],
+  "artifacts": [],
+  "errors": [],
+  "next_action": "Batch A",
+  "updated_at": "2026-06-26T19:30:00Z"
+}
