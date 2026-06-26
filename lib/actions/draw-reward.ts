@@ -84,14 +84,8 @@ async function getActiveRewardPackIdWithStock() {
 
   const { data, error } = await client
     .from('reward_packs')
-    .select(
-      `
-      id,
-      reward_pack_items!inner(id)
-    `
-    )
+    .select('id, created_at')
     .eq('is_active', true)
-    .eq('reward_pack_items.is_active', true)
     .or(`start_date.is.null,start_date.lte.${today}`)
     .or(`end_date.is.null,end_date.gte.${today}`)
     .order('created_at', { ascending: true })

@@ -152,7 +152,7 @@ async function ensureDefaultChild() {
 
 async function getActiveRewardPackIdWithStock() {
   const today = todayKey();
-  const { data: packs, error } = await supabase!
+  const { data, error } = await supabase!
     .from('reward_packs')
     .select('id, created_at')
     .eq('is_active', true)
@@ -160,19 +160,9 @@ async function getActiveRewardPackIdWithStock() {
     .or(`end_date.is.null,end_date.gte.${today}`)
     .order('created_at', { ascending: false });
 
-  if (error || !packs?.length) return null;
+  if (error || !data?.length) return null;
 
-  for (const pack of packs) {
-    const { count } = await supabase!
-      .from('reward_pack_items')
-      .select('id', { count: 'exact', head: true })
-      .eq('reward_pack_id', pack.id)
-      .eq('is_active', true);
-
-    if ((count ?? 0) > 0) return pack.id as string;
-  }
-
-  return null;
+  return (data[0]?.id as string | undefined) ?? null;
 }
 
 async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
