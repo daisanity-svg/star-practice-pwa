@@ -14,7 +14,8 @@ const menuCards: MenuCard[] = [
   { title: '學習進度', description: '熟練度、弱點與正確率', href: '/parent/progress', accent: 'bg-[#e8f8ef] text-[#0d7a4b]' },
   { title: '題型模板', description: '管理自動出題句型', href: '/parent/templates', accent: 'bg-[#fff4e5] text-[#b45f1a]' },
   { title: '每日規則', description: '題數、比例與抽卡條件', href: '/parent/settings', accent: 'bg-[#f3e8ff] text-[#7c3aed]' },
-  { title: '卡片管理', description: '上傳与管理單一卡池', href: '/parent/cards', accent: 'bg-[#e6f7ff] text-[#0a7bc0]' }
+  { title: '卡片管理', description: '上傳與管理單張卡池', href: '/parent/cards', accent: 'bg-[#e6f7ff] text-[#0a7bc0]' },
+  { title: '遊戲設定', description: '切換模式與重置遊戲進度', href: '/parent/settings', accent: 'bg-[#fce7f3] text-[#be185d]' }
 ];
 
 export default async function ParentDashboardPage() {

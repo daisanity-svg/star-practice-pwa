@@ -40,6 +40,12 @@ export default function PetPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const tierName = game?.growthLevel && game.growthLevel <= 1
+    ? '小光蛋'
+    : game?.growthLevel && game.growthLevel <= 3
+      ? '幼光獸'
+      : '守護小光獸';
+
   const refresh = () => setGame(loadGameState());
 
   const showFeedback = (msg: string) => {
@@ -109,8 +115,6 @@ export default function PetPage() {
   const intimacyNeed = getNextIntimacyNeed(game.intimacyLevel);
   const growthPct = Math.min(100, Math.round((game.feedCount / growthNeed) * 100));
   const intimacyPct = Math.min(100, Math.round((game.playCount / intimacyNeed) * 100));
-
-  const tierName = game.growthLevel <= 1 ? '小光蛋' : game.growthLevel <= 3 ? '幼光獸' : '守護小光獸';
 
   return (
     <PhoneFrame>
