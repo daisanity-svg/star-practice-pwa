@@ -1,16 +1,16 @@
 {
   "run_id": "nightly-quest-rewrite-20260626",
   "status": "scheduled",
-  "current_batch": "A",
+  "current_batch": "B",
   "batches": {
     "A": {
       "name": "Quest Chain Finalization",
-      "status": "pending",
-      "output": null
+      "status": "completed",
+      "output": "Created docs/chapter-01-quest-chain.md mapping current adventure flow to Chapter 1 quest chain."
     },
     "B": {
       "name": "Gameplay Blueprint Sync",
-      "status": "pending",
+      "status": "in_progress",
       "output": null
     },
     "C": {
@@ -29,10 +29,10 @@
       "output": null
     }
   },
-  "commit_hashes": [],
+  "commit_hashes": ["e9e1b48"],
   "build_test": [],
   "artifacts": [],
   "errors": [],
-  "next_action": "Batch A",
-  "updated_at": "2026-06-26T19:30:00Z"
+  "next_action": "Batch B",
+  "updated_at": "2026-06-26T19:35:00Z"
 }
