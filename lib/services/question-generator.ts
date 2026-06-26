@@ -12,6 +12,7 @@ import {
   renderTemplate,
   validateQuestion
 } from '@/lib/services/question-validator';
+import { getTaipeiTodayString, toTaipeiDateString } from '@/lib/utils/timezone';
 
 const DEFAULT_CHILD_NAME = '星見';
 const TOTAL_QUESTIONS = 5;
@@ -63,7 +64,7 @@ const CORE_ENGLISH_ITEMS = ENGLISH_POOL.map((symbol) => ({
 
 
 function todayKey() {
-  return new Date().toISOString().slice(0, 10);
+  return getTaipeiTodayString();
 }
 
 function shuffle<T>(items: T[]) {
@@ -188,7 +189,7 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
   if (existing?.id) {
     const updatePayload: Record<string, unknown> = {};
 
-    const completedDay = existing.completed_at ? new Date(existing.completed_at).toISOString().slice(0, 10) : '';
+    const completedDay = existing.completed_at ? toTaipeiDateString(new Date(existing.completed_at)) : '';
     if (completedDay && completedDay !== today) {
       updatePayload.is_completed = false;
       updatePayload.completed_at = null;
@@ -345,11 +346,12 @@ async function getNextOrderIndex(planId: string) {
 async function fetchRecentQuestionMemory(childId: string) {
   const since = new Date();
   since.setDate(since.getDate() - 3);
+  const sinceStr = toTaipeiDateString(since);
   const { data } = await supabase!
     .from('generated_questions')
     .select('question_text, learning_item_id, learning_memory_hooks(keyword), daily_learning_plan!inner(date)')
     .eq('child_id', childId)
-    .gte('daily_learning_plan.date', since.toISOString().slice(0, 10))
+    .gte('daily_learning_plan.date', sinceStr)
     .order('created_at', { ascending: false })
     .limit(80);
 

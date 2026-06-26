@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { CardCollectionSummary, ChildCardInventoryItem, RewardDrawResult } from '@/lib/types';
+import { getTaipeiTodayRange } from '@/lib/utils/timezone';
 
 export const demoCollections: CardCollectionSummary[] = [];
 
@@ -129,8 +130,8 @@ export async function getTodayDrawnReward(practiceRecordId?: string | null): Pro
   if (practiceRecordId) {
     query = query.eq('practice_record_id', practiceRecordId);
   } else {
-    const today = new Date().toISOString().slice(0, 10);
-    query = query.gte('created_at', `${today}T00:00:00.000Z`);
+    const todayRange = getTaipeiTodayRange();
+    query = query.gte('created_at', todayRange.start).lt('created_at', todayRange.end);
   }
 
   const { data, error } = await query.maybeSingle();
