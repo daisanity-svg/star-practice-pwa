@@ -241,7 +241,8 @@ export async function createCard(
     source_image_url: sourceImageUrl,
     rendered_card_image_url: renderedCardImageUrl,
     description: nullableValue(formData, 'description'),
-    is_active: true
+    is_active: true,
+    created_at: new Date().toISOString()
   });
 
   if (error) {
@@ -297,7 +298,8 @@ export async function createBatchCards(formData: FormData) {
       source_image_url: sourceImageUrl,
       rendered_card_image_url: renderedCardImageUrl,
       description: '批次上傳建立',
-      is_active: true
+      is_active: true,
+      created_at: new Date().toISOString()
     });
   }
 

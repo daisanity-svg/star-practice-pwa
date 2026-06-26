@@ -345,8 +345,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
       .eq('is_active', true)
       .gte('created_at', todayRange.start)
       .lt('created_at', todayRange.end)
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .order('created_at', { ascending: false });
 
     const availableTodayCard = (todayCards ?? []).find((c) => !drawnCardIds.has(c.id));
 
