@@ -86,6 +86,20 @@ export const demoPackItems: RewardPackItem[] = [
 
 export const demoScheduledRewards: ScheduledReward[] = [];
 
+export async function getDailyOverrideCardId(): Promise<string | null> {
+  const client = supabase;
+  if (!client) return null;
+
+  const { data, error } = await client
+    .from('app_settings')
+    .select('value')
+    .eq('key', 'daily_card_override')
+    .maybeSingle();
+
+  if (error || !data?.value) return null;
+  return String(data.value);
+}
+
 export async function getCardSeries() {
   if (!supabase) {
     return demoSeries;

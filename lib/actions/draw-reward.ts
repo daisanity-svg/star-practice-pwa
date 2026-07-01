@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase';
 import type { RewardDrawResult, RewardCard, SaveRewardResult } from '@/lib/types';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
-import { getTaipeiTodayRange, getTaipeiTodayString } from '@/lib/utils/timezone';
+import { getDailyOverrideCardId } from '@/lib/data/admin-rewards';
+import { getTaipeiTodayString } from '@/lib/utils/timezone';
 
 const demoCard: RewardCard = {
   id: 'demo-red-car',
@@ -46,7 +48,6 @@ type DrawLogRow = {
 function pickWeightedItem(items: PackItemRow[]) {
   const totalWeight = items.reduce((sum, item) => sum + Math.max(item.weight, 0), 0);
   if (totalWeight <= 0) return items[0];
-
   let cursor = Math.random() * totalWeight;
   for (const item of items) {
     cursor -= Math.max(item.weight, 0);
@@ -57,31 +58,21 @@ function pickWeightedItem(items: PackItemRow[]) {
 
 async function getDefaultChildId() {
   const client = supabase;
-  if (!client) {
-    console.error('[drawDailyReward] supabase client 尚未初始化');
-    return null;
-  }
-
+  if (!client) return null;
   const { data, error } = await client
     .from('children')
     .select('id')
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
-
-  if (error || !data?.id) {
-    console.error('[drawDailyReward] 找不到 child:', error);
-    return null;
-  }
+  if (error || !data?.id) return null;
   return data.id as string;
 }
 
 async function getActiveRewardPackIdWithStock() {
   const client = supabase;
   if (!client) return null;
-
   const today = getTaipeiTodayString();
-
   const { data, error } = await client
     .from('reward_packs')
     .select('id, created_at')
@@ -91,89 +82,56 @@ async function getActiveRewardPackIdWithStock() {
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
-
   if (error || !data?.id) return null;
   return data.id as string;
 }
 
-async function addCardToInventory(params: {
-  childId: string;
-  cardId: string;
-  rewardPackId: string | null;
-  practiceRecordId: string | null;
-}) {
+async function buildPendingCardIdFilter(client: SupabaseClient, childId: string) {
+  const { data: ownedRows } = await client
+    .from('child_card_inventory')
+    .select('card_id')
+    .eq('child_id', childId);
+  const ids = (ownedRows ?? []).map((row: { card_id?: string | null }) => row.card_id).filter((id: string | null | undefined): id is string => Boolean(id));
+  return ids.join(',');
+}
+
+function pickRandomCard(cards: Array<Pick<RewardCard, 'id' | 'name' | 'card_no' | 'rarity' | 'source_image_url' | 'rendered_card_image_url' | 'description' | 'series' | 'category'>>) {
+  if (!cards.length) return null;
+  const index = Math.floor(Math.random() * cards.length);
+  return cards[index];
+}
+
+async function addCardToInventory(params: { childId: string; cardId: string; rewardPackId: string | null; practiceRecordId: string | null }) {
   const client = supabase;
   if (!client) return { ok: false as const, isNew: false, message: 'Supabase 尚未連線。' };
-
   const { childId, cardId, rewardPackId, practiceRecordId } = params;
-
   const { data: existingInventory } = await client
     .from('child_card_inventory')
     .select('id, quantity')
     .eq('child_id', childId)
     .eq('card_id', cardId)
     .maybeSingle();
-
   const isNew = !existingInventory;
-
   if (existingInventory?.id) {
     const { error: updateInventoryError } = await client
       .from('child_card_inventory')
-      .update({
-        quantity: Number(existingInventory.quantity ?? 1) + 1,
-        obtained_at: new Date().toISOString(),
-        obtained_from_pack_id: rewardPackId,
-        obtained_from_practice_record_id: practiceRecordId
-      })
+      .update({ quantity: Number(existingInventory.quantity ?? 1) + 1, obtained_at: new Date().toISOString(), obtained_from_pack_id: rewardPackId, obtained_from_practice_record_id: practiceRecordId })
       .eq('id', existingInventory.id);
-
-    if (updateInventoryError) {
-      return { ok: false as const, isNew, message: `更新收納包失敗：${updateInventoryError.message}` };
-    }
+    if (updateInventoryError) return { ok: false as const, isNew, message: `更新收納包失敗：${updateInventoryError.message}` };
   } else {
-    const { error: insertInventoryError } = await client.from('child_card_inventory').insert({
-      child_id: childId,
-      card_id: cardId,
-      quantity: 1,
-      obtained_from_pack_id: rewardPackId,
-      obtained_from_practice_record_id: practiceRecordId
-    });
-
-    if (insertInventoryError) {
-      return { ok: false as const, isNew, message: `新增收納包失敗：${insertInventoryError.message}` };
-    }
+    const { error: insertInventoryError } = await client.from('child_card_inventory').insert({ child_id: childId, card_id: cardId, quantity: 1, obtained_from_pack_id: rewardPackId, obtained_from_practice_record_id: practiceRecordId });
+    if (insertInventoryError) return { ok: false as const, isNew, message: `新增收納包失敗：${insertInventoryError.message}` };
   }
-
   return { ok: true as const, isNew };
 }
 
 async function getScheduledReward(childId: string) {
   const client = supabase;
   if (!client) return null;
-
   const today = getTaipeiTodayString();
-
   const { data, error } = await client
     .from('scheduled_rewards')
-    .select(
-      `
-      id,
-      card_id,
-      reward_pack_id,
-      reason,
-      cards:cards(
-        id,
-        name,
-        card_no,
-        rarity,
-        source_image_url,
-        rendered_card_image_url,
-        description,
-        series:card_series(id, name),
-        category:card_categories(id, name)
-      )
-    `
-    )
+    .select(`id, card_id, reward_pack_id, reason, cards:cards(id, name, card_no, rarity, source_image_url, rendered_card_image_url, description, series:card_series(id, name), category:card_categories(id, name))`)
     .eq('is_claimed', false)
     .or(`child_id.is.null,child_id.eq.${childId}`)
     .or(`starts_on.is.null,starts_on.lte.${today}`)
@@ -181,35 +139,19 @@ async function getScheduledReward(childId: string) {
     .order('created_at', { ascending: true })
     .limit(1)
     .maybeSingle();
-
   if (error || !data?.id) return null;
   return data as unknown as ScheduledRewardRow;
 }
 
-async function insertDrawLog(params: {
-  childId: string;
-  rewardPackId: string | null;
-  cardId: string;
-  practiceRecordId: string | null;
-}) {
+async function insertDrawLog(params: { childId: string; rewardPackId: string | null; cardId: string; practiceRecordId: string | null }) {
   const client = supabase;
   if (!client) return null;
-
   const { data, error } = await client
     .from('reward_draw_logs')
-    .insert({
-      child_id: params.childId,
-      reward_pack_id: params.rewardPackId,
-      card_id: params.cardId,
-      practice_record_id: params.practiceRecordId
-    })
+    .insert({ child_id: params.childId, reward_pack_id: params.rewardPackId, card_id: params.cardId, practice_record_id: params.practiceRecordId })
     .select('id')
     .single();
-
-  if (error || !data?.id) {
-    throw new Error(error?.message ?? '寫入抽卡紀錄失敗');
-  }
-
+  if (error || !data?.id) throw new Error(error?.message ?? '寫入抽卡紀錄失敗');
   return data.id as string;
 }
 
@@ -250,20 +192,25 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   }
 
   if (!practiceRecordId && !(await isPracticeTestModeAsync())) {
-    return { ok: false, message: '請先完成今日練習，再打開卡包。' };
+    return { ok: false, message: '請確保練習記錄已建立，或聯繫家長。' };
+  }
+
+  if (practiceRecordId && !childId) {
+    return { ok: false, message: '找不到這次練習對應的孩子，請稍後再試。' };
   }
 
   childId = childId || (await getDefaultChildId());
   if (!childId) return { ok: false, message: '尚未建立孩子資料，請稍後再試。' };
+  const childIdSafe = childId;
 
   if (!rewardPackId) rewardPackId = await getActiveRewardPackIdWithStock();
 
-  const scheduledReward = await getScheduledReward(childId);
+  const scheduledReward = await getScheduledReward(childIdSafe);
   if (scheduledReward?.cards) {
     const finalRewardPackId = scheduledReward.reward_pack_id || rewardPackId;
     if (!finalRewardPackId) {
       console.error('[drawDailyReward] 找不到可記錄的卡包', { scheduledReward });
-      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+      return { ok: false, message: '卡包正在準備中，請家長稍後再試。' };
     }
 
     let drawLogId: string;
@@ -276,7 +223,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
       })) as string;
     } catch (error) {
       console.error('[drawDailyReward] 寫入抽卡紀錄失敗', { childId, finalRewardPackId, cardId: scheduledReward.card_id, error });
-      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+      return { ok: false, message: '卡包正在準備中，請家長稍後再試。' };
     }
 
     const inventoryResult = await addCardToInventory({
@@ -285,15 +232,6 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
       rewardPackId: finalRewardPackId,
       practiceRecordId
     });
-
-    await client
-      .from('scheduled_rewards')
-      .update({
-        is_claimed: true,
-        claimed_at: new Date().toISOString(),
-        claimed_practice_record_id: practiceRecordId
-      })
-      .eq('id', scheduledReward.id);
 
     if (practiceRecordId) {
       await client.from('practice_records').update({ reward_claimed: true }).eq('id', practiceRecordId);
@@ -316,134 +254,63 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
   }
 
   if (!rewardPackId) {
-    console.error('[drawDailyReward] 找不到可用的 rewardPackId');
-    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+    return { ok: false, message: '這個練習還沒有設定獎勵卡包，請聯絡家長設定。' };
   }
 
-  let drawCardId: string | null = null;
-  let drawCard: RewardCard | null = null;
+  const { data: packItems, error: packItemsError } = await client
+    .from('reward_pack_items')
+    .select('id, stock, weight, reward_pack_id, card_id, cards:cards(id, name, card_no, rarity, source_image_url, rendered_card_image_url, description, series:card_series(id, name), category:card_categories(id, name))')
+    .eq('reward_pack_id', rewardPackId)
+    .eq('is_active', true);
 
-  if (!(await isPracticeTestModeAsync())) {
-    const todayRange = getTaipeiTodayRange();
-    const { data: allDrawLogs } = await client
-      .from('reward_draw_logs')
-      .select('card_id')
-      .eq('child_id', childId);
-
-    const drawnCardIds = new Set((allDrawLogs ?? []).map((row: { card_id: string }) => row.card_id));
-
-    const { data: todayCards } = await client
-      .from('cards')
-      .select(
-        `
-        id, name, card_no, rarity, source_image_url, rendered_card_image_url, description,
-        series:card_series(id, name),
-        category:card_categories(id, name),
-        created_at
-      `
-      )
-      .eq('is_active', true)
-      .gte('created_at', todayRange.start)
-      .lt('created_at', todayRange.end)
-      .order('created_at', { ascending: false });
-
-    const availableTodayCard = (todayCards ?? []).find((c) => !drawnCardIds.has(c.id));
-
-    if (availableTodayCard) {
-      drawCardId = availableTodayCard.id;
-      drawCard = availableTodayCard as unknown as RewardCard;
-    } else {
-      const { count } = await client
-        .from('cards')
-        .select('id', { count: 'exact', head: true })
-        .gte('created_at', todayRange.start)
-        .lt('created_at', todayRange.end)
-        .eq('is_active', true);
-
-      if ((count ?? 0) > 0) {
-        return { ok: false, message: '今天的卡片已經抽過了，明天再來看看吧。' };
-      }
-      return { ok: false, message: '今天還沒有新卡片，請家長先上傳今日卡片。' };
-    }
+  if (packItemsError) {
+    console.error('[drawDailyReward] 讀取卡包失敗', { rewardPackId, packItemsError });
+    return { ok: false, message: '卡包正在準備中，請稍後再試。' };
   }
 
-  let remainingStock: number | null = null;
-
-  if (!drawCardId) {
-    const { data: packItems, error: packItemsError } = await client
-      .from('reward_pack_items')
-      .select(
-        `
-        id, stock, weight, reward_pack_id, card_id,
-        cards:cards(
-          id, name, card_no, rarity, source_image_url, rendered_card_image_url, description,
-          series:card_series(id, name),
-          category:card_categories(id, name),
-          created_at
-        )
-      `
-      )
-      .eq('reward_pack_id', rewardPackId)
-      .eq('is_active', true);
-
-    if (packItemsError) {
-      console.error('[drawDailyReward] 讀取卡包失敗', { rewardPackId, packItemsError });
-      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
-    }
-
-    const availableItems = (packItems ?? []) as unknown as PackItemRow[];
-    if (!availableItems.length) {
-      console.error('[drawDailyReward] reward pack 沒有啟用中的卡片', { rewardPackId });
-      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
-    }
-
-    const picked = pickWeightedItem(availableItems);
-    if (!picked?.cards) {
-      console.error('[drawDailyReward] 抽到的卡片資料不完整', { picked });
-      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
-    }
-
-    drawCardId = picked.card_id;
-    drawCard = picked.cards;
-
-    const nextStock = Math.max(0, Number(picked.stock ?? 1) - 1);
-    const { error: stockError } = await client
-      .from('reward_pack_items')
-      .update({ stock: nextStock })
-      .eq('id', picked.id);
-
-    if (stockError) {
-      console.error('[drawDailyReward] 扣庫存失敗', { picked, stockError });
-      return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
-    }
-
-    remainingStock = nextStock;
+  const availableItems = (packItems ?? []) as unknown as PackItemRow[];
+  if (!availableItems.length) {
+    console.error('[drawDailyReward] reward pack 沒有啟用中的卡片', { rewardPackId });
+    return { ok: false, message: '卡包正在準備中，請稍後再試。' };
   }
 
-  if (!drawCard) {
-    console.error('[drawDailyReward] 抽到的卡片資料不完整');
-    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+  const picked = pickWeightedItem(availableItems);
+  if (!picked?.cards) {
+    console.error('[drawDailyReward] 抽到的卡片資料不完整', { picked });
+    return { ok: false, message: '卡包正在準備中，請稍後再試。' };
   }
 
-  const finalRewardPackId = rewardPackId;
+  const drawCardId = picked.card_id;
+  const drawCard = picked.cards;
+
+  const nextStock = Math.max(0, Number(picked.stock ?? 1) - 1);
+  const { error: stockError } = await client
+    .from('reward_pack_items')
+    .update({ stock: nextStock })
+    .eq('id', picked.id);
+
+  if (stockError) {
+    console.error('[drawDailyReward] 扣庫存失敗', { picked, stockError });
+    return { ok: false, message: '卡包正在準備中，請稍後再試。' };
+  }
 
   let drawLogId: string;
   try {
     drawLogId = (await insertDrawLog({
       childId,
-      rewardPackId: finalRewardPackId,
+      rewardPackId,
       cardId: drawCardId,
       practiceRecordId
     })) as string;
   } catch (error) {
-    console.error('[drawDailyReward] 寫入抽卡紀錄失敗', { childId, finalRewardPackId, cardId: drawCardId, error });
-    return { ok: false, message: '今天卡包正在準備中，明天再來看看吧。' };
+    console.error('[drawDailyReward] 寫入抽卡紀錄失敗', { childId, rewardPackId, cardId: drawCardId, error });
+    return { ok: false, message: '卡包正在準備中，請稍後再試。' };
   }
 
   const inventoryResult = await addCardToInventory({
     childId,
     cardId: drawCardId,
-    rewardPackId: finalRewardPackId,
+    rewardPackId,
     practiceRecordId
   });
 
@@ -461,7 +328,7 @@ export async function drawDailyReward(formData?: FormData): Promise<RewardDrawRe
     card: drawCard,
     draw_log_id: drawLogId,
     is_new: true,
-    remaining_stock: remainingStock,
+    remaining_stock: nextStock,
     saved_to_inventory: Boolean(inventoryResult.ok),
     drawn_now: true
   };
