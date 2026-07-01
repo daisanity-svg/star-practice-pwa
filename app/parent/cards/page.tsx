@@ -5,22 +5,11 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { createCard, type CardFormState } from '@/lib/actions/rewards';
 import { deleteCard, setNextRewardCard } from '@/lib/actions/cards';
-import { getCardSeries } from '@/lib/data/admin-rewards';
 import { CompanionBar } from '@/components/CompanionBar';
 import { supabase } from '@/lib/supabase';
 
-type CardSeries = {
-  id: string;
-  name: string;
-  cover_image_url?: string | null;
-  description?: string | null;
-  is_active?: boolean | null;
-};
-
 type CardRow = {
   id: string;
-  series_id: string;
-  category_id?: string | null;
   name: string;
   card_no?: string | null;
   rarity?: string | null;
@@ -65,8 +54,6 @@ function formatDate(value?: string | null) {
 }
 
 export default function ParentCardsPage() {
-  const [series, setSeries] = useState<CardSeries[]>([]);
-  const [selectedSeriesId, setSelectedSeriesId] = useState<string>('');
   const [allCards, setAllCards] = useState<CardRow[]>([]);
   const [inventory, setInventory] = useState<InventoryRow[]>([]);
   const [children, setChildren] = useState<DashboardChild[]>([]);
@@ -76,7 +63,7 @@ export default function ParentCardsPage() {
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState('');
 
-  const canSave = Boolean(selectedSeriesId) && !isSubmitting && !saving;
+  const canSave = !isSubmitting && !saving;
   const childParam = selectedChildId || null;
 
   const wrappedDeleteCard = async (formData: FormData) => {
@@ -92,12 +79,6 @@ export default function ParentCardsPage() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const nextSeries = await getCardSeries();
-    setSeries(nextSeries);
-    if (nextSeries.length && !selectedSeriesId) {
-      setSelectedSeriesId(nextSeries[0].id);
-    }
-
     if (!supabase) {
       setLoading(false);
       return;
@@ -120,20 +101,24 @@ export default function ParentCardsPage() {
       setSelectedChildId((childrenData as DashboardChild[])[0].id);
     }
     setLoading(false);
-  }, [selectedSeriesId, selectedChildId]);
+  }, [selectedChildId]);
+
+  useEffect(() => {
+    // Mount-only data load; suppress set-state-in-effect intentionally.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refresh();
+  }, [refresh]);
 
   const pendingCards = allCards.filter((card) => {
-    const matchesSeries = !selectedSeriesId || card.series_id === selectedSeriesId;
     const matchesQuery = !query || card.name.toLowerCase().includes(query.toLowerCase());
     const matchesChild = !childParam || !inventory.some((row) => row.card_id === card.id && row.child_id === childParam);
-    return matchesSeries && matchesQuery && matchesChild;
+    return matchesQuery && matchesChild;
   });
 
   const ownedCards = allCards.filter((card) => {
-    const matchesSeries = !selectedSeriesId || card.series_id === selectedSeriesId;
     const matchesQuery = !query || card.name.toLowerCase().includes(query.toLowerCase());
     const matchesChild = !childParam || inventory.some((row) => row.card_id === card.id && row.child_id === childParam);
-    return matchesSeries && matchesQuery && matchesChild;
+    return matchesQuery && matchesChild;
   });
 
   return (
@@ -147,45 +132,17 @@ export default function ParentCardsPage() {
         </header>
 
         <form action={formAction} className="mt-6 space-y-4 rounded-[28px] border border-blue-100 bg-white/80 p-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className={`${labelClass} block`}>
-              所屬系列 *
-              <select name="series_id" defaultValue={selectedSeriesId} className={inputClass}>
-                {series.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className={`${labelClass} block`}>
-              卡號
-              <input name="card_no" className={inputClass} placeholder="CAR-001" />
-            </label>
-
-            <label className={`${labelClass} block`}>
-              卡片名稱 *
-              <input name="name" className={inputClass} placeholder="紅色小車" />
-            </label>
-
-            <label className={`${labelClass} block`}>
-              稀有度
-              <input name="rarity" className={inputClass} placeholder="common" />
-            </label>
-
-            <label className={`${labelClass} block`}>
-              原圖連結
-              <input name="source_image_url" className={inputClass} placeholder="https://..." />
-            </label>
-          </div>
+          <label className={`${labelClass} block`}>
+            卡片名稱
+            <input name="name" className={inputClass} placeholder="例如：紅色小車" />
+          </label>
 
           <label className={`${labelClass} block`}>
             圖片
             <input name="source_image_file" type="file" accept="image/*" className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-base text-slate-900" />
           </label>
 
-          <button type="submit" className={`${primaryBtnClass} w-full`} disabled={!canSave || isSubmitting}>
+          <button type="submit" className={`${primaryBtnClass} w-full`} disabled={isSubmitting}>
             {isSubmitting ? '建立中...' : '新增卡片'}
           </button>
 
@@ -195,10 +152,31 @@ export default function ParentCardsPage() {
       </section>
 
       <section className={`mx-auto mt-8 max-w-3xl ${cardShellClass}`}>
+        <h2 className="text-lg font-black text-slate-900">快速連結</h2>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/parent/dashboard" className={`${ghostBtnClass}`}>
+            家長 Dashboard
+          </Link>
+          <Link href="/parent/settings" className={`${ghostBtnClass}`}>
+            家長設定
+          </Link>
+          <Link href="/collection" className={`${ghostBtnClass}`}>
+            孩子圖鑑
+          </Link>
+          <Link href="/reward" className={`${ghostBtnClass}`}>
+            今日獎勵
+          </Link>
+          <Link href="/practice" className={`${ghostBtnClass}`}>
+            每日練習
+          </Link>
+        </div>
+      </section>
+
+      <section className={`mx-auto mt-8 max-w-3xl ${cardShellClass}`}>
         <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-black text-slate-900">卡片列表</h2>
-            <p className="text-sm text-slate-500">搜尋或快速跳轉到指定系列。</p>
+            <p className="text-sm text-slate-500">搜尋卡片，或切換孩子查看誰已經收集到。</p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <input
@@ -207,13 +185,6 @@ export default function ParentCardsPage() {
               className={inputClass}
               placeholder="搜尋卡片"
             />
-            <select value={selectedSeriesId} onChange={(event) => setSelectedSeriesId(event.target.value)} className={inputClass}>
-              {series.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
             <select
               value={selectedChildId}
               onChange={(event) => setSelectedChildId(event.target.value)}
@@ -308,27 +279,6 @@ export default function ParentCardsPage() {
             </section>
           </div>
         )}
-      </section>
-
-      <section className={`mx-auto mt-8 max-w-3xl ${cardShellClass}`}>
-        <h2 className="text-lg font-black text-slate-900">快速連結</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/parent/dashboard" className={`${ghostBtnClass}`}>
-            家長 Dashboard
-          </Link>
-          <Link href="/parent/settings" className={`${ghostBtnClass}`}>
-            家長設定
-          </Link>
-          <Link href="/collection" className={`${ghostBtnClass}`}>
-            孩子圖鑑
-          </Link>
-          <Link href="/reward" className={`${ghostBtnClass}`}>
-            今日獎勵
-          </Link>
-          <Link href="/practice" className={`${ghostBtnClass}`}>
-            每日練習
-          </Link>
-        </div>
       </section>
     </main>
   );

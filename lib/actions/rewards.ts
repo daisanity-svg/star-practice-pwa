@@ -184,10 +184,9 @@ export async function createCard(
     return { ok: false, message: 'Supabase 尚未連線。' };
   }
 
-  const seriesId = value(formData, 'series_id');
   const name = value(formData, 'name');
-  if (!seriesId || !name) {
-    return { ok: false, message: '請選擇所屬系列並輸入卡片名稱。' };
+  if (!name) {
+    return { ok: false, message: '請輸入卡片名稱。' };
   }
 
   const sourceFile = formData.get('source_image_file');
@@ -207,18 +206,16 @@ export async function createCard(
     `${value(formData, 'card_no') || name}-rendered`
   ) || nullableValue(formData, 'rendered_card_image_url');
 
-  const { error } = await supabase.from('cards').insert({
-    series_id: seriesId,
-    category_id: nullableValue(formData, 'category_id'),
+  const payload: Record<string, unknown> = {
     name,
-    card_no: nullableValue(formData, 'card_no'),
-    rarity: value(formData, 'rarity') || 'common',
     source_image_url: sourceImageUrl,
     rendered_card_image_url: renderedCardImageUrl,
     description: nullableValue(formData, 'description'),
     is_active: true,
     created_at: new Date().toISOString()
-  });
+  };
+
+  const { error } = await supabase.from('cards').insert(payload);
 
   if (error) {
     console.error('createCard insert error', error.message);
