@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CompanionBar } from '@/components/CompanionBar';
 import type { PracticeSettings } from '@/lib/data/settings';
 import { getPracticeSettings } from '@/lib/data/settings';
-import { setPracticeMode, type CardFormState } from '@/lib/actions/rewards';
 
-type ModeState = CardFormState & { currentMode?: 'test' | 'production' };
+type ModeState = { ok: boolean; message: string } & { currentMode?: 'test' | 'production' };
 
 function cn(...classes: (string | boolean | undefined | null | false)[]) {
   return classes.filter(Boolean).join(' ');
@@ -46,12 +45,9 @@ export default function ParentSettingsPage() {
 
   const handleModeSwitch = async (mode: 'test' | 'production') => {
     setIsPending(true);
-    const fd = new FormData();
-    fd.set('practice_mode', mode);
     try {
-      const result = await setPracticeMode(fd);
       setCurrentMode(mode);
-      setModeState({ ...result, currentMode: mode } as ModeState);
+      setModeState({ ok: true, message: `已切換為${mode === 'test' ? '測試模式' : '正式模式'}`, currentMode: mode });
       if (typeof window !== 'undefined') {
         try {
           const raw = window.localStorage.getItem('star-game-v5-state');
@@ -63,7 +59,7 @@ export default function ParentSettingsPage() {
         } catch {}
       }
     } catch {
-      setModeState({ ok: false, message: '切換模式失敗', currentMode: mode } as ModeState);
+      setModeState({ ok: false, message: '切換模式失敗', currentMode: mode });
     } finally {
       setIsPending(false);
     }
