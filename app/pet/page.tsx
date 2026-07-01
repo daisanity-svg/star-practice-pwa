@@ -212,16 +212,33 @@ export default function PetPage() {
 
         <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
           <div className="kid-map-header" style={{ padding: '0 2px' }}>
-            <h2 className="kid-map-title">想獲得更多星星？</h2>
-            <p className="kid-map-sub">完成練習就能賺星星幣和能量，照顧小光獸吧</p>
+            <h2 className="kid-map-title">今天的小任務</h2>
+            <p className="kid-map-sub">完成練習，養育你的小光獸</p>
           </div>
-          <button
-            type="button"
-            className="kid-blue-button flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
-            onClick={goPractice}
-          >
-            去練習獲得星星
-          </button>
+          <div style={{ marginTop: 10, borderRadius: 20, background: '#f5f9ff', padding: '14px 12px', textAlign: 'center' }}>
+            {game.todayPracticeCount > 0 ? (
+              <>
+                <p className="text-sm font-black text-[#1766e6]">今天已經完成練習了</p>
+                <p className="mt-2 text-base font-bold text-[#172033]">
+                  小光獸吃得很飽，心情好極了！
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-black text-[#ef4444]">今天還沒練習喔</p>
+                <p className="mt-2 text-base font-bold text-[#172033]">
+                  快去完成練習，賺星星幣和能量回來照顧小光獸吧！
+                </p>
+                <button
+                  type="button"
+                  className="kid-blue-button mt-3 flex min-h-[54px] w-full items-center justify-center rounded-[22px] text-base font-black"
+                  onClick={goPractice}
+                >
+                  去練習
+                </button>
+              </>
+            )}
+          </div>
         </section>
 
         {feedback && (

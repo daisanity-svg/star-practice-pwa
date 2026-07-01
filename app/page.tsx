@@ -1,23 +1,57 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { CompanionBar } from '@/components/CompanionBar';
 import { PetAvatar } from '@/components/PetAvatar';
 import { getCollectionSummary } from '@/lib/data/rewards';
+import { getMapProgress } from '@/lib/actions/map';
 
-export default async function HomePage() {
-  const collections = await getCollectionSummary();
+const NODE_COUNT = 10;
+const BOSS_NODES = new Set([2, 5, 8]);
+const QUEST_THEME_NAMES = ['找朋友', '小司機', '恐龍', '植物', '星星章', '大冒險', '小河流', '雲朵', 'Boss', '終點'];
+
+function nodeLabel(index: number) {
+  if (index === 0) return '出發點';
+  if (index === NODE_COUNT - 1) return '終點';
+  return QUEST_THEME_NAMES[index] ?? `第 ${index + 1} 關`;
+}
+
+export default function HomePage() {
+  const [collections, setCollections] = useState<Awaited<ReturnType<typeof getCollectionSummary>>>([]);
+  const [progress, setProgress] = useState(getMapProgress());
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // Mount guard: avoid accessing localStorage during SSR.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCollectionSummary().then((items) => {
+      if (!cancelled) setCollections(items);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
   const ownedTotal = collections.reduce((sum, item) => sum + item.owned, 0) || 0;
   const cardTotal = collections.reduce((sum, item) => sum + item.total, 0) || 1;
   const progressPercent = Math.round((ownedTotal / cardTotal) * 100);
 
-  const quests = [
-    { id: 1, label: '找朋友', status: 'done' },
-    { id: 2, label: '小司機', status: 'active' },
-    { id: 3, label: '恐龍', status: 'locked' },
-    { id: 4, label: '植物', status: 'locked' },
-    { id: 5, label: '星星章', status: 'locked' },
-  ];
+  const completedCount = mounted ? progress.completed.length : 0;
+  const activeIndex = mounted ? progress.current : 0;
+  const isAllComplete = mounted && completedCount >= NODE_COUNT;
+
+  const quests = Array.from({ length: 5 }, (_, i) => i).map((index) => {
+    const done = progress.completed.includes(index);
+    const active = mounted && activeIndex === index;
+    const status = done ? 'done' : active ? 'active' : 'locked';
+    return { id: index + 1, label: nodeLabel(index), status };
+  });
 
   return (
     <PhoneFrame>
@@ -72,19 +106,35 @@ export default async function HomePage() {
             </div>
           </section>
 
-          <section className="kid-reward">
-            <div className="kid-chest" aria-hidden="true">
-              <div className="kid-chest-top" />
-              <div className="kid-chest-body" />
-              <div className="kid-chest-band" />
-              <div className="kid-chest-shine" />
-            </div>
-            <h3 className="kid-reward-title">完成後打開卡包</h3>
-            <p className="kid-reward-sub">看看今天會遇見哪位新朋友</p>
-            <Link href="/reward" className="kid-reward-cta">
-              打開今日卡包
-            </Link>
-          </section>
+          {isAllComplete ? (
+            <section className="kid-reward">
+              <div className="kid-chest" aria-hidden="true">
+                <div className="kid-chest-top" />
+                <div className="kid-chest-body" />
+                <div className="kid-chest-band" />
+                <div className="kid-chest-shine" />
+              </div>
+              <h3 className="kid-reward-title">小徑已經探索完成！</h3>
+              <p className="kid-reward-sub">快去打開今天的驚喜吧。</p>
+              <Link href="/boss" className="kid-reward-cta">
+                前往 Boss 挑戰
+              </Link>
+            </section>
+          ) : (
+            <section className="kid-reward">
+              <div className="kid-chest" aria-hidden="true">
+                <div className="kid-chest-top" />
+                <div className="kid-chest-body" />
+                <div className="kid-chest-band" />
+                <div className="kid-chest-shine" />
+              </div>
+              <h3 className="kid-reward-title">完成後打開卡包</h3>
+              <p className="kid-reward-sub">看看今天會遇見哪位新朋友</p>
+              <Link href="/reward" className="kid-reward-cta">
+                打開今日卡包
+              </Link>
+            </section>
+          )}
 
           <section className="kid-collect">
             <div className="kid-collect-header">
@@ -112,7 +162,7 @@ export default async function HomePage() {
 
         <KidBottomNav />
         <p className="kid-chip text-center font-mono text-xs text-slate-400" style={{ padding: '8px 0' }}>V5.1 Stability Pass · 499e72e</p>
-        </div>
-        </PhoneFrame>
-        );
+      </div>
+    </PhoneFrame>
+  );
 }

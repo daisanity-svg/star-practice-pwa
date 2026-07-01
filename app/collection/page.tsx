@@ -4,10 +4,23 @@ import { CompanionBar } from '@/components/CompanionBar';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { getRewardCardDisplayName } from '@/lib/cards/display';
 import { getChildInventory } from '@/lib/data/rewards';
+import { loadGameState, addBossWin } from '@/lib/game/state';
 import type { RewardCard } from '@/lib/types';
 
 function cardImageUrl(card: RewardCard) {
   return card.rendered_card_image_url || card.source_image_url || null;
+}
+
+function BossVictoryPlaceholder() {
+  const state = loadGameState();
+  const wins = state.bossWins || 0;
+  return (
+    <div className="rounded-[26px] bg-white/80 p-5 text-center shadow-sm">
+      <p className="text-sm font-black text-[#1766e6]">Boss 勝利紀念</p>
+      <p className="mt-2 text-3xl font-black text-[#172033]">x{wins}</p>
+      <p className="mt-2 text-sm font-bold text-[#5f6f89]">你在冒險中擊敗了 {wins} 次 Boss。</p>
+    </div>
+  );
 }
 
 export default async function CollectionPage() {
@@ -82,13 +95,18 @@ export default async function CollectionPage() {
           <p className="mt-3 text-base font-bold leading-relaxed text-[#5f6f89]">
             完成練習、打開小禮物，按「儲存到收納包」後，卡片才會出現。
           </p>
-          <div className="mt-7 w-full space-y-3">
+
+          <div className="mt-6 w-full space-y-3">
             <Link href="/practice" className="kid-blue-button flex min-h-[60px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
               去練習
             </Link>
             <Link href="/reward" className="kid-white-button flex min-h-[58px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
               看今日獎勵
             </Link>
+          </div>
+
+          <div className="mt-8 w-full">
+            <BossVictoryPlaceholder />
           </div>
         </section>
       )}
