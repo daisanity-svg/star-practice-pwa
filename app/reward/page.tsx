@@ -17,7 +17,7 @@ export default async function RewardPage({ searchParams }: RewardPageProps) {
 
   return (
     <PhoneFrame>
-      <CompanionBar title="今日獎勵" backHref="/" backLabel="地圖" rightLabel="卡片" />
+      <CompanionBar title="小光獸的驚喜" backHref="/" backLabel="地圖" rightLabel="卡片" />
       <RewardDrawPanel practiceRecordId={practiceRecordId} initialResult={todayDraw} />
       <KidBottomNav />
     </PhoneFrame>

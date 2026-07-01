@@ -86,6 +86,12 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
             <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">
               {saved ? '收藏成功！這是你今天找到的新朋友。' : saveResult?.message ?? drawResult?.message}
             </p>
+
+            {isFreshDraw && card ? (
+              <p className="mt-3 rounded-[24px] bg-[#fff7e6] px-4 py-3 text-left text-sm font-bold leading-relaxed text-[#8c6b1a] shadow-sm">
+                小光獸說：這張新朋友看起來好特別，快把它收進你的星星圖鑑吧！
+              </p>
+            ) : null}
           </div>
         </div>
 

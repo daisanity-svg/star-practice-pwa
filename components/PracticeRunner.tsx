@@ -203,9 +203,12 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
       <section className="practice-empty-card practice-complete-card" style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom) + 20px))' }}>
         <div className="practice-orb practice-orb-success" aria-hidden="true" />
         <p className="practice-chip practice-chip-success">完成任務</p>
-        <h1 className="practice-title">今天練習完成！</h1>
+        <h1 className="practice-title">小光獸覺得你超棒！</h1>
         <p className="practice-subtitle">
-          答對 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，獲得了 2 星星幣和 {questions.length} 能量！
+          你答對了 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，得到了 2 星星幣和 {questions.length} 能量。
+        </p>
+        <p className="practice-subtitle" style={{ marginTop: 6 }}>
+          小光獸想帶著這些能量，繼續前往下一個小徑冒險。
         </p>
         {completionMessage ? <p className="practice-note">{completionMessage}</p> : null}
         <div className="practice-complete-actions">
