@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { Route } from 'next';
 import { KidButton } from '@/components/KidButton';
@@ -44,6 +45,7 @@ const DEMO_BOSS_QUESTIONS: Choice[] = [
 
 type BossBattleProps = {
   nodeIndex?: number;
+  returnTo?: string;
 };
 
 function BossIcon({ size = 120 }: { size?: number }) {
@@ -80,7 +82,8 @@ const BOSS_TOTAL_HP = 100;
 const QUESTION_TIME_LIMIT = 5;
 const QUICK_BONUS_THRESHOLD = 3;
 
-export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
+export function BossBattle({ nodeIndex = 2, returnTo = '/reward' }: BossBattleProps) {
+  const router = useRouter();
   const [hp, setHp] = useState(BOSS_TOTAL_HP);
   const [timeLeft, setTimeLeft] = useState(QUESTION_TIME_LIMIT);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -223,10 +226,10 @@ export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
         <div className="boss-result-card is-win">
           <div className="boss-orb boss-orb-win" aria-hidden="true" />
           <h2 className="boss-result-title">Boss 被打敗了！</h2>
-          <p className="boss-result-body">你贏得了戰鬥，回到地圖繼續冒險。</p>
-          <KidButton href={"/adventure" as Route} tone="sky">
-            回到地圖
-          </KidButton>
+          <p className="boss-result-body">小光獸幫你抵擋了攻擊，快去打開今天的驚喜吧。</p>
+          <button type="button" onClick={() => router.push(returnTo)} className="kid-cta">
+            前往獎勵
+          </button>
         </div>
       ) : null}
 
@@ -235,9 +238,9 @@ export function BossBattle({ nodeIndex = 2 }: BossBattleProps) {
           <div className="boss-orb boss-orb-retry" aria-hidden="true" />
           <h2 className="boss-result-title">Boss 還在等你</h2>
           <p className="boss-result-body">再挑戰一次吧。</p>
-          <KidButton href={"/adventure" as Route} tone="white">
+          <button type="button" onClick={() => router.push('/adventure')} className="kid-cta">
             回到地圖
-          </KidButton>
+          </button>
         </div>
       ) : null}
     </section>

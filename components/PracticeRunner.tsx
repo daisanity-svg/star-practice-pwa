@@ -91,7 +91,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
   useEffect(() => {
     if (!isCompleting || !practiceRecordId) return;
     const timer = setTimeout(() => {
-      router.push(`/reward?practice_record_id=${practiceRecordId}`);
+      router.push(`/boss?practice_record_id=${practiceRecordId}`);
     }, 1500);
     return () => clearTimeout(timer);
   }, [isCompleting, practiceRecordId, router]);
