@@ -65,7 +65,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
 
         <p className="relative z-10 self-center rounded-full bg-[#e9f4ff] px-4 py-2 text-sm font-black text-[#1766e6]">今日獎勵</p>
         <h1 className="relative z-10 mt-3 text-[28px] font-black leading-tight text-[#172033]">
-          {isFreshDraw ? '你找到新朋友了' : isAlreadyDrawn ? '今天已經找到這位朋友了' : cantDraw ? '今天卡包正在準備中' : ''}
+          {isFreshDraw ? '你找到新朋友了' : isAlreadyDrawn ? '今天已經找到這位朋友了' : cantDraw ? '今天卡包正在準備中' : '打開小禮物'}
         </h1>
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">

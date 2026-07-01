@@ -54,7 +54,7 @@ export default async function HomePage() {
 
           <section className="kid-map">
             <div className="kid-map-header">
-              <h2 className="kid-map-title">今天 5 關冒險</h2>
+              <h2 className="kid-map-title">今天 5 題練習</h2>
               <p className="kid-map-sub">跟著小徑前進，一站一站完成</p>
             </div>
             <div className="kid-map-route">
