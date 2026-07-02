@@ -71,10 +71,15 @@ export default function ParentCardsPage() {
     await deleteCard(null, formData);
     setSaving(false);
   };
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
   const wrappedSetNextRewardCard = async (formData: FormData) => {
     setSaving(true);
-    await setNextRewardCard(null, formData);
+    const result = await setNextRewardCard(null, formData);
     setSaving(false);
+    if (result?.message) {
+      setAlertMessage(result.message);
+    }
   };
 
   const refresh = useCallback(async () => {

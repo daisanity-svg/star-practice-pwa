@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import type { RewardDrawResult, RewardCard, SaveRewardResult } from '@/lib/types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isPracticeTestModeAsync } from '@/lib/config/app-mode';
-import { getTaipeiTodayString } from '@/lib/utils/timezone';
 
 const demoCard: RewardCard = {
   id: 'demo-red-car',

@@ -47,15 +47,40 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
   const [drawResult, drawFormAction, isDrawing] = useActionState<RewardDrawResult | null, FormData>(drawDailyRewardFromState, initialResult);
   const [saveResult, saveFormAction, isSaving] = useActionState<SaveRewardResult | null, FormData>(saveDrawnRewardFromState, null);
 
-  const card = saveResult?.card ?? drawResult?.card;
-  const drawLogId = drawResult?.draw_log_id;
-  const saved = Boolean((drawResult?.saved_to_inventory || saveResult?.saved_to_inventory));
+  const combinedDrawResult = (drawResult ?? initialResult) as RewardDrawResult | null;
+  const card = saveResult?.card ?? combinedDrawResult?.card;
+  const drawLogId = combinedDrawResult?.draw_log_id;
+  const saved = Boolean((combinedDrawResult?.saved_to_inventory || saveResult?.saved_to_inventory));
+  const errorMessage = combinedDrawResult && !combinedDrawResult.ok ? combinedDrawResult.message : null;
 
-  const isFreshDraw = Boolean(drawResult?.drawn_now && drawResult?.ok);
-  const isAlreadyDrawn = Boolean(drawResult?.ok && !drawResult?.drawn_now);
-  const cantDraw = Boolean(drawResult && !drawResult?.ok);
+  const isFreshDraw = Boolean(combinedDrawResult?.drawn_now && combinedDrawResult?.ok);
+  const isAlreadyDrawn = Boolean(combinedDrawResult?.ok && !combinedDrawResult?.drawn_now);
+  const isPending = !combinedDrawResult;
+  const isDrawError = Boolean(errorMessage);
 
-  if (drawResult || saveResult) {
+  if (isDrawError) {
+    return (
+      <section className="kid-reward-stage relative flex min-h-[auto] flex-col items-center justify-center overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
+        <div className="relative z-10 rounded-[28px] bg-white p-6 shadow-sm">
+          <h1 className="text-[24px] font-black text-[#172033]">小光獸還在忙碌</h1>
+          <p className="mt-3 text-base font-bold leading-relaxed text-[#5f6f89]">{errorMessage}</p>
+          <Link href="/practice" className="kid-blue-button mt-5 flex min-h-[54px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+            先去練習
+          </Link>
+        </div>
+      </section>
+    );
+  }
+
+  if (isPending) {
+    return (
+      <section className="kid-reward-stage relative flex min-h-[auto] flex-col items-center justify-center overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
+        <p className="text-base font-bold text-[#5f6f89]">載入今天的獎勵中...</p>
+      </section>
+    );
+  }
+
+  if (card || isAlreadyDrawn || isFreshDraw || saved) {
     return (
       <section className="kid-reward-stage relative flex min-h-[auto] flex-col overflow-hidden p-4 pb-[calc(env(safe-area-inset-bottom)+156px)] text-center">
         <div className="pointer-events-none absolute inset-x-0 top-10 mx-auto h-80 w-80 rounded-full bg-[#dbeafe] opacity-70 blur-3xl" aria-hidden="true" />
@@ -65,7 +90,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
 
         <p className="relative z-10 self-center rounded-full bg-[#e9f4ff] px-4 py-2 text-sm font-black text-[#1766e6]">今日獎勵</p>
         <h1 className="relative z-10 mt-3 text-[28px] font-black leading-tight text-[#172033]">
-          {isFreshDraw ? '你找到新朋友了' : isAlreadyDrawn ? '今天已經找到這位朋友了' : cantDraw ? '今天卡包正在準備中' : '打開小禮物'}
+          {isFreshDraw ? '你找到新朋友了' : isAlreadyDrawn ? '今天已經找到這位朋友了' : '打開小禮物'}
         </h1>
 
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
@@ -84,7 +109,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
               <div className="rounded-[34px] bg-white p-8 text-6xl shadow-sm">?</div>
             )}
             <p className="mt-5 text-base font-black leading-relaxed text-[#5f6f89]">
-              {saved ? '收藏成功！這是你今天找到的新朋友。' : saveResult?.message ?? drawResult?.message}
+              {saved ? '收藏成功！這是你今天找到的新朋友。' : saveResult?.message ?? combinedDrawResult?.message}
             </p>
 
             {isFreshDraw && card ? (
