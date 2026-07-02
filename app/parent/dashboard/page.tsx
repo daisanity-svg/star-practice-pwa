@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { CompanionBar } from '@/components/CompanionBar';
+import { getDashboardStatus } from '@/lib/data/dashboard';
+import type { DashboardStatus } from '@/lib/data/dashboard';
 
 type MenuCard = {
   title: string;
@@ -18,7 +20,19 @@ const menuCards: MenuCard[] = [
   { title: '遊戲設定', description: '切換模式與重置遊戲進度', href: '/parent/settings', accent: 'bg-[#fce7f3] text-[#be185d]' }
 ];
 
+function StatusCard({ label, value, hint, accent }: { label: string; value: string; hint?: string; accent: string }) {
+  return (
+    <div className={`kid-card flex flex-col justify-between gap-2 rounded-[26px] p-4 active:scale-[0.99] ${accent}`}>
+      <p className="text-xs font-black uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-3xl font-black text-ink">{value}</p>
+      {hint ? <p className="text-xs font-bold text-slate-500">{hint}</p> : null}
+    </div>
+  );
+}
+
 export default async function ParentDashboardPage() {
+  const status: DashboardStatus = await getDashboardStatus();
+
   return (
     <main className="admin-shell safe-screen">
       <CompanionBar title="家長後台" backHref="/" backLabel="小孩端" />
@@ -27,12 +41,41 @@ export default async function ParentDashboardPage() {
         <p className="text-sm font-black text-[#5f6f89]">Dashboard</p>
         <h1 className="mt-2 text-[30px] font-black leading-tight text-ink">家長控制台</h1>
         <p className="mt-2 text-sm font-bold leading-relaxed text-slate-500">
-          選擇下方功能卡片，快速到達對應頁面。
+          查看今天狀況，或快速進入功能。
         </p>
       </section>
 
       <section className="mt-3">
-        <p className="text-center font-mono text-xs text-slate-400" style={{ padding: '4px 0' }}>V5.1 Stability Pass · 499e72e</p>
+        <p className="text-center font-mono text-xs text-slate-400" style={{ padding: '4px 0' }}>
+          {status.isTestMode ? '測試模式' : '正式模式'} · {status.childId ? `孩子：${status.childId.slice(0, 8)}…` : '尚未建立孩子資料'}
+        </p>
+      </section>
+
+      <section className="mt-5 grid grid-cols-2 gap-3">
+        <StatusCard
+          label="今日練習"
+          value={status.todayPracticeDone ? '已完成' : '未完成'}
+          hint={status.todayPracticeDone ? '快去領獎勵' : '還沒去練習'}
+          accent={status.todayPracticeDone ? 'bg-[#e8f8ef] text-[#0d7a4b]' : 'bg-[#fff4e5] text-[#b45f1a]'}
+        />
+        <StatusCard
+          label="今日抽卡"
+          value={status.todayDrawn ? '已抽' : '未抽'}
+          hint={status.pendingDrawCount > 0 ? `還有 ${status.pendingDrawCount} 張可抽` : '卡池已清空'}
+          accent={status.todayDrawn ? 'bg-[#e8f8ef] text-[#0d7a4b]' : 'bg-[#f3e8ff] text-[#7c3aed]'}
+        />
+        <StatusCard
+          label="收藏卡數"
+          value={`${status.inventoryCount}`}
+          hint={`共 ${status.totalCards} 張卡`}
+          accent="bg-[#e9f4ff] text-[#1766e6]"
+        />
+        <StatusCard
+          label="待抽卡數"
+          value={`${status.pendingDrawCount}`}
+          hint={status.pendingDrawCount > 0 ? '還有新卡可以抽' : '沒有新卡'}
+          accent="bg-[#fff4e5] text-[#b45f1a]"
+        />
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-3">
