@@ -10,7 +10,7 @@ import { getChildInventory } from '@/lib/data/rewards';
 import { loadGameState, addBossWin } from '@/lib/game/state';
 import type { ChildCardInventoryItem, RewardCard } from '@/lib/types';
 
-type Coll CardRow = {
+type CollectionCardRow = {
   id: string;
   quantity: number;
   obtained_at?: string | null;
@@ -41,7 +41,7 @@ function BossVictoryPlaceholder() {
 }
 
 export default function CollectionPage() {
-  const [inventory, setInventory] = useState<CollCardRow[]>([]);
+  const [inventory, setInventory] = useState<CollectionCardRow[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +49,7 @@ export default function CollectionPage() {
     let cancelled = false;
     getChildInventory().then((items) => {
       if (cancelled) return;
-      const rows: CollCardRow[] = (items as CollCardRow[]).filter(
+      const rows: CollectionCardRow[] = (items as CollectionCardRow[]).filter(
         (item) => item && item.card && item.card.id
       );
       setInventory(rows);
@@ -58,7 +58,6 @@ export default function CollectionPage() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = useMemo(() => {
