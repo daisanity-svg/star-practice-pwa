@@ -122,21 +122,6 @@ export function setPetMood(mood: PetMood): GameState {
   return updated;
 }
 
-export function incrementPracticeCount(): GameState {
-  const state = loadGameState();
-  const today = new Date().toISOString().slice(0, 10);
-  const updated =
-    state.lastPracticeDate === today
-      ? { ...state, todayPracticeCount: state.todayPracticeCount + 1 }
-      : {
-          ...state,
-          todayPracticeCount: 1,
-          lastPracticeDate: today,
-        };
-  saveGameState(updated);
-  return updated;
-}
-
 export function addBossWin(): GameState {
   const state = loadGameState();
   const updated = { ...state, bossWins: state.bossWins + 1 };
@@ -148,6 +133,21 @@ export function unlockWorld(worldId: string): GameState {
   const state = loadGameState();
   if (state.unlockedWorlds.includes(worldId)) return state;
   const updated = { ...state, unlockedWorlds: [...state.unlockedWorlds, worldId] };
+  saveGameState(updated);
+  return updated;
+}
+
+export function incrementPracticeCount(): GameState {
+  const state = loadGameState();
+  const today = new Date().toISOString().slice(0, 10);
+  const updated =
+    state.lastPracticeDate === today
+      ? { ...state, todayPracticeCount: state.todayPracticeCount + 1 }
+      : {
+          ...state,
+          todayPracticeCount: 1,
+          lastPracticeDate: today,
+        };
   saveGameState(updated);
   return updated;
 }
@@ -207,8 +207,7 @@ export function playWithPet(): GameState {
 
 export function recordDraw(): GameState {
   const state = loadGameState();
-  const today = new Date().toISOString().slice(0, 10);
-  const updated = { ...state, lastDrawDate: today };
+  const updated = { ...state, lastDrawDate: new Date().toISOString().slice(0, 10) };
   saveGameState(updated);
   return updated;
 }
