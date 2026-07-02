@@ -48,7 +48,7 @@ export default function AdventurePage() {
       <section className="adventure-stage">
         <div className="adventure-header">
           <h1 className="adventure-title">冒險地圖</h1>
-          <p className="adventure-sub">完成 10 個節點，打敗 Boss</p>
+          <p className="adventure-sub">完成 10 個節點，打敗 Boss 獲得星星幣</p>
         </div>
 
         <div className="adventure-route">
