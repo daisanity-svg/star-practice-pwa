@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { KidBottomNav } from '@/components/KidBottomNav';
 import { CompanionBar } from '@/components/CompanionBar';
@@ -5,10 +8,24 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 import { getRewardCardDisplayName } from '@/lib/cards/display';
 import { getChildInventory } from '@/lib/data/rewards';
 import { loadGameState, addBossWin } from '@/lib/game/state';
-import type { RewardCard } from '@/lib/types';
+import type { ChildCardInventoryItem, RewardCard } from '@/lib/types';
+
+type Coll CardRow = {
+  id: string;
+  quantity: number;
+  obtained_at?: string | null;
+  card: RewardCard;
+};
 
 function cardImageUrl(card: RewardCard) {
   return card.rendered_card_image_url || card.source_image_url || null;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return '--';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value ?? '--';
+  return date.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' });
 }
 
 function BossVictoryPlaceholder() {
@@ -23,9 +40,38 @@ function BossVictoryPlaceholder() {
   );
 }
 
-export default async function CollectionPage() {
-  const inventory = await getChildInventory();
-  const totalQuantity = inventory.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
+export default function CollectionPage() {
+  const [inventory, setInventory] = useState<CollCardRow[]>([]);
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getChildInventory().then((items) => {
+      if (cancelled) return;
+      const rows: CollCardRow[] = (items as CollCardRow[]).filter(
+        (item) => item && item.card && item.card.id
+      );
+      setInventory(rows);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!query.trim()) return inventory;
+    const q = query.trim().toLowerCase();
+    return inventory.filter((item) => {
+      const name = item.card?.name?.toLowerCase() ?? '';
+      const no = item.card?.card_no?.toLowerCase() ?? '';
+      return name.includes(q) || no.includes(q);
+    });
+  }, [inventory, query]);
+
+  const totalQuantity = filtered.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
 
   return (
     <PhoneFrame>
@@ -56,60 +102,74 @@ export default async function CollectionPage() {
         </div>
       </section>
 
-      {inventory.length ? (
-        <section className="space-y-4 pb-[calc(env(safe-area-inset-bottom)+120px)]">
-          <div className="grid grid-cols-2 gap-2.5">
-            {inventory.map((item) => {
-              const card = item.card;
-              if (!card) return null;
-              const imageUrl = cardImageUrl(card);
-              const displayName = getRewardCardDisplayName(card);
-              const quantity = Number(item.quantity ?? 1);
-
-              return (
-                <div
-                  key={item.id}
-                  className="relative overflow-hidden rounded-3xl bg-white shadow-sm active:scale-[0.99]"
-                >
-                  {imageUrl ? (
-                    <img src={imageUrl} alt={displayName} className="aspect-[3/4] w-full object-contain" />
-                  ) : (
-                    <span className="kid-card-placeholder" aria-label={displayName} />
-                  )}
-                  <p className="truncate px-2 py-2 text-center text-sm font-black text-[#172033]">{displayName}</p>
-                  {quantity > 1 ? (
-                    <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
-                      x{quantity}
-                    </span>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ) : (
-        <section className="kid-empty-card flex min-h-[440px] flex-col items-center justify-center p-6 text-center">
-          <div className="kid-empty-orb" aria-hidden="true" />
-          <p className="kid-chip">收納包是空的</p>
-          <h2 className="mt-4 text-[30px] font-black leading-tight text-[#172033]">還沒有收藏卡片</h2>
-          <p className="mt-3 text-base font-bold leading-relaxed text-[#5f6f89]">
-            完成練習、打開小禮物，按「儲存到收納包」後，卡片才會出現。
-          </p>
-
-          <div className="mt-6 w-full space-y-3">
-            <Link href="/practice" className="kid-blue-button flex min-h-[60px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
-              去練習
-            </Link>
-            <Link href="/reward" className="kid-white-button flex min-h-[58px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
-              看今日獎勵
-            </Link>
+      <section className="px-4 pb-[calc(env(safe-area-inset-bottom)+120px)]">
+        <div className="mx-auto max-w-3xl">
+          <div className="mt-5">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="搜尋卡片名稱或卡號"
+              className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+            />
           </div>
 
-          <div className="mt-8 w-full">
-            <BossVictoryPlaceholder />
-          </div>
-        </section>
-      )}
+          {loading ? (
+            <p className="mt-6 text-center text-base font-bold text-[#5f6f89]">載入收藏中...</p>
+          ) : filtered.length === 0 ? (
+            <div className="kid-empty-card mt-6 flex min-h-[320px] flex-col items-center justify-center rounded-[28px] bg-white/80 p-6 text-center shadow-sm">
+              <div className="kid-empty-orb" aria-hidden="true" />
+              <p className="kid-chip">還沒收錄這張</p>
+              <h2 className="mt-4 text-[28px] font-black leading-tight text-[#172033]">還沒有符合的卡片</h2>
+              <p className="mt-3 text-base font-bold leading-relaxed text-[#5f6f89]">
+                試試其他名稱，或者先去練習打開小禮物。
+              </p>
+              <div className="mt-6 w-full space-y-3">
+                <Link href="/practice" className="kid-blue-button flex min-h-[60px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+                  去練習
+                </Link>
+                <Link href="/reward" className="kid-white-button flex min-h-[58px] items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99]">
+                  看今日獎勵
+                </Link>
+              </div>
+              <div className="mt-8 w-full">
+                <BossVictoryPlaceholder />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-6 grid grid-cols-2 gap-2.5">
+              {filtered.map((item) => {
+                const card = item.card;
+                const imageUrl = cardImageUrl(card);
+                const displayName = getRewardCardDisplayName(card);
+                const quantity = Number(item.quantity ?? 1);
+                return (
+                  <div
+                    key={item.id}
+                    className="relative overflow-hidden rounded-3xl bg-white shadow-sm active:scale-[0.99]"
+                  >
+                    {imageUrl ? (
+                      <img src={imageUrl} alt={displayName} className="aspect-[3/4] w-full object-contain" />
+                    ) : (
+                      <span className="kid-card-placeholder" aria-label={displayName} />
+                    )}
+                    <p className="truncate px-2 py-2 text-center text-sm font-black text-[#172033]">
+                      {displayName}
+                    </p>
+                    <p className="truncate px-2 pb-2 text-center text-[11px] font-bold text-[#7a8599]">
+                      {card.card_no ?? '--'} · {formatDate(item.obtained_at)}
+                    </p>
+                    {quantity > 1 ? (
+                      <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
+                        x{quantity}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
 
       <KidBottomNav />
     </PhoneFrame>
