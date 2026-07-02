@@ -137,8 +137,10 @@ export default function PetPage() {
               <div className="kid-pet-name" style={{ marginTop: 14 }}>
                 {tierName} Lv.{game.growthLevel}
               </div>
-              <div className="kid-pet-mood" style={{ color: MOOD_COLORS[game.petMood] }}>
-                心情：{MOOD_LABELS[game.petMood]}
+              <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 8, borderRadius: 999, background: 'rgba(255,255,255,0.75)', padding: '4px 12px' }}>
+                <span className="kid-pet-mood" style={{ color: MOOD_COLORS[game.petMood] }}>
+                  心情：{MOOD_LABELS[game.petMood]}
+                </span>
               </div>
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div>
@@ -166,8 +168,8 @@ export default function PetPage() {
 
         <section className="kid-soft-panel" style={{ padding: '16px 14px', marginTop: 14 }}>
           <div className="kid-map-header" style={{ padding: '0 2px' }}>
-            <h2 className="kid-map-title">目前資源</h2>
-            <p className="kid-map-sub">看看還剩多少星星幣和能量</p>
+            <h2 className="kid-map-title">目前寶貝</h2>
+            <p className="kid-map-sub">星星幣和能量</p>
           </div>
           <div style={{ display: 'flex', gap: 12, marginTop: 10 }}>
             <div style={{ flex: 1, borderRadius: 20, background: '#e9f4ff', padding: '12px 10px', textAlign: 'center' }}>
@@ -190,8 +192,8 @@ export default function PetPage() {
               disabled={busy || game.energy < 2}
               aria-busy={busy}
             >
-              餵食（消耗 2 能量）
-              <span className="kid-pet-resource"> 能量：{game.energy}</span>
+              餵食
+              <span className="kid-pet-resource"> 2 能量</span>
             </button>
             <button
               type="button"
@@ -200,13 +202,9 @@ export default function PetPage() {
               disabled={busy || game.stars < 1}
               aria-busy={busy}
             >
-              玩耍（消耗 1 星星幣）
-              <span className="kid-pet-resource"> 星星幣：{game.stars}</span>
+              玩耍
+              <span className="kid-pet-resource"> 1 星星幣</span>
             </button>
-          </div>
-          <div style={{ marginTop: 12, fontSize: 12, fontWeight: 800, color: '#5f6f89', lineHeight: 1.6 }}>
-            <p>星星幣：完成練習一輪 +2；完成冒險任務 +2；Boss 勝利 +2。</p>
-            <p>能量：每答對一題 +1（練習、冒險、Boss 都會累積）。</p>
           </div>
         </section>
 

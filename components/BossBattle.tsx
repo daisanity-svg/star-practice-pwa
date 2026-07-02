@@ -103,12 +103,12 @@ export function BossBattle({ nodeIndex = 2, returnTo = '/reward' }: BossBattlePr
     if (finishedRef.current) return;
     setSelected(null);
     setCurrentIndex((i) => {
-      if (i < DEMO_BOSS_QUESTIONS.length - 1) {
-        return i + 1;
+      const next = Math.min(i + 1, DEMO_BOSS_QUESTIONS.length - 1);
+      if (next >= DEMO_BOSS_QUESTIONS.length - 1 && timerRef.current) {
+        clearInterval(timerRef.current);
+        setFinished(true);
       }
-      if (timerRef.current) clearInterval(timerRef.current);
-      setFinished(true);
-      return i;
+      return next;
     });
     setTimeLeft(QUESTION_TIME_LIMIT);
   }, []);

@@ -154,9 +154,15 @@ export default function CollectionPage() {
                     <p className="truncate px-2 py-2 text-center text-sm font-black text-[#172033]">
                       {displayName}
                     </p>
-                    <p className="truncate px-2 pb-2 text-center text-[11px] font-bold text-[#7a8599]">
-                      {card.card_no ?? '--'} · {formatDate(item.obtained_at)}
-                    </p>
+                    {Number.isFinite(parseFloat(card.card_no ?? '')) ? (
+                      <p className="truncate px-2 pb-2 text-center text-[11px] font-bold text-[#7a8599]">
+                        No. {card.card_no} · {formatDate(item.obtained_at)}
+                      </p>
+                    ) : (
+                      <p className="truncate px-2 pb-2 text-center text-[11px] font-bold text-[#7a8599]">
+                        {formatDate(item.obtained_at)}
+                      </p>
+                    )}
                     {quantity > 1 ? (
                       <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
                         x{quantity}
