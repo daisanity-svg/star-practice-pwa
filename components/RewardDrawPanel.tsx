@@ -125,7 +125,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
             <form action={saveFormAction} className="w-full">
               {drawLogId ? <input type="hidden" name="draw_log_id" value={drawLogId} /> : null}
               <button type="submit" disabled={isSaving} className="kid-yellow-button flex min-h-[54px] w-full items-center justify-center rounded-[24px] text-lg font-black active:scale-[0.99] disabled:opacity-60">
-                {isSaving ? '收到中...' : '收到收納包'}
+                {isSaving ? '收到中...' : '收到卡片'}
               </button>
             </form>
           ) : null}
