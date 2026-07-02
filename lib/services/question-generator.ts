@@ -150,21 +150,6 @@ async function ensureDefaultChild() {
   return created.id as string;
 }
 
-async function getActiveRewardPackIdWithStock() {
-  const today = todayKey();
-  const { data, error } = await supabase!
-    .from('reward_packs')
-    .select('id, created_at')
-    .eq('is_active', true)
-    .or(`start_date.is.null,start_date.lte.${today}`)
-    .or(`end_date.is.null,end_date.gte.${today}`)
-    .order('created_at', { ascending: false });
-
-  if (error || !data?.length) return null;
-
-  return (data[0]?.id as string | undefined) ?? null;
-}
-
 async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
   const today = todayKey();
   const { data: existing } = await supabase!
@@ -173,8 +158,6 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
     .eq('child_id', childId)
     .eq('date', today)
     .maybeSingle();
-
-  const rewardPackId = await getActiveRewardPackIdWithStock();
 
   if (existing?.id) {
     const updatePayload: Record<string, unknown> = {};
@@ -188,10 +171,6 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
     if (testMode && existing.is_completed) {
       updatePayload.is_completed = false;
       updatePayload.completed_at = null;
-    }
-
-    if (!existing.reward_pack_id && rewardPackId) {
-      updatePayload.reward_pack_id = rewardPackId;
     }
 
     if (Object.keys(updatePayload).length) {
@@ -215,8 +194,7 @@ async function getOrCreateTodayPlan(childId: string, testMode: boolean) {
         child_id: childId,
         date: today,
         ...DEFAULT_COUNTS,
-        total_required_questions: TOTAL_QUESTIONS,
-        reward_pack_id: rewardPackId
+        total_required_questions: TOTAL_QUESTIONS
       },
       { onConflict: 'child_id,date' }
     )

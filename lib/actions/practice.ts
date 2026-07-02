@@ -34,12 +34,10 @@ async function markDailyPlanComplete(planId: string | null) {
     .eq('id', planId);
 }
 
-async function resolvePlanAndPack(validAnswers: SubmittedPracticeAnswer[]) {
+async function resolvePlan(validAnswers: SubmittedPracticeAnswer[]) {
   const explicitPlanId = validAnswers.find((answer) => answer.daily_learning_plan_id)?.daily_learning_plan_id ?? null;
-  let dailyLearningPlanId = explicitPlanId;
-  let rewardPackId: string | null = null;
 
-  if (!dailyLearningPlanId) {
+  if (!explicitPlanId) {
     const questionIds = validAnswers.map((answer) => answer.generated_question_id).filter(Boolean) as string[];
     if (questionIds.length) {
       const { data: firstQuestion } = await supabase!
@@ -48,27 +46,16 @@ async function resolvePlanAndPack(validAnswers: SubmittedPracticeAnswer[]) {
         .eq('id', questionIds[0])
         .maybeSingle();
 
-      dailyLearningPlanId = firstQuestion?.daily_learning_plan_id ?? null;
+      return firstQuestion?.daily_learning_plan_id ?? null;
     }
   }
 
-  if (dailyLearningPlanId) {
-    const { data: planData } = await supabase!
-      .from('daily_learning_plan')
-      .select('reward_pack_id')
-      .eq('id', dailyLearningPlanId)
-      .maybeSingle();
-
-    rewardPackId = planData?.reward_pack_id ?? null;
-  }
-
-  return { dailyLearningPlanId, rewardPackId };
+  return explicitPlanId;
 }
 
 async function insertPracticeRecord(params: {
   childId: string;
   dailyLearningPlanId: string | null;
-  rewardPackId: string | null;
   totalQuestions: number;
   correctCount: number;
   wrongCount: number;
@@ -86,8 +73,7 @@ async function insertPracticeRecord(params: {
 
   const extendedPayload = {
     ...basePayload,
-    daily_learning_plan_id: params.dailyLearningPlanId,
-    reward_pack_id: params.rewardPackId
+    daily_learning_plan_id: params.dailyLearningPlanId
   };
 
   const extendedResult = await supabase!
@@ -100,7 +86,7 @@ async function insertPracticeRecord(params: {
     return { record: extendedResult.data, error: null };
   }
 
-  const shouldFallback = extendedResult.error?.message?.includes('daily_learning_plan_id') || extendedResult.error?.message?.includes('reward_pack_id');
+  const shouldFallback = extendedResult.error?.message?.includes('daily_learning_plan_id');
   if (!shouldFallback) {
     return { record: null, error: extendedResult.error };
   }
@@ -148,12 +134,11 @@ export async function completePracticeSession(
   const testMode = await isPracticeTestModeAsync();
   const correctCount = validAnswers.filter((answer) => answer.is_correct).length;
   const wrongCount = validAnswers.length - correctCount;
-  const { dailyLearningPlanId, rewardPackId } = await resolvePlanAndPack(validAnswers);
+  const dailyLearningPlanId = await resolvePlan(validAnswers);
 
   const { record, error: recordError } = await insertPracticeRecord({
     childId,
     dailyLearningPlanId,
-    rewardPackId,
     totalQuestions: validAnswers.length,
     correctCount,
     wrongCount
@@ -216,7 +201,7 @@ export async function completePracticeSession(
 
   return {
     ok: true,
-    message: rewardPackId ? '練習完成，可以打開今天的卡包。' : '練習完成，可以前往領取獎勵。',
+    message: '練習完成，可以前往領取獎勵。',
     practice_record_id: record.id,
     total_questions: validAnswers.length,
     correct_count: correctCount,
