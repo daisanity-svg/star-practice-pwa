@@ -225,10 +225,6 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
 
   return (
     <section className={`practice-stage ${modeClass}`}>
-      {practiceMode === 'test' ? (
-        <div className="practice-test-banner">測試模式：題目與抽卡可重複測試</div>
-      ) : null}
-
       <div className="practice-mission-card">
         <div className="practice-mission-header">
           <div>

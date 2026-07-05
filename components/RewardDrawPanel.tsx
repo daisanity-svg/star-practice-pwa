@@ -150,11 +150,6 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
       <p className="relative z-10 mt-5 rounded-full bg-[#e9f4ff] px-4 py-2 text-sm font-black text-[#1766e6]">恭喜完成今天練習</p>
       <h1 className="relative z-10 mt-3 text-[30px] font-black leading-tight text-[#172033]">打開小禮物</h1>
       <p className="relative z-10 mt-3 text-base font-bold leading-relaxed text-[#5f6f89]">按一下小禮物，翻出今天抽到的收藏卡。</p>
-      {!practiceRecordId ? (
-        <p className="relative z-10 mt-5 rounded-[24px] bg-[#f5f9ff] px-4 py-3 text-sm font-bold leading-relaxed text-[#7b8aa3] shadow-sm">
-          測試模式可以直接抽卡；正式模式會要求先完成練習。
-        </p>
-      ) : null}
       <form action={drawFormAction} className="relative z-10 mt-5 w-full space-y-3" onSubmit={() => onDrawStart?.()}>
         {practiceRecordId ? <input type="hidden" name="practice_record_id" value={practiceRecordId} /> : null}
         <button

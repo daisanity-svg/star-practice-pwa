@@ -161,7 +161,6 @@ export default function HomePage() {
         </div>
 
         <KidBottomNav />
-        <p className="kid-chip text-center font-mono text-xs text-slate-400" style={{ padding: '8px 0' }}>V5.1 Stability Pass · 499e72e</p>
       </div>
     </PhoneFrame>
   );
