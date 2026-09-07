@@ -202,6 +202,19 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
     const total = completionStats?.total ?? questions.length;
     const allCorrect = correct === total && total > 0;
 
+    useEffect(() => {
+      if (allCorrect) {
+        import('canvas-confetti').then((mod) => {
+          mod.default({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.8 },
+            colors: ['#ffd95a', '#ffb800', '#ffffff', '#2387f7']
+          });
+        });
+      }
+    }, [allCorrect]);
+
     return (
       <section className="practice-empty-card practice-complete-card" style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom) + 20px))' }}>
         <div className="practice-orb practice-orb-success" aria-hidden="true" />
@@ -213,7 +226,7 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
           你答對了 {correct} / {total} 題，得到了 2 星星幣和 {total} 能量。
         </p>
         {allCorrect && (
-          <div className="practice-all-correct-badge mt-4 flex items-center justify-center gap-2 rounded-full bg-[#ffd95a] px-4 py-2 text-base font-black text-[#471f04]">
+          <div className="practice-all-correct-badge mt-4 flex items-center justify-center gap-2 rounded-full bg-[#ffd95a] px-4 py-2 text-base font-black text-[#471f04] kid-pop-in">
             <span className="text-2xl">🏆</span>
             <span>全對獎勵！</span>
           </div>

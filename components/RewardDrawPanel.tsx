@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useActionState } from 'react';
@@ -57,6 +58,22 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
   const isAlreadyDrawn = Boolean(combinedDrawResult?.ok && !combinedDrawResult?.drawn_now);
   const isPending = !combinedDrawResult;
   const isDrawError = Boolean(errorMessage);
+
+  useEffect(() => {
+    if (isFreshDraw && card) {
+      const rarity = (card.rarity ?? '').toLowerCase();
+      if (['rare', 'super_rare', 'legendary'].includes(rarity)) {
+        import('canvas-confetti').then((mod) => {
+          mod.default({
+            particleCount: 120,
+            spread: 90,
+            origin: { y: 0.5 },
+            colors: ['#ffe7a0', '#ffb800', '#ffffff', '#1766e6']
+          });
+        });
+      }
+    }
+  }, [isFreshDraw, card]);
 
   if (isDrawError) {
     return (

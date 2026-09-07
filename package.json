@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "latest",
+    "canvas-confetti": "^1.9.4",
     "clsx": "latest",
     "next": "latest",
     "react": "latest",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "latest",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
