@@ -19,7 +19,7 @@ const toneClass = {
 };
 
 export function KidButton({ href, children, tone = 'primary', className = '', type = 'button', ...buttonProps }: KidButtonProps) {
-  const classes = `tap-target flex touch-manipulation select-none items-center justify-center gap-2 px-6 text-center text-xl font-black tracking-[-0.02em] transition active:scale-[0.98] ${toneClass[tone]} ${className}`;
+  const classes = `tap-target flex touch-manipulation select-none items-center justify-center gap-2 px-6 text-center text-xl font-black tracking-[-0.02em] transition active:scale-[0.97] active:brightness-[0.96] ${toneClass[tone]} ${className}`;
 
   if (href) {
     return (

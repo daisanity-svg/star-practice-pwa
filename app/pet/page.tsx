@@ -39,6 +39,7 @@ export default function PetPage() {
   const [game, setGame] = useState<GameState | null>(() => loadGameState());
   const [feedback, setFeedback] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [petBounce, setPetBounce] = useState(false);
 
   const tierName = game?.growthLevel && game.growthLevel <= 1
     ? '小光蛋'
@@ -53,10 +54,15 @@ export default function PetPage() {
     setTimeout(() => setFeedback(null), 1800);
   };
 
+  const triggerPetBounce = () => {
+    setPetBounce(true);
+    setTimeout(() => setPetBounce(false), 320);
+  };
+
   const handleFeed = () => {
     if (!game || busy) return;
     if (game.energy < 2) {
-      showFeedback('能量好像不夠了，先去練習醒醒神吧！');
+      showFeedback('能量好像不夠了，休息一下再來吧！');
       return;
     }
     setBusy(true);
@@ -64,12 +70,13 @@ export default function PetPage() {
     feedPet();
     setPetMood('happy');
     refresh();
+    triggerPetBounce();
     const updated = loadGameState();
     const leveled = updated.growthLevel > before;
     const remaining = getNextGrowthNeed(updated.growthLevel) - updated.feedCount;
     showFeedback(
       leveled
-        ? `咦？${tierName}吹起氣來了！成長升級到 Lv.${updated.growthLevel}！`
+        ? `咦？${tierName}炸起來囉！升級到 Lv.${updated.growthLevel}！`
         : `${tierName}吃飽飽，再餵 ${remaining} 次就要長大囉`,
     );
     setTimeout(() => setBusy(false), 500);
@@ -86,6 +93,7 @@ export default function PetPage() {
     playWithPet();
     setPetMood('excited');
     refresh();
+    triggerPetBounce();
     const updated = loadGameState();
     const leveled = updated.intimacyLevel > before;
     const remaining = getNextIntimacyNeed(updated.intimacyLevel) - updated.playCount;
@@ -125,7 +133,7 @@ export default function PetPage() {
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div className="kid-pet-visual">
                 <div
-                  className="kid-pet-body"
+                  className={`kid-pet-body ${petBounce ? 'kid-pet-bounce' : ''}`}
                   style={{
                     width: 100,
                     height: 110,
@@ -240,7 +248,7 @@ export default function PetPage() {
         </section>
 
         {feedback && (
-          <div className="kid-pet-dialog" style={{ marginTop: 14 }}>
+          <div className="kid-pet-dialog kid-pet-dialog-pop" style={{ marginTop: 14 }}>
             <div className="kid-pet-dialog-text">{feedback}</div>
           </div>
         )}

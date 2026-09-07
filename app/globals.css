@@ -847,6 +847,67 @@ a[aria-disabled='true'] {
   background: rgba(255, 255, 255, 0.88);
 }
 
+.kid-pet-btn {
+  min-height: 56px;
+  padding: 10px 20px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffd95a 0%, #ffb800 100%);
+  color: #471f04;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 12px 24px rgba(255, 183, 77, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kid-pet-btn:active {
+  transform: scale(0.95);
+  box-shadow: 0 4px 12px rgba(255, 183, 77, 0.3);
+}
+
+.kid-pet-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.kid-pet-adjacent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #7a5a1c;
+  opacity: 0.9;
+}
+
+.kid-pet-dialog {
+  border-radius: 22px;
+  background: rgba(255, 248, 230, 0.96);
+  padding: 12px 16px;
+  box-shadow: 0 10px 24px rgba(255, 183, 77, 0.35);
+  transition: opacity 0.2s ease;
+}
+
+.kid-pet-dialog-text {
+  font-size: 15px;
+  font-weight: 800;
+  color: #5c3a04;
+  line-height: 1.4;
+}
+
+.kid-pet-exp-track {
+  height: 10px;
+  border-radius: 999px;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.kid-pet-exp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7cd081 0%, #3fae5d 100%);
+}
+
 .kid-blue-button {
   background: linear-gradient(180deg, #2f8cff 0%, #1766e6 100%);
   color: white;

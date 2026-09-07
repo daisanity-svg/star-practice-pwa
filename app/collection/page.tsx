@@ -44,6 +44,7 @@ export default function CollectionPage() {
   const [inventory, setInventory] = useState<CollectionCardRow[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [clickedCardId, setClickedCardId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,6 +73,15 @@ export default function CollectionPage() {
 
   const totalQuantity = filtered.reduce((sum, item) => sum + Number(item.quantity ?? 1), 0);
 
+  // 點擊卡片後的反饋處理
+  const handleCardClick = (cardId: string) => {
+    setClickedCardId(cardId);
+    // 2 秒後自動清除反饋狀態
+    setTimeout(() => {
+      setClickedCardId(null);
+    }, 2000);
+  };
+
   return (
     <PhoneFrame>
       <CompanionBar title="我的收納包" backHref="/" backLabel="地圖" rightLabel={`${inventory.length} 種卡片`} />
@@ -88,21 +98,11 @@ export default function CollectionPage() {
           </div>
           <div className="kid-collect-jewel relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[28px] shadow-[0_14px_28px_rgba(31,94,246,0.18)]" aria-hidden="true" />
         </div>
-
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-[26px] bg-white/18 p-4 text-center backdrop-blur">
-            <p className="text-sm font-black text-white/80">卡片種類</p>
-            <p className="mt-1 text-3xl font-black">{inventory.length}</p>
-          </div>
-          <div className="rounded-[26px] bg-white/18 p-4 text-center backdrop-blur">
-            <p className="text-sm font-black text-white/80">總張數</p>
-            <p className="mt-1 text-3xl font-black">{totalQuantity}</p>
-          </div>
-        </div>
       </section>
 
-      <section className="px-4 pb-[calc(env(safe-area-inset-bottom)+120px)]">
+      <section className="mt-5">
         <div className="mx-auto max-w-3xl">
+          {/* 搜索框 */}
           <div className="mt-5">
             <input
               value={query}
@@ -112,10 +112,16 @@ export default function CollectionPage() {
             />
           </div>
 
-          {loading ? (
-            <p className="mt-6 text-center text-base font-bold text-[#5f6f89]">載入收藏中...</p>
-          ) : filtered.length === 0 ? (
-            <div className="kid-empty-card mt-6 flex min-h-[320px] flex-col items-center justify-center rounded-[28px] bg-white/80 p-6 text-center shadow-sm">
+          {/* 載入中動畫 */}
+          {loading && (
+            <div className="mt-8 flex justify-center">
+              <div className="h-12 w-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* 搜尋結果為空 */}
+          {!loading && filtered.length === 0 && (
+            <div className="mt-6 flex min-h-[320px] flex-col items-center justify-center rounded-[28px] bg-white/80 p-6 text-center shadow-sm">
               <div className="kid-empty-orb" aria-hidden="true" />
               <p className="kid-chip">還沒收錄這張</p>
               <h2 className="mt-4 text-[28px] font-black leading-tight text-[#172033]">還沒有符合的卡片</h2>
@@ -134,17 +140,24 @@ export default function CollectionPage() {
                 <BossVictoryPlaceholder />
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* 卡片列表 */}
+          {!loading && filtered.length > 0 && (
             <div className="mt-6 grid grid-cols-2 gap-2.5">
               {filtered.map((item) => {
                 const card = item.card;
                 const imageUrl = cardImageUrl(card);
                 const displayName = getRewardCardDisplayName(card);
                 const quantity = Number(item.quantity ?? 1);
+                const isClicked = clickedCardId === item.id;
                 return (
                   <div
                     key={item.id}
-                    className="relative overflow-hidden rounded-3xl bg-white shadow-sm active:scale-[0.99]"
+                    className={`relative overflow-hidden rounded-3xl bg-white shadow-sm transition-all duration-200 hover:shadow-lg ${
+                      isClicked ? 'ring-2 ring-blue-400 scale-105' : 'active:scale-[0.99]'
+                    }`}
+                    onClick={() => handleCardClick(item.id)}
                   >
                     {imageUrl ? (
                       <img src={imageUrl} alt={displayName} className="aspect-[3/4] w-full object-contain" />
@@ -163,11 +176,17 @@ export default function CollectionPage() {
                         {formatDate(item.obtained_at)}
                       </p>
                     )}
-                    {quantity > 1 ? (
-                      <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)] ring-2 ring-white/90">
+                    {quantity > 1 && (
+                      <span className="absolute right-2 top-2 rounded-full bg-[#1766e6] px-2.5 py-1 text-xs font-black text-white shadow-[0_6px_14px_rgba(23,102,230,0.32)]">
                         x{quantity}
                       </span>
-                    ) : null}
+                    )}
+                    {/* 點擊反饋標示 */}
+                    {isClicked && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="h-8 w-8 animate-ping rounded-full bg-blue-400 opacity-20" aria-hidden="true" />
+                      </div>
+                    )}
                   </div>
                 );
               })}
