@@ -96,7 +96,7 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
         <div className="relative z-10 mt-4 flex flex-col items-center justify-center">
           <div className="reward-compact-actions">
             {card ? (
-              <div className="animate-pack-open relative flex w-full justify-center">
+              <div className="animate-pack-open relative flex w-full justify-center kid-pop-in">
                 <div className="relative aspect-[3/4] w-full max-w-[260px] overflow-hidden rounded-[24px]">
                   {getCardImageUrl(card) ? (
                     <Image src={getCardImageUrl(card)!} alt={getRewardCardDisplayName(card)} fill className="object-contain" sizes="260px" unoptimized />
@@ -113,9 +113,18 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
             </p>
 
             {isFreshDraw && card ? (
-              <p className="mt-3 rounded-[24px] bg-[#fff7e6] px-4 py-3 text-left text-sm font-bold leading-relaxed text-[#8c6b1a] shadow-sm">
-                小光獸說：這張新朋友看起來好特別，快把它收進你的星星圖鑑吧！
-              </p>
+              <>
+                {card.rarity && ['rare', 'super_rare', 'legendary'].includes(card.rarity.toLowerCase()) && (
+                  <p className="mt-3 rounded-[24px] bg-[#ffe7a0] px-4 py-3 text-left text-base font-bold leading-relaxed text-[#7a4a08] shadow-sm">
+                    小光獸說：哇！這麼厲害的朋友！快把它收進你的星星圖鑑吧！
+                  </p>
+                )}
+                {!card.rarity || !['rare', 'super_rare', 'legendary'].includes(card.rarity.toLowerCase()) && (
+                  <p className="mt-3 rounded-[24px] bg-[#fff7e6] px-4 py-3 text-left text-sm font-bold leading-relaxed text-[#8c6b1a] shadow-sm">
+                    小光獸說：這張新朋友看起來好特別，快把它收進你的星星圖鑑吧！
+                  </p>
+                )}
+              </>
             ) : null}
           </div>
         </div>
@@ -163,6 +172,11 @@ export function RewardDrawPanel({ practiceRecordId, initialResult = null, onDraw
           去看圖鑑
         </Link>
       </form>
+      {isDrawing && (
+        <div className="relative z-10 mt-4 h-6 text-center text-sm font-black text-[#1766e6] kid-shimmer">
+          小光獸正在翻找今天的驚喜...
+        </div>
+      )}
     </section>
   );
 }

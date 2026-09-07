@@ -7,22 +7,25 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 import { CompanionBar } from '@/components/CompanionBar';
 import { PetAvatar } from '@/components/PetAvatar';
 import { getCollectionSummary } from '@/lib/data/rewards';
-import { getMapProgress } from '@/lib/actions/map';
+import { getMapProgress, MapProgress } from '@/lib/actions/map';
+import { loadGameState, GameState, DEFAULT_GAME_STATE } from '@/lib/game/state';
 
-const NODE_COUNT = 10;
-const BOSS_NODES = new Set([2, 5, 8]);
-const QUEST_THEME_NAMES = ['找朋友', '小司機', '恐龍', '植物', '星星章', '大冒險', '小河流', '雲朵', 'Boss', '終點'];
+const NODE_COUNT = 5;
+const BOSS_NODES = new Set([2, 4]);
+const QUEST_THEME_NAMES = ['找朋友', '小司機', '恐龍', '植物', '星星章'];
 
 function nodeLabel(index: number) {
   if (index === 0) return '出發點';
-  if (index === NODE_COUNT - 1) return '終點';
+  if (index === NODE_COUNT - 1) return '星星章';
   return QUEST_THEME_NAMES[index] ?? `第 ${index + 1} 關`;
 }
 
 export default function HomePage() {
   const [collections, setCollections] = useState<Awaited<ReturnType<typeof getCollectionSummary>>>([]);
-  const [progress, setProgress] = useState(getMapProgress());
+  const [progress, setProgress] = useState<MapProgress>(() => getMapProgress({ nodeCount: NODE_COUNT }));
   const [mounted, setMounted] = useState(false);
+  const [gameState, setGameState] = useState<GameState>(DEFAULT_GAME_STATE);
+  const [todayCount, setTodayCount] = useState(0);
 
   useEffect(() => {
     // Mount guard: avoid accessing localStorage during SSR.
@@ -37,6 +40,17 @@ export default function HomePage() {
     });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    let cancelled = false;
+    try {
+      const state = loadGameState();
+      if (!cancelled) setGameState(state);
+      if (!cancelled) setTodayCount(state.todayPracticeCount);
+    } catch {}
+    return () => { cancelled = true; };
+  }, [mounted]);
 
   const ownedTotal = collections.reduce((sum, item) => sum + item.owned, 0) || 0;
   const cardTotal = collections.reduce((sum, item) => sum + item.total, 0) || 1;
@@ -69,11 +83,11 @@ export default function HomePage() {
         <div className="kid-game-content">
           <section className="kid-hero">
             <div className="kid-status-row">
-              <span className="kid-status-pill">第 3 天冒險中</span>
+              <span className="kid-status-pill">第 {todayCount + 1} 天冒險中</span>
               <span className="kid-status-pill">{ownedTotal} 位朋友</span>
             </div>
             <div className="flex justify-center">
-              <PetAvatar growthLevel={1} />
+              <PetAvatar growthLevel={gameState.growthLevel} />
             </div>
             <h1 className="kid-hero-title">今天出發<br />找星星朋友</h1>
             <p className="kid-hero-sub">完成 5 個小任務，打開今日卡包</p>

@@ -6,14 +6,30 @@ export type MapProgress = {
   bossHp: Record<number, number>;
 };
 
-export function getMapProgress(): MapProgress {
+export type MapConfig = {
+  nodeCount: number;
+  bossNodeCount?: number;
+};
+
+export const DEFAULT_NODE_COUNT = 5;
+export const DEFAULT_BOSS_NODE_COUNT = 0;
+
+export function getMapProgress(config?: MapConfig): MapProgress {
   const defaultProgress: MapProgress = { current: 0, completed: [], bossHp: {} };
   if (typeof window === 'undefined') return defaultProgress;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as MapProgress;
-      return parsed;
+      // Migrate legacy bigger progress arrays down to current visible node count
+      const maxIndex = (config?.nodeCount ?? DEFAULT_NODE_COUNT) - 1;
+      return {
+        current: Math.min(parsed.current, maxIndex),
+        completed: parsed.completed.filter((idx) => idx <= maxIndex),
+        bossHp: Object.fromEntries(
+          Object.entries(parsed.bossHp).filter(([key]) => Number(key) <= maxIndex)
+        ),
+      };
     }
   } catch {
     // ignore
@@ -26,16 +42,17 @@ export function setMapProgress(progress: MapProgress) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
 }
 
-export function completeAdventureNode(nodeIndex: number): MapProgress {
-  const progress = getMapProgress();
+export function completeAdventureNode(nodeIndex: number, config?: MapConfig): MapProgress {
+  const progress = getMapProgress(config);
   if (!progress.completed.includes(nodeIndex)) {
     progress.completed = [...progress.completed, nodeIndex];
   }
+  const nodeCount = (config?.nodeCount ?? DEFAULT_NODE_COUNT) - 1;
   const next = nodeIndex + 1;
-  if (next < 10 && !progress.completed.includes(next)) {
+  if (next <= nodeCount && !progress.completed.includes(next)) {
     progress.current = next;
-  } else if (next >= 10) {
-    progress.current = 9;
+  } else {
+    progress.current = nodeIndex;
   }
   setMapProgress(progress);
   return progress;
@@ -47,12 +64,7 @@ export function completeBossNode(nodeIndex: number): MapProgress {
     progress.completed = [...progress.completed, nodeIndex];
   }
   delete progress.bossHp[nodeIndex];
-  const next = nodeIndex + 1;
-  if (next < 10 && !progress.completed.includes(next)) {
-    progress.current = next;
-  } else if (next >= 10) {
-    progress.current = 9;
-  }
+  progress.current = nodeIndex;
   setMapProgress(progress);
   return progress;
 }

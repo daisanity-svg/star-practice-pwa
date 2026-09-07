@@ -176,12 +176,32 @@ export type CardFormState =
   | { ok: false; message: string }
   | null;
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const SUPPORTED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
+function getFileExtension(fileName: string): string {
+  const parts = fileName.split('.');
+  if (parts.length < 2) return '';
+  return parts[parts.length - 1].toLowerCase();
+}
+
+function isSupportedFormat(fileName: string): boolean {
+  const ext = getFileExtension(fileName);
+  return SUPPORTED_EXTENSIONS.includes(ext);
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export async function createCard(
   _prevState: CardFormState,
   formData: FormData
 ): Promise<CardFormState> {
   if (!supabase) {
-    return { ok: false, message: 'Supabase 尚未連線。' };
+    return { ok: false, message: '系統尚未設定好，請稍後再試。' };
   }
 
   const name = value(formData, 'name');
@@ -191,13 +211,34 @@ export async function createCard(
 
   const sourceFile = formData.get('source_image_file');
   let sourceImageUrl: string | null = null;
+
   if (sourceFile instanceof File && sourceFile.size > 0) {
+    if (!isSupportedFormat(sourceFile.name)) {
+      return {
+        ok: false,
+        message: `不支援的檔案格式：「${sourceFile.name}」。請改用 JPG、PNG 或 WebP 格式。`
+      };
+    }
+
+    if (sourceFile.size > MAX_FILE_SIZE) {
+      return {
+        ok: false,
+        message: `檔案太大：「${sourceFile.name}」（${formatFileSize(sourceFile.size)}）。請改用 5MB 以內的圖片。`
+      };
+    }
+
     sourceImageUrl = await uploadFileToStorage(sourceFile, 'source');
     if (!sourceImageUrl) {
-      return { ok: false, message: '原圖上傳失敗，請確認 Storage bucket 設定或稍後再試。' };
+      return {
+        ok: false,
+        message: `圖片上傳失敗：「${sourceFile.name}」。請檢查網路或稍後再試。`
+      };
     }
   } else {
     sourceImageUrl = nullableValue(formData, 'source_image_url');
+    if (!sourceImageUrl) {
+      return { ok: false, message: '請上傳圖片或提供圖片網址。' };
+    }
   }
 
   const renderedCardImageUrl = await uploadDataUrlToStorage(

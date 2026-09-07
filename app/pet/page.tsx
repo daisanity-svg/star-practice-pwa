@@ -56,7 +56,7 @@ export default function PetPage() {
   const handleFeed = () => {
     if (!game || busy) return;
     if (game.energy < 2) {
-      showFeedback('能量不夠，先去練習賺能量吧！');
+      showFeedback('能量好像不夠了，先去練習醒醒神吧！');
       return;
     }
     setBusy(true);
@@ -69,16 +69,16 @@ export default function PetPage() {
     const remaining = getNextGrowthNeed(updated.growthLevel) - updated.feedCount;
     showFeedback(
       leveled
-        ? `${tierName}吃飽飽，成長升級到 Lv.${updated.growthLevel}！`
-        : `${tierName}吃飽飽，再餵 ${remaining} 次就升級了`,
+        ? `咦？${tierName}吹起氣來了！成長升級到 Lv.${updated.growthLevel}！`
+        : `${tierName}吃飽飽，再餵 ${remaining} 次就要長大囉`,
     );
-    setTimeout(() => setBusy(false), 400);
+    setTimeout(() => setBusy(false), 500);
   };
 
   const handlePlay = () => {
     if (!game || busy) return;
     if (game.stars < 1) {
-      showFeedback('星星幣不夠，先去練習賺星星吧！');
+      showFeedback('星星幣不夠，先去練習賺一點回來吧！');
       return;
     }
     setBusy(true);
@@ -91,10 +91,10 @@ export default function PetPage() {
     const remaining = getNextIntimacyNeed(updated.intimacyLevel) - updated.playCount;
     showFeedback(
       leveled
-        ? `一起玩耍！親密度升級到 Lv.${updated.intimacyLevel}！${tierName}更喜歡你了！`
-        : `一起玩耍！親密度 +1，再玩 ${remaining} 次就升級了`,
+        ? `嗨嗨嗨！親密度升到 Lv.${updated.intimacyLevel}！${tierName}超開心的！`
+        : `一起玩耍！親密度 +1，再玩 ${remaining} 次就更要好啦`,
     );
-    setTimeout(() => setBusy(false), 400);
+    setTimeout(() => setBusy(false), 500);
   };
 
   const goPractice = () => {

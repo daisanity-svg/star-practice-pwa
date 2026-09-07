@@ -198,15 +198,26 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
 
   if (practiceRecordId) {
     const rewardHref = `/reward?practice_record_id=${practiceRecordId}` as Route;
+    const correct = completionStats?.correct ?? 0;
+    const total = completionStats?.total ?? questions.length;
+    const allCorrect = correct === total && total > 0;
 
     return (
       <section className="practice-empty-card practice-complete-card" style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom) + 20px))' }}>
         <div className="practice-orb practice-orb-success" aria-hidden="true" />
         <p className="practice-chip practice-chip-success">完成任務</p>
-        <h1 className="practice-title">小光獸覺得你超棒！</h1>
+        <h1 className="practice-title kid-pop-in" style={{ fontSize: allCorrect ? '36px' : '30px' }}>
+          {allCorrect ? '太棒了！全對！' : '小光獸覺得你超棒！'}
+        </h1>
         <p className="practice-subtitle">
-          你答對了 {completionStats?.correct ?? 0} / {completionStats?.total ?? questions.length} 題，得到了 2 星星幣和 {questions.length} 能量。
+          你答對了 {correct} / {total} 題，得到了 2 星星幣和 {total} 能量。
         </p>
+        {allCorrect && (
+          <div className="practice-all-correct-badge mt-4 flex items-center justify-center gap-2 rounded-full bg-[#ffd95a] px-4 py-2 text-base font-black text-[#471f04]">
+            <span className="text-2xl">🏆</span>
+            <span>全對獎勵！</span>
+          </div>
+        )}
         <p className="practice-subtitle" style={{ marginTop: 6 }}>
           小光獸想帶著這些能量，繼續前往下一個小徑冒險。
         </p>
@@ -297,9 +308,9 @@ export function PracticeRunner({ questions, practiceMode = 'production' }: Pract
 
       {answeredCurrent ? (
         <div className={`practice-feedback ${isTracingQuestion(current) || currentIsCorrect ? 'is-ok' : 'is-retry'}`}>
-          <p className="practice-feedback-title">{isTracingQuestion(current) || currentIsCorrect ? '太棒了！找到朋友了' : '差一點點，我們再記一次'}</p>
+          <p className="practice-feedback-title">{isTracingQuestion(current) || currentIsCorrect ? '太棒了！找到朋友了' : '沒關係，再找一次朋友吧'}</p>
           <p className="practice-feedback-body">
-            {isTracingQuestion(current) || currentIsCorrect ? encouragement(current) : `${encouragement(current)}，下次一定更快！`}
+            {isTracingQuestion(current) || currentIsCorrect ? encouragement(current) : `${encouragement(current)}，我們再試一次，小光獸陪你`}
           </p>
         </div>
       ) : null}

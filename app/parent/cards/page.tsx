@@ -35,22 +35,30 @@ type DashboardChild = {
 
 const cardShellClass = 'rounded-[28px] bg-white/75 p-5 shadow-sm';
 const inputClass =
-  'mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100';
+  'mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100';
 const labelClass = 'text-sm font-black text-slate-700';
 const primaryBtnClass =
-  'inline-flex items-center justify-center rounded-[26px] bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700';
+  'inline-flex items-center justify-center rounded-[26px] bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed';
 const dangerBtnClass =
   'inline-flex items-center justify-center rounded-[26px] bg-red-500 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-red-600';
 const ghostBtnClass =
   'inline-flex items-center justify-center rounded-[26px] border border-blue-200 bg-white px-4 py-2 text-sm font-bold text-blue-700 transition hover:border-blue-300';
 const nextActionBtnClass =
   'playful-shadow inline-flex items-center justify-center rounded-[26px] bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700';
+const smallMutedClass =
+  'text-xs font-semibold text-slate-500';
 
 function formatDate(value?: string | null) {
   if (!value) return '--';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value ?? '--';
   return date.toLocaleDateString('zh-TW', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function ParentCardsPage() {
@@ -62,6 +70,9 @@ export default function ParentCardsPage() {
   const [formState, formAction, isSubmitting] = useActionState<CardFormState, FormData>(createCard, null);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const canSave = !isSubmitting && !saving;
   const childParam = selectedChildId || null;
@@ -71,8 +82,6 @@ export default function ParentCardsPage() {
     await deleteCard(null, formData);
     setSaving(false);
   };
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-
   const wrappedSetNextRewardCard = async (formData: FormData) => {
     setSaving(true);
     const result = await setNextRewardCard(null, formData);
@@ -109,10 +118,28 @@ export default function ParentCardsPage() {
   }, [selectedChildId]);
 
   useEffect(() => {
-    // Mount-only data load; suppress set-state-in-effect intentionally.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+      setAlertMessage(null);
+    } else {
+      setSelectedFile(null);
+      setPreviewUrl(null);
+    }
+  };
 
   const pendingCards = allCards.filter((card) => {
     const matchesQuery = !query || card.name.toLowerCase().includes(query.toLowerCase());
@@ -139,20 +166,44 @@ export default function ParentCardsPage() {
         <form action={formAction} className="mt-6 space-y-4 rounded-[28px] border border-blue-100 bg-white/80 p-4">
           <label className={`${labelClass} block`}>
             卡片名稱
-            <input name="name" className={inputClass} placeholder="例如：紅色小車" />
+            <input
+              name="name"
+              className={inputClass}
+              placeholder="例如：紅色小車"
+              disabled={isSubmitting || saving}
+            />
           </label>
 
           <label className={`${labelClass} block`}>
             圖片
-            <input name="source_image_file" type="file" accept="image/*" className="mt-2 w-full rounded-2xl border border-blue-100 bg-white px-4 py-3 text-base text-slate-900" />
+            <input
+              name="source_image_file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className={`${inputClass} file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100`}
+              onChange={handleFileChange}
+              disabled={isSubmitting || saving}
+            />
+            {selectedFile && (
+              <p className={`${smallMutedClass} mt-1`}>已選擇：{selectedFile.name}（{formatFileSize(selectedFile.size)}）</p>
+            )}
+            {previewUrl && (
+              <div className="mt-3 rounded-2xl overflow-hidden border border-blue-100 bg-white">
+                <img src={previewUrl} alt={selectedFile?.name ?? '預覷'} className="h-28 w-full object-cover" />
+              </div>
+            )}
           </label>
 
-          <button type="submit" className={`${primaryBtnClass} w-full`} disabled={isSubmitting}>
-            {isSubmitting ? '建立中...' : '新增卡片'}
-          </button>
-
           {formState && formState.ok && <p className="text-sm font-semibold text-emerald-600">{formState.message}</p>}
-          {formState && !formState.ok && <p className="text-sm font-semibold text-red-500">{formState.message}</p>}
+          {formState && !formState.ok && <p className="text-sm font-semibold text-red-600">{formState.message}</p>}
+
+          <button
+            type="submit"
+            className={`${primaryBtnClass} w-full`}
+            disabled={isSubmitting || saving || !selectedFile}
+          >
+            {isSubmitting ? '建立中...' : saving ? '儲存中...' : '新增卡片'}
+          </button>
         </form>
       </section>
 
@@ -228,8 +279,8 @@ export default function ParentCardsPage() {
                         )}
                         <div className="space-y-1">
                           <p className="text-sm font-black text-slate-900">{card.name}</p>
-                          <p className="text-xs font-semibold text-slate-500">卡號：{card.card_no ?? '--'}</p>
-                          <p className="text-xs font-semibold text-slate-500">建立：{formatDate(card.created_at)}</p>
+                          <p className={`${smallMutedClass}`}>卡號：{card.card_no ?? '--'}</p>
+                          <p className={`${smallMutedClass}`}>建立：{formatDate(card.created_at)}</p>
                         </div>
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -272,8 +323,8 @@ export default function ParentCardsPage() {
                           )}
                           <div className="space-y-1">
                             <p className="text-sm font-black text-slate-900">{card.name}</p>
-                            <p className="text-xs font-semibold text-slate-500">卡號：{card.card_no ?? '--'}</p>
-                            <p className="text-xs font-semibold text-slate-500">{inventoryRow ? `收藏：${formatDate(inventoryRow.obtained_at)}` : '收藏日期：--'}</p>
+                            <p className={`${smallMutedClass}`}>卡號：{card.card_no ?? '--'}</p>
+                            <p className={`${smallMutedClass}`}>{inventoryRow ? `收藏：${formatDate(inventoryRow.obtained_at)}` : '收藏日期：--'}</p>
                           </div>
                         </div>
                       </article>
@@ -285,6 +336,10 @@ export default function ParentCardsPage() {
           </div>
         )}
       </section>
+
+      {alertMessage && (
+        <p className="mt-4 text-center text-sm font-semibold text-slate-600">{alertMessage}</p>
+      )}
     </main>
   );
 }
